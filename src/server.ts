@@ -8,6 +8,12 @@ import authPlugin from "./plugins/auth.plugin";
 import healthRoutes from "./routes/health.routes";
 import userRoutes from "./routes/user.route";
 import uploadRoutes from "./routes/upload.routes";
+import chatRoutes from "./routes/chat.routes";
+import webSearchRoutes from "./routes/webSearch.routes";
+import fileRoutes from "./routes/file.routes";
+import llmTipRoutes from "./routes/llmTip.routes";
+import chatSessionRoutes from "./routes/chatSession.routes";
+import tasksRoutes from "./routes/tasks.routes";
 
 const fastify = Fastify({ logger: true });
 
@@ -35,6 +41,12 @@ const start = async () => {
   await fastify.register(healthRoutes, { prefix: "/health" });
   await fastify.register(userRoutes, { prefix: "/users" });
   await fastify.register(uploadRoutes, { prefix: "/upload" });
+  await fastify.register(chatRoutes, { prefix: "/chat" });
+  await fastify.register(webSearchRoutes, { prefix: "/web-search" });
+  await fastify.register(fileRoutes, { prefix: "/files" });
+  await fastify.register(llmTipRoutes, { prefix: "/llm-tips" });
+  await fastify.register(chatSessionRoutes, { prefix: "/chat-sessions" });
+  await fastify.register(tasksRoutes, { prefix: "/tasks" });
 
   // Start server
   const start = async () => {
