@@ -7,7 +7,6 @@ import {
   similaritySearchChunks,
   similaritySearchClusters,
   similaritySearchDocuments,
-  similaritySearchTips,
 } from "@/service/simSearch";
 import { parseJson } from "@/utils/parseJson";
 import {
@@ -18,7 +17,7 @@ import {
 } from "@/@types/agents";
 import { logger } from "@/utils/logger";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { chunks, userFileCluster, userFilePage } from "@/db/schema";
 import { observe } from "@lmnr-ai/lmnr";
@@ -939,7 +938,7 @@ export const agenticChunkSearch = async (
   const chunkIds = json.chunkIds;
   console.log("Chunk ids", chunkIds);
   // Load chunks
-  const chunksData = await db
+  const chunksData = await getDb()
     .select()
     .from(chunks)
     .where(inArray(chunks.id, chunkIds));
@@ -997,7 +996,7 @@ export const agenticChunkSearchV2 = async (
           console.log(
             `Chunks:
             ${JSON.stringify(
-              chunks.map((c) => ({
+              chunks.map((c: any) => ({
                 startPage: c.startPage,
                 endPage: c.endPage,
                 // summary: c.summary,
@@ -1033,7 +1032,7 @@ export const agenticChunkSearchV2 = async (
 
   const pages = [];
   for (const doc of json) {
-    const docPages = await db
+    const docPages = await getDb()
       .select()
       .from(userFilePage)
       .where(
@@ -1067,7 +1066,7 @@ export const agenticChunkSearchV3 = async (
   const documentWithOutline = await Promise.all(
     documents.map(async (d) => {
       try {
-        const clusters = await db
+        const clusters = await getDb()
           .select()
           .from(userFileCluster)
           .where(eq(userFileCluster.fileId, d.id));
@@ -1181,7 +1180,7 @@ export const agenticChunkSearchV3 = async (
 
   const pages = [];
   for (const doc of json) {
-    const docPages = await db
+    const docPages = await getDb()
       .select()
       .from(userFilePage)
       .where(
@@ -1287,16 +1286,6 @@ export const generateApproach = async (
   if (!analystPersona) {
     throw new Error("Analyst not found");
   }
-  const tips = await similaritySearchTips(query);
-  callback?.({
-    id: uuidv4(),
-    type: StepType.TIP_SEARCH,
-    status: "done",
-    message: `Tips fetched: ${tips.map((t) => t.title).join(", ")}`,
-    metadata: {
-      tips: tips,
-    },
-  });
 
   const approach = await generateObject({
     model: llm,
@@ -1306,7 +1295,7 @@ export const generateApproach = async (
     )
       .replace("{today}", new Date().toISOString())
       .replace("{query}", query)
-      .replace("{tips}", tips.map((t) => t.content).join("\n")),
+      .replace("{tips}", ""),
     schema: approachSchema,
     experimental_telemetry: {
       isEnabled: true,

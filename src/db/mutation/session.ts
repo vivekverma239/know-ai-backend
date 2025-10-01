@@ -1,11 +1,14 @@
 import type { ChatSession } from "@/@types";
 import { chatSession } from "../schema";
 import { eq } from "drizzle-orm";
-import { db } from "..";
+import { getDb } from "..";
 
 export const updateSession = async (
   sessionId: string,
   data: Partial<ChatSession>
 ) => {
-  await db.update(chatSession).set(data).where(eq(chatSession.id, sessionId));
+  await getDb()
+    .update(chatSession)
+    .set(data)
+    .where(eq(chatSession.id, sessionId));
 };

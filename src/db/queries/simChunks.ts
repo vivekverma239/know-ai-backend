@@ -1,4 +1,4 @@
-import { db } from "..";
+import { getDb } from "..";
 import {
   cosineDistance,
   desc,
@@ -9,13 +9,7 @@ import {
   notInArray,
 } from "drizzle-orm";
 import { type Chunk } from "@/@types";
-import {
-  chunks,
-  llmTip,
-  userFile,
-  userFileChapter,
-  userFileCluster,
-} from "../schema";
+import { chunks, userFile, userFileChapter, userFileCluster } from "../schema";
 
 export type SimilarChunk = Omit<
   Chunk,
@@ -50,7 +44,7 @@ export const getSimilarChunks = async (
   let retryCount = 0;
   while (retryCount < 3) {
     try {
-      const similarChunks = await db
+      const similarChunks = await getDb()
         .select({
           id: chunks.id,
           content: chunks.content,
@@ -87,7 +81,7 @@ export const getSimilarClusters = async (
   if (documentIds) {
     andConditions.push(inArray(userFileCluster.fileId, documentIds));
   }
-  const similarClusters = await db
+  const similarClusters = await getDb()
     .select({
       id: userFileCluster.id,
       documentId: userFileCluster.fileId,
@@ -110,7 +104,7 @@ export const getSimilarDocuments = async (embedding: number[], limit = 3) => {
     userFile.embedding,
     embedding
   )})`;
-  const similarDocuments = await db
+  const similarDocuments = await getDb()
     .select({
       id: userFile.id,
       title: userFile.name,
@@ -123,27 +117,6 @@ export const getSimilarDocuments = async (embedding: number[], limit = 3) => {
     .limit(limit);
 
   return similarDocuments;
-};
-
-export const getSimilarTips = async (embedding: number[], limit = 3) => {
-  const similarity = sql<number>`1 - (${cosineDistance(
-    llmTip.embedding,
-    embedding
-  )})`;
-  const similarTips = await db
-    .select({
-      id: llmTip.id,
-      title: llmTip.title,
-      content: llmTip.content,
-      category: llmTip.category,
-      similarity: similarity,
-    })
-    .from(llmTip)
-    .where(gte(similarity, 0.5))
-    .orderBy((t) => desc(t.similarity))
-    .limit(limit);
-
-  return similarTips;
 };
 
 export const getSimilarChapters = async ({
@@ -165,7 +138,7 @@ export const getSimilarChapters = async ({
   if (documentIds) {
     andConditions.push(inArray(userFileChapter.fileId, documentIds));
   }
-  const similarChapters = await db
+  const similarChapters = await getDb()
     .select({
       id: userFileChapter.id,
       documentId: userFileChapter.fileId,

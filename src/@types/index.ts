@@ -3,7 +3,6 @@ import type {
   chatSession,
   textNote,
   userFile,
-  llmTip,
   messages,
   chunks,
   userFileCluster,
@@ -31,7 +30,6 @@ export type Citation = {
 
 export type UserFilePage = typeof userFilePage.$inferSelect;
 export type TextNote = typeof textNote.$inferSelect;
-export type LLMTip = typeof llmTip.$inferSelect;
 export type ChatSession = typeof chatSession.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Chunk = typeof chunks.$inferSelect;

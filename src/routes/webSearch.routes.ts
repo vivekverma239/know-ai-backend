@@ -8,7 +8,7 @@ import {
 import { webAgent } from "@/agents/webAgent";
 import { sendQstashMessage } from "@/service/qstash";
 import { logger } from "@/utils/logger";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { webSearchTask } from "@/db/schema";
 
 const webSearchRoutes = async (fastify: FastifyInstance) => {
@@ -19,6 +19,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       preHandler: fastify.authenticate,
       schema: {
         description: "Create a web search task",
+        tags: ["Web Search"],
         body: Type.Object({
           query: Type.String(),
           userId: Type.String(),
@@ -33,7 +34,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
 
-        const task = await db
+        const task = await getDb()
           .insert(webSearchTask)
           .values({ userId, query, status: "pending" })
           .returning();
@@ -50,7 +51,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
             });
           } catch (error) {
             logger.error("Failed to queue web search task", { error });
-            await db
+            await getDb()
               .update(webSearchTask)
               .set({
                 status: "failed",
@@ -74,6 +75,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
     preHandler: fastify.authenticate,
     schema: {
       description: "Get a web search task",
+      tags: ["Web Search"],
       params: Type.Object({ id: Type.String() }),
       querystring: Type.Object({ userId: Type.String(), orgId: Type.String() }),
       response: { 200: WebSearchTaskSchema },
@@ -84,7 +86,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const { id } = request.params;
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
-      const task = await db.query.webSearchTask.findFirst({
+      const task = await getDb().query.webSearchTask.findFirst({
         where: eq(webSearchTask.id, id),
       });
       if (!task || task.userId !== userId) {
@@ -99,6 +101,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
     preHandler: fastify.authenticate,
     schema: {
       description: "List web search tasks for current user",
+      tags: ["Web Search"],
       querystring: Type.Object({ userId: Type.String(), orgId: Type.String() }),
       response: { 200: Type.Array(WebSearchTaskSchema) },
     },
@@ -107,7 +110,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const userId: string = request.user.id;
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
-      const tasks = await db.query.webSearchTask.findMany({
+      const tasks = await getDb().query.webSearchTask.findMany({
         where: eq(webSearchTask.userId, userId),
         orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
       });
@@ -122,6 +125,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       preHandler: fastify.authenticate,
       schema: {
         description: "Retry a failed web search task",
+        tags: ["Web Search"],
         body: Type.Object({
           taskId: Type.String(),
           userId: Type.String(),
@@ -135,7 +139,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         const { taskId } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
-        const task = await db.query.webSearchTask.findFirst({
+        const task = await getDb().query.webSearchTask.findFirst({
           where: eq(webSearchTask.id, taskId),
         });
         if (!task || task.userId !== userId || task.status !== "failed") {
@@ -143,7 +147,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
             .code(400)
             .send({ message: "Task not eligible for retry" });
         }
-        await db
+        await getDb()
           .update(webSearchTask)
           .set({ status: "pending", error: null, updatedAt: new Date() })
           .where(eq(webSearchTask.id, taskId));
@@ -163,6 +167,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       preHandler: fastify.authenticate,
       schema: {
         description: "Legacy: execute web agent directly",
+        tags: ["Web Search"],
         body: Type.Object({
           query: Type.String(),
           userId: Type.String(),

@@ -3,7 +3,6 @@ import {
   getSimilarChunks,
   getSimilarClusters,
   getSimilarDocuments,
-  getSimilarTips,
 } from "@/db/queries/simChunks";
 import { observe } from "@lmnr-ai/lmnr";
 /**
@@ -164,36 +163,6 @@ export const similaritySearchDocumentsWithObserver = async (
         name: "similaritySearchDocuments",
       },
       (query, limit) => similaritySearchDocuments(query, limit),
-      query,
-      limit
-    );
-  return await fn();
-};
-/**
- * Performs a similarity search on a query using embeddings and returns similar tips.
- * @param query - The query to search for.
- * @param limit - The maximum number of tips to return.
- * @returns An array of similar tips.
- */
-export const similaritySearchTips = async (query: string, limit = 5) => {
-  const embedding = await getEmbeddings([query]);
-  if (!embedding[0]) {
-    throw new Error("No embedding found");
-  }
-  const similarTips = await getSimilarTips(embedding[0], limit);
-  return similarTips;
-};
-
-export const similaritySearchTipsWithObserver = async (
-  query: string,
-  limit = 5
-) => {
-  const fn = async () =>
-    observe(
-      {
-        name: "similaritySearchTips",
-      },
-      (query, limit) => similaritySearchTips(query, limit),
       query,
       limit
     );

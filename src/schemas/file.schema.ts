@@ -63,3 +63,14 @@ export const HierarchicalIndexItems = Type.Object({
 });
 
 export const DeleteResponse = Type.Object({ success: Type.Boolean() });
+
+export const FileUploadRequest = Type.Object({
+  name: Type.Optional(Type.String()),
+});
+
+export const FileUploadResponse = Type.Object({
+  fileId: Type.String(),
+  name: Type.String(),
+  status: Type.String(),
+  message: Type.String(),
+});

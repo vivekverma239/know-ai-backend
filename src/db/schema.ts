@@ -1,10 +1,10 @@
 import type { Subsection } from "@/@types/fileIndex";
+import type { MessageParts } from "@/@types/message";
 import type { PageSummary } from "@/@types/metadata";
 import type { TokenUsage } from "@/@types/tokenUsage";
 import { relations, sql } from "drizzle-orm";
 import { index, pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 // import { type AdapterAccountType } from "next-auth/adapters";
-import { v4 as uuidv4 } from "uuid";
 
 type AdapterAccountType = "email" | "oidc" | "oauth" | "webauthn";
 
@@ -14,7 +14,7 @@ type AdapterAccountType = "email" | "oidc" | "oauth" | "webauthn";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `lara-frontend_${name}`);
+export const createTable = pgTableCreator((name) => `${name}`);
 
 export const processingStatus = pgEnum("processing_status", [
   "pending",
@@ -58,12 +58,10 @@ export const userFile = createTable("user_file", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   name: d.varchar({ length: 256 }),
+  userId: d.varchar({ length: 255 }).notNull(),
+  orgId: d.varchar({ length: 255 }).notNull(),
   embedding: d.vector({ dimensions: 768 }),
   metadata: d.jsonb().$type<FileMetadata>(),
-  createdById: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => users.id),
   status: processingStatus("processing_status").default("pending"),
   parsingMetadata: d.jsonb().$type<{
     done: number;
@@ -100,6 +98,8 @@ export const userFileCluster = createTable("file_cluster", (d) => ({
     .uuid()
     .notNull()
     .references(() => userFile.id),
+  userId: d.varchar({ length: 255 }).notNull(),
+  orgId: d.varchar({ length: 255 }).notNull(),
   startPage: d.integer().notNull(),
   endPage: d.integer().notNull(),
   pageSummaries: d.jsonb().$type<PageSummary[]>(),
@@ -118,6 +118,8 @@ export const userFileChapter = createTable("file_chapter", (d) => ({
     .uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
+  userId: d.varchar({ length: 255 }).notNull(),
+  orgId: d.varchar({ length: 255 }).notNull(),
   fileId: d
     .uuid()
     .notNull()
@@ -138,6 +140,8 @@ export const userFileSection = createTable("file_section", (d) => ({
     .uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
+  userId: d.varchar({ length: 255 }).notNull(),
+  orgId: d.varchar({ length: 255 }).notNull(),
   fileId: d
     .uuid()
     .notNull()
@@ -164,6 +168,8 @@ export const userFileHeirarchialIndex = createTable(
       .uuid()
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    userId: d.varchar({ length: 255 }).notNull(),
+    orgId: d.varchar({ length: 255 }).notNull(),
     fileId: d
       .uuid()
       .notNull()
@@ -190,26 +196,6 @@ export const textNote = createTable("text_note", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   content: d.text().notNull(),
-  createdById: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => users.id),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-  updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-}));
-
-export const llmTip = createTable("llm_tip", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  title: d.varchar({ length: 255 }).notNull(),
-  content: d.text().notNull(),
-  category: d.varchar({ length: 255 }),
-  embedding: d.vector({ dimensions: 768 }),
   createdById: d
     .varchar({ length: 255 })
     .notNull()
@@ -274,8 +260,7 @@ export const messages = createTable("message", (d) => ({
     .uuid()
     .notNull()
     .references(() => chatSession.id),
-  content: d.text().notNull(),
-  parts: d.jsonb(),
+  parts: d.jsonb().$type<MessageParts>(),
   metadata: d.jsonb(),
   createdAt: d
     .timestamp({ withTimezone: true })

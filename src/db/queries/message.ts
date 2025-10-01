@@ -1,7 +1,7 @@
 import { type Message } from "@/@types/message";
 import { type Message as SQLMessage } from "@/@types";
 
-import { db } from "..";
+import { getDb } from "..";
 import { messages, chatSession } from "../schema";
 import { and, desc, eq, lt } from "drizzle-orm";
 import type { ChatSession } from "@/@types";
@@ -19,16 +19,19 @@ export const createMessage = async (
     id: message.id,
     userId: message.userId,
     role: message.role,
-    content: message.content,
+    parts: message.parts,
     createdAt: message.createdAt,
     sessionId: chatSessionId,
   };
-  const newMessage = await db.insert(messages).values(sqlMessage).returning();
+  const newMessage = await getDb()
+    .insert(messages)
+    .values(sqlMessage)
+    .returning();
   return newMessage[0];
 };
 
 export const syncMessages = async (sqlMessages: SQLMessage[]) => {
-  const newMessages = await db.transaction(async (tx) => {
+  const newMessages = await getDb().transaction(async (tx) => {
     return await Promise.all(
       sqlMessages.map(async (message) => {
         return await tx
@@ -37,7 +40,7 @@ export const syncMessages = async (sqlMessages: SQLMessage[]) => {
           .onConflictDoUpdate({
             target: [messages.id],
             set: {
-              content: message.content,
+              parts: message.parts,
               role: message.role,
               updatedAt: new Date(),
             },
@@ -54,7 +57,7 @@ export const syncMessages = async (sqlMessages: SQLMessage[]) => {
  * @returns The messages for the session.
  */
 export const getMessages = async (chatSessionId: string) => {
-  const sessionMessages = await db
+  const sessionMessages = await getDb()
     .select()
     .from(messages)
     .where(eq(messages.sessionId, chatSessionId));
@@ -62,7 +65,7 @@ export const getMessages = async (chatSessionId: string) => {
     .map((sessionMessage) => ({
       id: sessionMessage.id,
       role: sessionMessage.role,
-      content: sessionMessage.content,
+      parts: sessionMessage.parts,
       metadata: sessionMessage.metadata,
       createdAt: sessionMessage.createdAt,
     }))
@@ -73,14 +76,14 @@ export const getSessionWithMessages = async (
   sessionId: string,
   userId: string
 ) => {
-  let session: ChatSession | undefined = await db
+  let session: ChatSession | undefined = await getDb()
     .select()
     .from(chatSession)
     .where(eq(chatSession.id, sessionId))
     .then((sessions) => sessions[0]);
   if (!session) {
     // Create a new session
-    const newSession = await db
+    const newSession = await getDb()
       .insert(chatSession)
       .values({ id: sessionId, userId: userId, title: "New Session" })
       .returning();
@@ -103,7 +106,7 @@ export const createSession = async (
   id: string,
   title: string
 ) => {
-  const newSession = await db
+  const newSession = await getDb()
     .insert(chatSession)
     .values({ id: id, userId: userId, title: title })
     .returning();
@@ -123,7 +126,7 @@ export const listSessions = async (
   if (cursor) {
     // If we have a cursor, find the position of the cursor session
     const cursorSession = (
-      await db
+      await getDb()
         .select()
         .from(chatSession)
         .where(eq(chatSession.id, cursor))
@@ -133,7 +136,7 @@ export const listSessions = async (
     if (cursorSession) {
       const cursorSessionCreatedAt = cursorSession.createdAt;
       // Get sessions after the cursor
-      return await db
+      return await getDb()
         .select()
         .from(chatSession)
         .where(
@@ -148,7 +151,7 @@ export const listSessions = async (
   }
 
   // If no cursor or cursor not found, return first page
-  return await db
+  return await getDb()
     .select()
     .from(chatSession)
     .where(eq(chatSession.userId, userId))
@@ -162,7 +165,7 @@ export const listSessions = async (
  * @returns The latest session ID.
  */
 export const getLatestSessionId = async (userId: string) => {
-  const latestSession = await db
+  const latestSession = await getDb()
     .select()
     .from(chatSession)
     .where(eq(chatSession.userId, userId))

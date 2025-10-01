@@ -2,7 +2,7 @@
 import { getLLM } from "@/ai/llm";
 import { DEFAULT_SMALL_MODEL } from "@/ai/llm";
 import { and, asc, inArray } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { eq } from "drizzle-orm";
 import { userFileChapter, userFilePage, userFileSection } from "@/db/schema";
 import { generateText, stepCountIs, tool } from "ai";
@@ -50,7 +50,7 @@ You are an expert financial research assistant. Your task is to provide comprehe
 
 const pageTool = async (pages: number[], fileId: string) => {
   logger.info(`Getting page content for ${pages.join(", ")}`);
-  const pageContent = await db.query.userFilePage.findMany({
+  const pageContent = await getDb().query.userFilePage.findMany({
     where: and(
       eq(userFilePage.fileId, fileId),
       inArray(userFilePage.pageNumber, pages)
@@ -79,7 +79,7 @@ export const fileAgent = async (
     conditions.push(eq(userFileSection.chapterId, chapterId));
   }
 
-  const sections = await db.query.userFileSection.findMany({
+  const sections = await getDb().query.userFileSection.findMany({
     where: and(...conditions),
     orderBy: (userFileSection, { asc }) => [asc(userFileSection.startPage)],
   });

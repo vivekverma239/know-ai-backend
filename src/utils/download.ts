@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import AdmZip from "adm-zip";
+import { logger } from "./logger";
 
 const SERVICE_URL = "https://pdf-generator-api-z5z6k2buaq-de.a.run.app";
 
@@ -50,4 +51,63 @@ export const downloadPDF = async (urls: string[]) => {
       ).length
     } PDF files to ${pdfDir}`
   );
+};
+
+/**
+ * Download a file from a URL and return the buffer
+ */
+export const downloadFileFromUrl = async (url: string): Promise<Buffer> => {
+  try {
+    logger.info(`Downloading file from URL: ${url}`);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; KnowsisAI/1.0)",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download file: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("pdf")) {
+      throw new Error("File must be a PDF document");
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    logger.error(`Error downloading file from URL ${url}:`, { error });
+    throw new Error(
+      `Failed to download file: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+};
+
+/**
+ * Extract filename from URL or use a default name
+ */
+export const extractFilenameFromUrl = (
+  url: string,
+  defaultName?: string
+): string => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    const filename = pathname.split("/").pop();
+
+    if (filename && filename.includes(".")) {
+      return filename;
+    }
+
+    return defaultName || `document-${Date.now()}.pdf`;
+  } catch {
+    return defaultName || `document-${Date.now()}.pdf`;
+  }
 };

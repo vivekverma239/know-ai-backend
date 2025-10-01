@@ -10,6 +10,7 @@ const tasksRoutes = async (fastify: FastifyInstance) => {
   }>("/execute", {
     schema: {
       description: "Execute a background task",
+      tags: ["Tasks"],
       headers: Type.Object({
         "x-task-token": Type.Optional(Type.String()),
         authorization: Type.Optional(Type.String()),

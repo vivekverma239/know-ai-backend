@@ -12,3 +12,4 @@
 .env.production.local
 node_modules
 trpc
+data/
