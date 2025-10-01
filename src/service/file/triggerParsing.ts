@@ -12,7 +12,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.createdById}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
 
   const signedUrl = await storage.getSignedUrl(path);
 
@@ -51,7 +51,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.createdById}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
@@ -90,7 +90,7 @@ export const parsePDFChapters = async (
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.createdById}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
@@ -129,7 +129,7 @@ export const parsePDFHeirarchialIndex = async (
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.createdById}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
