@@ -102,6 +102,7 @@ export class GoogleStorageService {
 
     try {
       const [signedUrl] = await file.getSignedUrl({
+        version: "v4",
         action: "read",
         expires: Date.now() + expiresIn * 1000,
       });
@@ -118,6 +119,7 @@ export class GoogleStorageService {
 
     try {
       const [signedUrl] = await file.getSignedUrl({
+        version: "v4",
         action: "write",
         expires: Date.now() + expiresIn * 1000,
         contentType: "application/octet-stream",

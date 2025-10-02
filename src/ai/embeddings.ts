@@ -35,10 +35,10 @@ export const getEmbeddings = async (
           values: values.slice(i, i + 100),
           providerOptions: {
             openai: {
-              dimensions: 512, // Reduce embedding dimensions
+              dimensions: 768, // Reduce embedding dimensions
             },
             google: {
-              outputDimensionality: 512,
+              outputDimensionality: 768,
             },
           },
         });

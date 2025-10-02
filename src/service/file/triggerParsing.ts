@@ -12,7 +12,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/document.pdf`;
 
   const signedUrl = await storage.getSignedUrl(path);
 
@@ -30,7 +30,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
         document_url: signedUrl,
         document_id: fileId,
         elements: ["pdf_parse", "metadata", "outline", "heirarchial_index"],
-        callback_url: `${process.env.APP_URL}/api/callbacks/parsing/${fileId}`,
+        callback_url: `${process.env.APP_URL}/api/v1/callbacks/parsing/${fileId}`,
         ignore_cache: false,
       }),
     }
@@ -51,7 +51,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/document.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
@@ -65,7 +65,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
       body: JSON.stringify({
         pdf_url: signedUrl,
         doc_id: fileId,
-        callback_url: `${process.env.APP_URL}/api/callbacks/parsing/${fileId}`,
+        callback_url: `${process.env.APP_URL}/api/v1/callbacks/parsing/${fileId}`,
       }),
     }
   );
@@ -90,7 +90,7 @@ export const parsePDFChapters = async (
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/document.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
@@ -104,7 +104,7 @@ export const parsePDFChapters = async (
       body: JSON.stringify({
         pdf_url: signedUrl,
         doc_id: fileId,
-        callback_url: `${process.env.APP_URL}/api/callbacks/parsing/${fileId}`,
+        callback_url: `${process.env.APP_URL}/api/v1/callbacks/parsing/${fileId}`,
       }),
     }
   );
@@ -129,7 +129,7 @@ export const parsePDFHeirarchialIndex = async (
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const path = `files/${file.userId}/${fileId}/document.pdf`;
   const signedUrl = await storage.getSignedUrl(path);
 
   const response = await fetch(
@@ -143,7 +143,7 @@ export const parsePDFHeirarchialIndex = async (
       body: JSON.stringify({
         pdf_url: signedUrl,
         doc_id: fileId,
-        callback_url: `${process.env.APP_URL}/api/callbacks/parsing/${fileId}`,
+        callback_url: `${process.env.APP_URL}/api/v1/callbacks/parsing/${fileId}`,
       }),
     }
   );

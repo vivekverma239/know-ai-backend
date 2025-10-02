@@ -196,7 +196,7 @@ export const textNote = createTable("text_note", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   content: d.text().notNull(),
-  createdById: d
+  userId: d
     .varchar({ length: 255 })
     .notNull()
     .references(() => users.id),

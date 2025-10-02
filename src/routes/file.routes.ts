@@ -419,19 +419,22 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       const { fileId } = request.body;
       const storageService = getStorage();
       const signedUrl = await storageService.createUploadSignedUrl(
-        `files/${userId}/${fileId}/${fileId}.pdf`
+        `files/${userId}/${fileId}/document.pdf`
       );
-      return reply.send({ signedUrl });
+      return reply.send({
+        signedUrl,
+        fileId,
+      });
     },
   });
 
   // Parse PDF
-  fastify.post<{ Body: { fileId: string; name: string } }>("/parse-async", {
+  fastify.post<{ Body: { fileId: string } }>("/parse-async", {
     preHandler: fastify.authenticate,
     schema: {
       description: "Parse PDF",
       tags: ["Files"],
-      body: Type.Object({ fileId: Type.String(), name: Type.String() }),
+      body: Type.Object({ fileId: Type.String() }),
       response: {
         201: UserFileSchema,
         401: Type.Object({ error: Type.String() }),
@@ -442,13 +445,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      // @ts-expect-error
-      const userId: string = request.user.id;
+      const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { fileId, name } = request.body as any;
+      const { fileId } = request.body;
       const file = await getDb().insert(userFile).values({
         id: fileId,
-        name,
+        name: fileId,
         userId: userId,
         orgId: orgId,
       });

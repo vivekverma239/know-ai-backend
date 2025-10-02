@@ -11,7 +11,7 @@ import type {
 } from "@/db/schema";
 
 export type UserFile = typeof userFile.$inferSelect;
-export type UserFileWithMeta = Omit<UserFile, "embedding" | "createdById"> & {
+export type UserFileWithMeta = Omit<UserFile, "embedding"> & {
   numPages: number;
   numChunks: number;
   numChapters: number;

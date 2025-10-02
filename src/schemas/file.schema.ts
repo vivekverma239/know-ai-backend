@@ -5,7 +5,7 @@ export const UserFileSchema = Type.Object({
   name: Type.String(),
   status: Type.String(),
   metadata: Type.Optional(Type.Object({}, { additionalProperties: true })),
-  createdById: Type.String(),
+  userId: Type.String(),
   createdAt: Type.String(),
   updatedAt: Type.Optional(Type.String()),
 });
