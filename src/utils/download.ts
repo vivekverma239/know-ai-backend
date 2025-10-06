@@ -74,7 +74,7 @@ export const downloadFileFromUrl = async (url: string): Promise<Buffer> => {
     }
 
     const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("pdf")) {
+    if (!contentType?.includes("pdf")) {
       throw new Error("File must be a PDF document");
     }
 
@@ -102,12 +102,12 @@ export const extractFilenameFromUrl = (
     const pathname = urlObj.pathname;
     const filename = pathname.split("/").pop();
 
-    if (filename && filename.includes(".")) {
+    if (filename?.includes(".")) {
       return filename;
     }
 
-    return defaultName || `document-${Date.now()}.pdf`;
+    return defaultName ?? `document-${Date.now()}.pdf`;
   } catch {
-    return defaultName || `document-${Date.now()}.pdf`;
+    return defaultName ?? `document-${Date.now()}.pdf`;
   }
 };

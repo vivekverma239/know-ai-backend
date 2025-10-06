@@ -13,6 +13,8 @@ import {
   updateParsedPages,
 } from "@/service/file/parsing";
 import { updateUsage } from "@/service/file/usage";
+import type { CallbackTokenUsage } from "@/@types/tokenUsage";
+import type { SectionCallbackData } from "@/@types/fileIndex";
 
 const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
   // Global dispatcher for parsing callbacks
@@ -33,8 +35,17 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
       },
     },
     async (request, reply) => {
-      const { fileId } = request.params;
-      const { status, data, task_type, usage_metadata } = request.body as any;
+      const { fileId } = request.params as { fileId: string };
+      const { status, data, task_type, usage_metadata } = request.body as {
+        status: string;
+        data:
+          | HeirarchialIndexData
+          | ParsedPDF
+          | DocumentMetadata
+          | SectionCallbackData;
+        task_type: string;
+        usage_metadata: CallbackTokenUsage;
+      };
       logger.info(
         `File ${fileId} parsing callback received, status: ${status}`
       );
@@ -42,10 +53,11 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
       if (task_type === "parse_heirarchial_index") {
         await updateHeirarchialIndex(fileId, data as HeirarchialIndexData);
       } else if (task_type === "parse_outline") {
+        const section = data as SectionCallbackData;
         await updateOutline({
-          chapters: data.chapters,
-          title: data.title,
-          summary: data.summary,
+          chapters: section.chapters,
+          title: section.title,
+          summary: section.summary,
           fileId,
         });
         await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
@@ -54,7 +66,8 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         await updateParsedPages(fileId, parsed);
         await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
       } else if (task_type === "parse_metadata") {
-        await updateParsedMetadata(fileId, data as DocumentMetadata);
+        const parsed = data as DocumentMetadata;
+        await updateParsedMetadata(fileId, parsed);
         await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
       }
 

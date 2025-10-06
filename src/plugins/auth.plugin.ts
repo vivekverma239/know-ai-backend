@@ -65,7 +65,7 @@ const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
 
 const authPlugin = async (fastify: FastifyInstance) => {
   console.log("Auth plugin");
-  await fastify.decorate("authenticate", authFn);
+  fastify.decorate("authenticate", authFn);
   console.log("Auth plugin decorated");
   console.log(fastify.authenticate);
 };

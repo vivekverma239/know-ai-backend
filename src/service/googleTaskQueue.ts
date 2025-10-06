@@ -18,7 +18,7 @@ export class GoogleCloudTasksProvider {
   constructor(config: TaskQueueConfig) {
     this.config = config;
     this.queuePath = `projects/${config.projectId}/locations/${config.location}/queues/${config.queueName}`;
-    this.initializeClient();
+    void this.initializeClient();
   }
 
   private async initializeClient(): Promise<void> {
@@ -52,9 +52,14 @@ export class GoogleCloudTasksProvider {
       logger.info("exists", {
         queueName: this.config.queueName,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If queue doesn't exist (404), create it
-      if (error.code === 5 || error.message?.includes("not found")) {
+      if (
+        (error instanceof Error && "code" in error && error.code === 5) ||
+        (error instanceof Error &&
+          "message" in error &&
+          error.message?.includes("not found"))
+      ) {
         logger.info("creating", {
           queueName: this.config.queueName,
         });
@@ -98,7 +103,7 @@ export class GoogleCloudTasksProvider {
           headers: {
             "Content-Type": "application/json",
             "User-Agent": "TrainFit-TaskQueue/1.0",
-            "X-API-Key": process.env.ASYNC_QUEUE_AUTH_KEY || "",
+            "X-API-Key": process.env.ASYNC_QUEUE_AUTH_KEY!,
           },
           body: Buffer.from(JSON.stringify(options.payload)).toString("base64"),
         },
@@ -119,7 +124,7 @@ export class GoogleCloudTasksProvider {
         task,
       });
 
-      const taskId = response.name || `gcp-task-${Date.now()}`;
+      const taskId = response.name ?? `gcp-task-${Date.now()}`;
 
       logger.info("Task enqueued to Google Cloud Tasks", {
         message: "Task enqueued to Google Cloud Tasks",
@@ -203,30 +208,6 @@ export class GoogleCloudTasksProvider {
     }
   }
 
-  async getQueueStats(): Promise<Result<QueueStats, Error>> {
-    try {
-      const [response] = await this.client.getQueue({ name: this.queuePath });
-
-      // Google Cloud Tasks doesn't provide detailed statistics like completed/failed tasks
-      // We can only get basic queue information
-      const stats = (response as any).stats;
-
-      return ok({
-        totalTasks: stats?.concurrentDispatchesCount || 0,
-        pendingTasks: stats?.oldestEstimatedArrivalTime ? 1 : 0, // Simplified
-        runningTasks: stats?.concurrentDispatchesCount || 0,
-        completedTasks: 0, // Google Cloud Tasks doesn't track completed tasks
-        failedTasks: 0, // Google Cloud Tasks doesn't track failed tasks
-      });
-    } catch (error) {
-      logger.error("Failed to get queue stats from Google Cloud Tasks", {
-        queueName: this.config.queueName,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return err(error as Error);
-    }
-  }
-
   /**
    * Get detailed queue information
    */
@@ -251,21 +232,21 @@ export class GoogleCloudTasksProvider {
       const [response] = await this.client.getQueue({ name: this.queuePath });
 
       return ok({
-        name: response.name || "",
-        state: String(response.state || "UNKNOWN"),
+        name: response.name ?? "",
+        state: String(response.state ?? "UNKNOWN"),
         rateLimits: response.rateLimits
           ? {
               maxConcurrentDispatches:
-                response.rateLimits.maxConcurrentDispatches || 0,
+                response.rateLimits.maxConcurrentDispatches ?? 0,
               maxDispatchesPerSecond:
-                response.rateLimits.maxDispatchesPerSecond || 0,
+                response.rateLimits.maxDispatchesPerSecond ?? 0,
             }
           : undefined,
         retryConfig: response.retryConfig
           ? {
-              maxAttempts: response.retryConfig.maxAttempts || 0,
+              maxAttempts: response.retryConfig.maxAttempts ?? 0,
               maxRetryDuration: Number(
-                response.retryConfig.maxRetryDuration?.seconds || 0
+                response.retryConfig.maxRetryDuration?.seconds ?? 0
               ),
             }
           : undefined,

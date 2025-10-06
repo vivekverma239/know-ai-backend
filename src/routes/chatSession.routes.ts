@@ -29,7 +29,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { id } = request.params as any;
+      const { id } = request.params as { id: string };
       const session = await getSessionWithMessages(id, userId);
       return reply.send(session);
     },
@@ -64,7 +64,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { id, title } = request.body as any;
+      const { id, title } = request.body as { id: string; title: string };
       const session = await createSession(userId, id, title);
       return reply.code(201).send(session);
     },
@@ -94,7 +94,11 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { cursor, limit = 10 } = (request.query as any) ?? {};
+      const { cursor, limit = 10 } =
+        (request.query as {
+          cursor?: string;
+          limit?: number;
+        }) ?? {};
       const sessions = await listSessions(userId, limit, cursor);
       return reply.send({
         sessions,

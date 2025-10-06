@@ -1,22 +1,36 @@
 import { Storage, Bucket, File } from "@google-cloud/storage";
 import fs from "fs";
 
+interface JWTInput {
+  type?: string;
+  client_email?: string;
+  private_key?: string;
+  private_key_id?: string;
+  project_id?: string;
+  client_id?: string;
+  client_secret?: string;
+  refresh_token?: string;
+  quota_project_id?: string;
+  universe_domain?: string;
+}
 export class GoogleStorageService {
   private readonly bucket: Bucket;
   private readonly storage: Storage;
 
   constructor() {
+    const credentialsRaw = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64!;
+    let credentials: JWTInput;
+    if (credentialsRaw) {
+      credentials = JSON.parse(
+        Buffer.from(credentialsRaw, "base64").toString("utf-8")
+      ) as JWTInput;
+    } else {
+      credentials = JSON.parse(
+        fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS!, "utf-8")
+      ) as JWTInput;
+    }
     this.storage = new Storage({
-      credentials: JSON.parse(
-        process.env.GOOGLE_APPLICATION_CREDENTIALS!
-          ? fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS!)
-          : JSON.parse(
-              Buffer.from(
-                process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64!,
-                "base64"
-              ).toString("utf-8")
-            )
-      ),
+      credentials: credentials,
     });
     this.bucket = this.storage.bucket(process.env.GOOGLE_CLOUD_BUCKET_NAME!);
   }
@@ -40,7 +54,7 @@ export class GoogleStorageService {
     try {
       await file.save(buffer, {
         metadata: {
-          contentType: contentType || "application/octet-stream",
+          contentType: contentType ?? "application/octet-stream",
         },
       });
       return path;
@@ -191,8 +205,6 @@ export class GoogleStorageService {
 let _storageInstance: GoogleStorageService | null = null;
 
 export const getStorage = (): GoogleStorageService => {
-  if (!_storageInstance) {
-    _storageInstance = new GoogleStorageService();
-  }
+  _storageInstance ??= new GoogleStorageService();
   return _storageInstance;
 };

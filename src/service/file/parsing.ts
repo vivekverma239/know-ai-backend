@@ -9,7 +9,12 @@ import {
 } from "@/db/schema";
 import { and, count, eq, gte, lte } from "drizzle-orm";
 import { getDb } from "@/db";
-import type { Chapter } from "@/@types/fileIndex";
+import type {
+  Chapter,
+  Section,
+  Subsection,
+  SubsectionAPI,
+} from "@/@types/fileIndex";
 import { getEmbeddings } from "@/ai/embeddings";
 import { logger } from "@/utils/logger";
 import type { ParsedPDF } from "@/@types/parsedData";
@@ -95,11 +100,11 @@ export const updateOutline = async ({
     );
     const sectionEmbeddings = await getEmbeddings(
       chapter.sections.map(
-        (section: any) =>
+        (section: Section) =>
           `Section ${section.start_page}-${section.end_page}: ${section.section_summary}`
       )
     );
-    const sectionData = chapter.sections.map((section: any, i: number) => ({
+    const sectionData = chapter.sections.map((section: Section, i: number) => ({
       fileId,
       userId: file.userId,
       orgId: file.orgId,
@@ -109,7 +114,7 @@ export const updateOutline = async ({
       title: section.title,
       chapterId: newChapter.id,
       embedding: sectionEmbeddings[i],
-      subsections: section.subsections?.map((sub: any) => ({
+      subsections: section.subsections?.map((sub: SubsectionAPI) => ({
         id: sub.id,
         startPage: sub.start_page,
         endPage: sub.end_page,
@@ -148,8 +153,7 @@ export const updateParsedPages = async (
     start: number;
     end: number;
   }>;
-  for (let i = 0; i < parsedData.pages.length; i += 1) {
-    const page = parsedData.pages[i]!;
+  for (const page of parsedData.pages) {
     chunkInputs.push({
       content: page.content,
       start: page.page_number,

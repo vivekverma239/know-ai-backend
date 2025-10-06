@@ -14,7 +14,6 @@ import healthRoutes from "./routes/health.routes";
 import chatRoutes from "./routes/chatSession.routes";
 import webSearchRoutes from "./routes/webSearch.routes";
 import fileRoutes from "./routes/file.routes";
-import tasksRoutes from "./routes/tasks.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 import parsingCallbackRoutes from "./routes/parsingCallback.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
@@ -79,7 +78,6 @@ const start = async () => {
     prefix: "/api/v1/agent/web-search",
   });
   await fastify.register(fileRoutes, { prefix: "/api/v1/files" });
-  await fastify.register(tasksRoutes, { prefix: "/api/v1/tasks" });
   // Callbacks / webhooks and streamed chat
   await fastify.register(webSearchCallbackRoutes, {
     prefix: "/api/v1/web-search-callback",
@@ -90,8 +88,15 @@ const start = async () => {
   // Start server
   const start = async () => {
     try {
-      await fastify.listen({ port: 3000 });
-      console.log("✅ Server running at http://localhost:3000");
+      await fastify.listen({
+        port: 3000,
+        host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
+      });
+      console.log(
+        `✅ Server running at http://${
+          process.env.ENV === "prod" ? "0.0.0.0" : "localhost"
+        }:3000`
+      );
       console.log("📖 Docs at http://localhost:3000/docs");
     } catch (err) {
       fastify.log.error(err);

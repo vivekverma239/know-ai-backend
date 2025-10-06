@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql, type SQLWrapper } from "drizzle-orm";
 import {
   userFile,
   userFilePage,
@@ -67,14 +67,24 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { page = 1, pageSize = 25, search, status } = request.query as any;
+      const {
+        page = 1,
+        pageSize = 25,
+        search,
+        status,
+      } = request.query as {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: "all" | "pending" | "processing" | "processed" | "failed";
+      };
       const offset = (page - 1) * pageSize;
 
-      const whereConditions: any[] = [];
+      const whereConditions: SQLWrapper[] = [];
       if (status && status !== "all")
         whereConditions.push(eq(userFile.status, status));
       if ((search?.trim?.() ?? "") !== "") {
-        const searchTerms = (search as string)
+        const searchTerms = search!
           .trim()
           .split(/\s+/)
           .filter((term) => term.length > 0);
@@ -129,7 +139,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         .groupBy(userFileChapter.fileId)
         .as("chapterCount");
 
-      const data = (await getDb()
+      const data = await getDb()
         .select({
           id: userFiles.id,
           name: userFiles.name,
@@ -145,7 +155,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         .leftJoin(pageCount, eq(userFiles.id, pageCount.documentId))
         .leftJoin(chunkCount, eq(userFiles.id, chunkCount.documentId))
         .leftJoin(chapterCount, eq(userFiles.id, chapterCount.documentId))
-        .orderBy(desc(userFiles.createdAt))) as any[];
+        .orderBy(desc(userFiles.createdAt));
 
       return reply.send(data);
     },
@@ -165,7 +175,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { id } = request.params as any;
+      const { id } = request.params as { id: string };
       const [file] = await getDb()
         .select()
         .from(userFile)
@@ -203,7 +213,15 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { fileId, limit = 10, offset = 0 } = request.query as any;
+      const {
+        fileId,
+        limit = 10,
+        offset = 0,
+      } = request.query as {
+        fileId: string;
+        limit?: number;
+        offset?: number;
+      };
       const [pages, total] = await Promise.all([
         getDb().query.userFilePage.findMany({
           where: and(eq(userFilePage.fileId, fileId)),
@@ -246,7 +264,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { fileId } = request.query as any;
+      const { fileId } = request.query as { fileId: string };
       const chapters = await getDb().query.userFileChapter.findMany({
         where: eq(userFileChapter.fileId, fileId),
       });
@@ -277,7 +295,15 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { fileId, limit = 10, offset = 0 } = request.query as any;
+      const {
+        fileId,
+        limit = 10,
+        offset = 0,
+      } = request.query as {
+        fileId: string;
+        limit?: number;
+        offset?: number;
+      };
       const [sections, total] = await Promise.all([
         getDb().query.userFileSection.findMany({
           where: and(eq(userFileSection.fileId, fileId)),
@@ -324,7 +350,17 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { fileId, level, limit = 10, offset = 0 } = request.query;
+      const {
+        fileId,
+        level,
+        limit = 10,
+        offset = 0,
+      } = request.query as {
+        fileId: string;
+        level?: number;
+        limit?: number;
+        offset?: number;
+      };
       const items = await getDb().query.userFileHeirarchialIndex.findMany({
         where: and(
           eq(userFileHeirarchialIndex.fileId, fileId),
@@ -357,13 +393,13 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const { id } = request.params as any;
+      const { id } = request.params as { id: string };
       try {
         const file = await getDb().query.userFile.findFirst({
           where: and(eq(userFile.id, id)),
         });
         if (!file) return reply.code(404).send({ message: "File not found" });
-        // @ts-expect-error
+        // @ts-expect-error - Ignore type error
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const requesterId: string = request.user.id;
         if (file.userId !== requesterId) {
@@ -414,7 +450,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      // @ts-expect-error
+      // @ts-expect-error - Ignore type error
       const userId: string = request.user.id;
       const { fileId } = request.body;
       const storageService = getStorage();
@@ -532,7 +568,10 @@ const fileRoutes = async (fastify: FastifyInstance) => {
 
         // Trigger parsing asynchronously
         parsePDF(fileId).catch((error) => {
-          logger.error(`Error parsing file ${fileId}:`, error);
+          logger.error(
+            `Error parsing file ${fileId}:`,
+            error as Record<string, unknown>
+          );
           // Update file status to error
           getDb()
             .update(userFile)
@@ -541,7 +580,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             .catch((updateError) => {
               logger.error(
                 `Error updating file status for ${fileId}:`,
-                updateError
+                updateError as Record<string, unknown>
               );
             });
         });

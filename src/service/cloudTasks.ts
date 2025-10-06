@@ -1,4 +1,4 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
+import { CloudTasksClient, protos } from "@google-cloud/tasks";
 
 type CreateTaskParams = {
   queue: string;
@@ -12,8 +12,10 @@ type CreateTaskParams = {
 };
 
 function getClient(projectId?: string) {
-  const raw =
-    process.env.GCP_SA_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  const raw = Buffer.from(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64!,
+    "base64"
+  ).toString("utf-8");
   if (raw) {
     try {
       const json = JSON.parse(raw) as {
@@ -22,7 +24,7 @@ function getClient(projectId?: string) {
         project_id?: string;
       };
       return new CloudTasksClient({
-        projectId: projectId || json.project_id,
+        projectId: projectId ?? json.project_id,
         credentials: {
           client_email: json.client_email,
           private_key: json.private_key,
@@ -44,7 +46,7 @@ export async function enqueueHttpTask(params: CreateTaskParams) {
     params.queue
   );
 
-  const task: any = {
+  const task: protos.google.cloud.tasks.v2.ITask = {
     httpRequest: {
       httpMethod: "POST",
       url: params.url,
@@ -61,7 +63,7 @@ export async function enqueueHttpTask(params: CreateTaskParams) {
   }
 
   if (params.oidcServiceAccountEmail) {
-    task.httpRequest.oidcToken = {
+    task.httpRequest!.oidcToken = {
       serviceAccountEmail: params.oidcServiceAccountEmail,
       audience: params.audience ?? params.url,
     };

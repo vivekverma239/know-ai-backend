@@ -70,7 +70,8 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { messages, sessionId, deepSearch, model } = request.body as any;
+      const { messages, sessionId, deepSearch, model } =
+        request.body as ChatPostBody;
 
       const saveMessage = async (msgs: CoreMessageExt[]) => {
         const backendMessages: SQLMessage[] = msgs.map(
@@ -93,7 +94,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
             messages.map((m: CoreMessageExt) => ({
               role: m.role as "user" | "assistant",
               content: m.parts
-                .map((p: any) => (p.type === "text" ? p.text : ""))
+                .map((p: CoreMessageExt["parts"][number]) =>
+                  p.type === "text" ? p.text : ""
+                )
                 .join("\n"),
             }))
           );
@@ -133,7 +136,10 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                         const index = steps.findIndex((s) => s.id === step.id);
                         if (index !== -1) steps[index] = step;
                         else steps.push(step);
-                        writer.write(JSON.parse(JSON.stringify(step)));
+                        writer.write(
+                          // @ts-expect-error - Ignore type error
+                          step
+                        );
                       });
                     },
                   },

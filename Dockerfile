@@ -6,18 +6,28 @@ ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 WORKDIR /app
 
-# Install dependencies
+# Build stage
+FROM base AS builder
 COPY pnpm-lock.yaml package.json ./
 RUN pnpm install --frozen-lockfile
-
-# Copy source
 COPY . .
+RUN pnpm run build
 
-# Set production env
+# Production stage
+FROM base AS production
 ENV NODE_ENV=production
+
+# Install only production dependencies
+COPY pnpm-lock.yaml package.json ./
+RUN pnpm install --prod --frozen-lockfile
+
+# Copy built application from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/data ./data
+
 EXPOSE 3000
 
-# Run server with tsx (TypeScript runtime)
-CMD ["pnpm", "exec", "tsx", "src/server.ts"]
+# Run the compiled JavaScript
+CMD ["node", "dist/src/server.js"]
 
 

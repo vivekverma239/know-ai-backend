@@ -15,7 +15,7 @@ export const exaWebsiteContent = tool({
       .describe("Full URL to fetch, e.g. 'https://example.com/page'."),
   }),
   execute: async ({ url }) => {
-    const exa = new Exa(process.env.EXA_API_KEY as string);
+    const exa = new Exa(process.env.EXA_API_KEY!);
 
     const startTime = Date.now();
     logger.debug(`Exa getting contents for ${url}`);
@@ -47,7 +47,7 @@ export const exaSearch = tool({
       .optional(),
   }),
   execute: async ({ query, queryType, category }) => {
-    const exa = new Exa(process.env.EXA_API_KEY as string);
+    const exa = new Exa(process.env.EXA_API_KEY!);
     const startTime = Date.now();
     logger.debug(`Exa searching for ${query}`);
     const response = await exa.search(query, {
