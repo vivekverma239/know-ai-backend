@@ -23,11 +23,10 @@ RUN pnpm install --prod --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/data ./data
 
 EXPOSE 3000
 
 # Run the compiled JavaScript
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]
 
 
