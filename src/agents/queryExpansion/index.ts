@@ -1,5 +1,5 @@
 import { MODELS } from "@/@types/llm";
-import { getLLM } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { generateText } from "ai";
 import moment from "moment";
 

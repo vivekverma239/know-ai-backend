@@ -1,4 +1,4 @@
-import { getEmbeddings } from "@/ai/embeddings";
+import { getEmbeddings } from "@/ai-backend/embeddings";
 import {
   getSimilarChunks,
   getSimilarClusters,

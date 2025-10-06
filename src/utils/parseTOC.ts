@@ -8,7 +8,7 @@ import {
   type ModelMessage,
   type TextPart,
 } from "ai";
-import { getLLM } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
 import fs from "fs";
 import plimit from "p-limit";

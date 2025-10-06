@@ -2,13 +2,12 @@
   "name": "knowsis-backend",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node ./dist/src/server.js",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/server.js",
     "dev:inspect": "node --inspect --loader ts-node/esm src/server.ts",
     "lint": "eslint \"src/**/*.ts\" ",
     "lint:types": "eslint \"src/**/*.ts\" --cache --cache-location .eslintcache"
@@ -43,7 +42,6 @@
     "ai": "^5.0.59",
     "braintrust": "^0.3.8",
     "dotenv": "^17.2.3",
-    "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.5",
     "eslint-plugin-drizzle": "^0.2.3",
     "exa-js": "^1.9.3",
@@ -54,17 +52,21 @@
     "neverthrow": "^8.2.0",
     "p-limit": "^7.1.1",
     "pdf-lib": "^1.17.1",
+    "pg": "^8.16.3",
     "pino": "^9.12.0",
     "postgres": "^3.4.7",
     "typescript-eslint": "^8.45.0",
-    "uuid": "^13.0.0",
+    "uuid": "^11.1.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^24.6.0",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5",
     "eslint": "^9.36.0",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.20.6",
     "typescript": "^5.9.2"
   }

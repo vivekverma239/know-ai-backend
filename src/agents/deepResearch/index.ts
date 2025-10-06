@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { generateObject, generateText, stepCountIs, tool } from "ai";
-import { DEFAULT_SMALL_MODEL } from "@/ai/llm";
-import { getLLM } from "@/ai/llm";
+import { DEFAULT_SMALL_MODEL } from "@/ai-backend/llm";
+import { getLLM } from "@/ai-backend/llm";
 import type { SimilarChunk } from "@/db/queries/simChunks";
 import {
   similaritySearchChunks,
@@ -996,7 +996,7 @@ export const agenticChunkSearchV2 = async (
           console.log(
             `Chunks:
             ${JSON.stringify(
-              chunks.map((c: any) => ({
+              chunks.map((c) => ({
                 startPage: c.startPage,
                 endPage: c.endPage,
                 // summary: c.summary,

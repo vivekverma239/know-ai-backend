@@ -77,5 +77,16 @@ declare module "fastify" {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => void;
   }
+
+  interface FastifyRequest {
+    user?: AuthenticatedUser;
+  }
 }
 export { authFn };
+
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  name?: string;
+  orgId: string;
+}

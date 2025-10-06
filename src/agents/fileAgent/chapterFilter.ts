@@ -1,4 +1,4 @@
-import { getLLM } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 import { logger } from "@/utils/logger";
@@ -6,7 +6,7 @@ import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { getSimilarChapters } from "@/db/queries/simChunks";
-import { getEmbeddings } from "@/ai/embeddings";
+import { getEmbeddings } from "@/ai-backend/embeddings";
 import { parseJson } from "@/utils/parseJson";
 import { similaritySearchChunks } from "@/service/simSearch";
 import { v4 as uuidv4 } from "uuid";

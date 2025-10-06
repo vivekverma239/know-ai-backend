@@ -15,7 +15,7 @@ import type {
   Subsection,
   SubsectionAPI,
 } from "@/@types/fileIndex";
-import { getEmbeddings } from "@/ai/embeddings";
+import { getEmbeddings } from "@/ai-backend/embeddings";
 import { logger } from "@/utils/logger";
 import type { ParsedPDF } from "@/@types/parsedData";
 import type { DocumentMetadata } from "@/@types/metadata";

@@ -1,6 +1,6 @@
 "use server";
-import { getLLM } from "@/ai/llm";
-import { DEFAULT_SMALL_MODEL } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
+import { DEFAULT_SMALL_MODEL } from "@/ai-backend/llm";
 import { and, asc, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eq } from "drizzle-orm";
@@ -12,7 +12,7 @@ import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { getSimilarChapters } from "@/db/queries/simChunks";
-import { getEmbeddings } from "@/ai/embeddings";
+import { getEmbeddings } from "@/ai-backend/embeddings";
 
 const SYSTEM_PROMPT = `
 You are an expert financial research assistant. Your task is to provide comprehensive, accurate answers based on the document content provided to you.

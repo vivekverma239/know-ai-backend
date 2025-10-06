@@ -2,7 +2,7 @@ import { z } from "zod";
 import { tool, type ToolSet, generateText } from "ai";
 import Exa from "exa-js";
 
-import { getPerplexityLLM } from "@/ai/llm";
+import { getPerplexityLLM } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
 import { logger } from "@/utils/logger";
 

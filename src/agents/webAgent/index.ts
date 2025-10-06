@@ -1,5 +1,4 @@
-import { getLLM } from "@/ai/llm";
-import { DEFAULT_SMALL_MODEL } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { generateText, stepCountIs } from "ai";
 import { exaSearch, webSearchTool, exaWebsiteContent } from "@/agents/tools";
 import { MODELS } from "@/@types/llm";

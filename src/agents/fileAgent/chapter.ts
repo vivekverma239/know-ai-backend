@@ -1,5 +1,5 @@
 "use server";
-import { getLLM } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 import { logger } from "@/utils/logger";

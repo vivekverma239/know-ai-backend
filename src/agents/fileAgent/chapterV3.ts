@@ -1,5 +1,5 @@
 "use server";
-import { getLLM } from "@/ai/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { userFileChapter, userFilePage, userFileSection } from "@/db/schema";
 import { generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
@@ -8,7 +8,7 @@ import { MODELS } from "@/@types/llm";
 import { StepType, type StepMessage } from "@/@types/agents";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { getSimilarChapters, getSimilarChunks } from "@/db/queries/simChunks";
-import { getEmbeddings } from "@/ai/embeddings";
+import { getEmbeddings } from "@/ai-backend/embeddings";
 import { similaritySearchChunks } from "@/service/simSearch";
 import { v4 as uuidv4 } from "uuid";
 import { recordTokenUsage } from "@/utils/asyncHook";

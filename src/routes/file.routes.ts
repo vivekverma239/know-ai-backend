@@ -30,8 +30,6 @@ import {
   FileUploadRequest,
   FileUploadResponse,
 } from "../schemas/file.schema";
-import { chapterAgent } from "@/agents/fileAgent/chapter";
-import { fileAgent } from "@/agents/fileAgent";
 import { v4 as uuidv4 } from "uuid";
 
 const fileRoutes = async (fastify: FastifyInstance) => {
@@ -399,9 +397,8 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           where: and(eq(userFile.id, id)),
         });
         if (!file) return reply.code(404).send({ message: "File not found" });
-        // @ts-expect-error - Ignore type error
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const requesterId: string = request.user.id;
+        const requesterId: string = request.user!.id;
         if (file.userId !== requesterId) {
           return reply.code(403).send({ message: "Forbidden" });
         }
@@ -450,8 +447,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      // @ts-expect-error - Ignore type error
-      const userId: string = request.user.id;
+      const userId: string = request.user!.id;
       const { fileId } = request.body;
       const storageService = getStorage();
       const signedUrl = await storageService.createUploadSignedUrl(

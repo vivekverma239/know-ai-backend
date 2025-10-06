@@ -28,8 +28,8 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         response: { 201: WebSearchTaskSchema },
       },
       handler: async (request, reply) => {
-        // @ts-expect-error added by auth plugin
-        const userId: string = request.user.id;
+        // added by auth plugin
+        const userId: string = request.user!.id;
         const { query } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
@@ -81,8 +81,8 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       response: { 200: WebSearchTaskSchema },
     },
     handler: async (request, reply) => {
-      // @ts-expect-error added by auth plugin
-      const userId: string = request.user.id;
+      // added by auth plugin
+      const userId: string = request.user!.id;
       const { id } = request.params;
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
@@ -106,8 +106,8 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       response: { 200: Type.Array(WebSearchTaskSchema) },
     },
     handler: async (request, reply) => {
-      // @ts-expect-error added by auth plugin
-      const userId: string = request.user.id;
+      // added by auth plugin
+      const userId: string = request.user!.id;
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
       const tasks = await getDb().query.webSearchTask.findMany({
@@ -134,8 +134,8 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         response: { 200: Type.Object({ success: Type.Boolean() }) },
       },
       handler: async (request, reply) => {
-        // @ts-expect-error added by auth plugin
-        const userId: string = request.user.id;
+        // added by auth plugin
+        const userId: string = request.user!.id;
         const { taskId } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;

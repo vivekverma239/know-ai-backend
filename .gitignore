@@ -13,3 +13,5 @@
 node_modules
 trpc
 data/
+dist/
+.env.*
