@@ -4,7 +4,6 @@ import { z } from "zod";
 import { logger } from "@/utils/logger";
 import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { getSimilarChapters } from "@/db/queries/simChunks";
 import { getEmbeddings } from "@/ai-backend/embeddings";
 import { parseJson } from "@/utils/parseJson";
@@ -200,10 +199,17 @@ export const chapterFilter = async (query: string) => {
   return await fn();
 };
 
-export const chapterAgentV2 = async (
-  query: string,
-  callback?: (step: StepMessage) => void
-) => {
+export const chapterAgentV2 = async ({
+  query,
+  userId,
+  orgId,
+  callback,
+}: {
+  query: string;
+  userId: string;
+  orgId: string;
+  callback?: (step: StepMessage) => void;
+}) => {
   const model = MODELS.O4_MINI;
   // const model = MODELS.CLAUDE_3_5_SONNET;
 
@@ -274,6 +280,8 @@ export const chapterAgentV2 = async (
                   page,
                   includeChunkId: true,
                   excludeChunkIds: alreadyLookedAtChunks,
+                  userId,
+                  orgId,
                 });
                 alreadyLookedAtChunks.push(
                   ...chunks

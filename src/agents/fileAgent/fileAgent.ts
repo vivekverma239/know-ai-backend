@@ -1,6 +1,5 @@
 "use server";
 import { getLLM } from "@/ai-backend/llm";
-import { DEFAULT_SMALL_MODEL } from "@/ai-backend/llm";
 import { and, asc, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eq } from "drizzle-orm";
@@ -61,12 +60,21 @@ const pageTool = async (pages: number[], fileId: string) => {
     .join("\n");
 };
 
-export const fileAgent = async (
-  query: string,
-  fileId: string,
-  chapterId?: string,
-  callback?: (step: StepMessage) => void
-) => {
+export const fileAgent = async ({
+  query,
+  fileId,
+  chapterId,
+  userId,
+  orgId,
+  callback,
+}: {
+  query: string;
+  fileId: string;
+  chapterId?: string;
+  userId: string;
+  orgId: string;
+  callback?: (step: StepMessage) => void;
+}) => {
   // const llm = getLLM(DEFAULT_SMALL_MODEL);
   const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
   // const llm = getLLM(MODELS.GPT_4_1_MINI);
@@ -152,7 +160,19 @@ export const fileAgent = async (
   };
 };
 
-export const fileAgentWithChapters = async (query: string, fileId: string) => {
+export const fileAgentWithChapters = async ({
+  query,
+  fileId,
+  userId,
+  orgId,
+  callback,
+}: {
+  query: string;
+  fileId: string;
+  userId: string;
+  orgId: string;
+  callback?: (step: StepMessage) => void;
+}) => {
   // First identify relevant chapters which could be relevant to the query
   // Then call fileAgent for each chapter
   // Then combine the responses
@@ -169,22 +189,41 @@ export const fileAgentWithChapters = async (query: string, fileId: string) => {
   });
   console.log(JSON.stringify(similarChapters, null, 2));
   const responses = await Promise.all(
-    similarChapters.map((chapter) => fileAgent(query, fileId, chapter.id))
+    similarChapters.map((chapter) =>
+      fileAgent({
+        query,
+        fileId,
+        chapterId: chapter.id,
+        userId,
+        orgId,
+        callback,
+      })
+    )
   );
   return responses;
 };
 
-export const indexSearch = async (
-  query: string,
+export const indexSearch = async ({
+  query,
+  documents,
+  userId,
+  orgId,
+  callback,
+}: {
+  query: string;
   documents: {
     id: string;
     title: string;
-  }[],
-  callback?: (step: StepMessage) => void
-) => {
+  }[];
+  userId: string;
+  orgId: string;
+  callback?: (step: StepMessage) => void;
+}) => {
   // Sequentially run file agent for each document
   const responses = await Promise.all(
-    documents.map((document) => fileAgent(query, document.id))
+    documents.map((document) =>
+      fileAgent({ query, fileId: document.id, userId, orgId, callback })
+    )
   );
 
   const fileResponses = documents.map((document, index) => ({

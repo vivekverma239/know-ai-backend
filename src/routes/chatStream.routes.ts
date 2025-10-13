@@ -9,14 +9,18 @@ import {
   convertToModelMessages,
 } from "ai";
 import { z } from "zod";
-import type { MODELS } from "@/@types/llm";
+import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
 import type { Message as SQLMessage } from "@/@types";
 import { processDeepSearchQuery } from "@/agents/deepResearch";
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
 import { updateSession } from "@/db/mutation/session";
-import { syncMessages } from "@/db/queries/message";
+import {
+  getLatestSessionId,
+  getSession,
+  syncMessages,
+} from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
 
 const SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool which can provide you with \nadditional information about any topic. Feel free to use it to answer\nany of the user questions.\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [1](/doc/{documentId}/page/{pageNumber})\nwhere documentId is the id of the document and pageNumber is the page number of the document.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
@@ -27,7 +31,6 @@ type CoreMessageExt = UIMessage & {
   id: string;
   metadata?: {
     agent: "deepResearch" | "knowledgeBase";
-    model: MODELS;
     steps?: StepMessage[];
   };
 };
@@ -36,7 +39,6 @@ export interface ChatPostBody {
   messages: CoreMessageExt[];
   sessionId: string;
   deepSearch: string;
-  model: MODELS;
 }
 
 const chatStreamRoutes = async (fastify: FastifyInstance) => {
@@ -70,8 +72,19 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { messages, sessionId, deepSearch, model } =
-        request.body as ChatPostBody;
+      const { messages, sessionId, deepSearch } = request.body as ChatPostBody;
+
+      // Check if sessionId is valid
+      const session = await getSession(sessionId);
+      if (!session) {
+        return reply.code(400).send({ error: "Invalid sessionId" });
+      }
+
+      if (session.userId !== userId) {
+        return reply.code(400).send({ error: "Invalid sessionId" });
+      }
+
+      // Handle invalid model
 
       const saveMessage = async (msgs: CoreMessageExt[]) => {
         const backendMessages: SQLMessage[] = msgs.map(
@@ -104,15 +117,8 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         }
       };
 
-      const llm = getLLM(model);
-      if (
-        deepSearch === "deepSearchV1" ||
-        deepSearch === "deepSearchV2" ||
-        deepSearch === "deepSearchV3" ||
-        deepSearch === "deepSearchV4" ||
-        deepSearch === "indexSearch" ||
-        deepSearch === "agentSearch"
-      ) {
+      const llm = getLLM(MODELS.GEMINI_2_5_PRO);
+      if (deepSearch === "agentSearch") {
         const steps: StepMessage[] = [];
         const stream = await observe({ name: "deepSearchAgent" }, () =>
           createUIMessageStream({
@@ -132,32 +138,25 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                         ),
                     }),
                     execute: async ({ query }: { query: string }) => {
-                      return await processDeepSearchQuery(query, (step) => {
-                        const index = steps.findIndex((s) => s.id === step.id);
-                        if (index !== -1) steps[index] = step;
-                        else steps.push(step);
-                        writer.write(
-                          // @ts-expect-error - Ignore type error
-                          step
-                        );
+                      return await processDeepSearchQuery({
+                        query,
+                        userId,
+                        orgId,
+                        callback: (step) => {
+                          const index = steps.findIndex(
+                            (s) => s.id === step.id
+                          );
+                          if (index !== -1) steps[index] = step;
+                          else steps.push(step);
+                          writer.write(
+                            // @ts-expect-error - Ignore type error
+                            step
+                          );
+                        },
                       });
                     },
                   },
                 },
-                // onFinish: async (result) => {
-                //   const updated = appendResponseMessages({
-                //     messages,
-                //     responseMessages: result.response.messages,
-                //   });
-                //   const last = updated[updated.length - 1];
-                //   if (last)
-                //     last.metadata = {
-                //       agent: "deepResearch",
-                //       model,
-                //       steps,
-                //     } as any;
-                //   await saveMessage(updated as CoreMessageExt[]);
-                // },
                 messages: [
                   { role: "system", content: SYSTEM_PROMPT },
                   ...convertToModelMessages(messages),
@@ -199,12 +198,14 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                   ),
               }),
               execute: async ({ query }: { query: string }) =>
-                await similaritySearchChunksWithObserver(
+                await similaritySearchChunksWithObserver({
                   query,
-                  undefined,
-                  undefined,
-                  5
-                ),
+                  limit: 5,
+                  includeChunkId: false,
+                  page: 1,
+                  userId,
+                  orgId,
+                }),
             },
           },
           //   onFinish: async (res) => {

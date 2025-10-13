@@ -5,9 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/server.ts",
+    "test:doc-parsing": "tsx test/docParsing.ts",
+    "test:chat-stream": "tsx test/chatStream.test.ts",
+    "test:all": "npm run test:doc-parsing && npm run test:chat-stream",
+    "dev": "dotenvx run -- nodemon --watch .env --exec \"tsx src/server.ts\"",
+    "start": "dotenvx run -- node dist/server.js",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
     "dev:inspect": "node --inspect --loader ts-node/esm src/server.ts",
     "lint": "eslint \"src/**/*.ts\" ",
     "lint:types": "eslint \"src/**/*.ts\" --cache --cache-location .eslintcache"
@@ -37,6 +40,7 @@
     "@openrouter/ai-sdk-provider": "^1.2.0",
     "@sinclair/typebox": "^0.34.41",
     "@t3-oss/env-core": "^0.13.8",
+    "@types/form-data": "^2.5.2",
     "@upstash/qstash": "^2.8.3",
     "adm-zip": "^0.5.16",
     "ai": "^5.0.59",
@@ -60,11 +64,13 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.51.0",
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^24.6.0",
     "@types/pg": "^8.15.5",
     "drizzle-kit": "^0.31.5",
     "eslint": "^9.36.0",
+    "form-data": "^4.0.4",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.20.6",

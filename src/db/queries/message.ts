@@ -76,13 +76,20 @@ export const getSessionWithMessages = async (
   sessionId: string,
   userId: string
 ) => {
+  // First check if session exists AND belongs to user
   let session: ChatSession | undefined = await getDb()
     .select()
     .from(chatSession)
-    .where(eq(chatSession.id, sessionId))
+    .where(
+      and(
+        eq(chatSession.id, sessionId),
+        eq(chatSession.userId, userId) // Verify session belongs to user
+      )
+    )
     .then((sessions) => sessions[0]);
+
   if (!session) {
-    // Create a new session
+    // Only create new session if user is requesting their own session
     const newSession = await getDb()
       .insert(chatSession)
       .values({ id: sessionId, userId: userId, title: "New Session" })
@@ -175,4 +182,17 @@ export const getLatestSessionId = async (userId: string) => {
     return latestSession[0].id;
   }
   return null;
+};
+
+/**
+ * Get a session by ID.
+ * @param sessionId - The ID of the session.
+ * @returns The session.
+ */
+export const getSession = async (sessionId: string) => {
+  const session = await getDb()
+    .select()
+    .from(chatSession)
+    .where(eq(chatSession.id, sessionId));
+  return session[0];
 };

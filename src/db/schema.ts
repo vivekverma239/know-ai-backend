@@ -58,8 +58,13 @@ export const userFile = createTable("user_file", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   name: d.varchar({ length: 256 }),
-  userId: d.varchar({ length: 255 }).notNull(),
-  orgId: d.varchar({ length: 255 }).notNull(),
+  /**
+   * If true, the file is an admin file. This is a file that is populated by the admin and is visible by all users.
+   */
+  isAdminFile: d.boolean().default(false),
+
+  userId: d.varchar({ length: 255 }).notNull(), // knowsis in case of admin file
+  orgId: d.varchar({ length: 255 }).notNull(), // knows in case of admin file
   embedding: d.vector({ dimensions: 768 }),
   metadata: d.jsonb().$type<FileMetadata>(),
   status: processingStatus("processing_status").default("pending"),
@@ -196,10 +201,7 @@ export const textNote = createTable("text_note", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   content: d.text().notNull(),
-  userId: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => users.id),
+  userId: d.varchar({ length: 255 }).notNull(),
   createdAt: d
     .timestamp({ withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
@@ -239,10 +241,7 @@ export const chatSession = createTable("chat_session", (d) => ({
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   title: d.varchar({ length: 255 }).notNull(),
-  userId: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => users.id),
+  userId: d.varchar({ length: 255 }).notNull(),
   createdAt: d
     .timestamp({ withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
@@ -269,88 +268,9 @@ export const messages = createTable("message", (d) => ({
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
-export const users = createTable("user", (d) => ({
-  id: d
-    .varchar({ length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: d.varchar({ length: 255 }),
-  email: d.varchar({ length: 255 }).notNull(),
-  emailVerified: d
-    .timestamp({
-      mode: "date",
-      withTimezone: true,
-    })
-    .default(sql`CURRENT_TIMESTAMP`),
-  image: d.varchar({ length: 255 }),
-}));
-
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-}));
-
-export const accounts = createTable(
-  "account",
-  (d) => ({
-    userId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    type: d.varchar({ length: 255 }).$type<AdapterAccountType>().notNull(),
-    provider: d.varchar({ length: 255 }).notNull(),
-    providerAccountId: d.varchar({ length: 255 }).notNull(),
-    refresh_token: d.text(),
-    access_token: d.text(),
-    expires_at: d.integer(),
-    token_type: d.varchar({ length: 255 }),
-    scope: d.varchar({ length: 255 }),
-    id_token: d.text(),
-    session_state: d.varchar({ length: 255 }),
-  }),
-  (t) => [
-    primaryKey({ columns: [t.provider, t.providerAccountId] }),
-    index("account_user_id_idx").on(t.userId),
-  ]
-);
-
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, { fields: [accounts.userId], references: [users.id] }),
-}));
-
-export const sessions = createTable(
-  "session",
-  (d) => ({
-    sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
-    userId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  }),
-  (t) => [index("t_user_id_idx").on(t.userId)]
-);
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, { fields: [sessions.userId], references: [users.id] }),
-}));
-
-export const verificationTokens = createTable(
-  "verification_token",
-  (d) => ({
-    identifier: d.varchar({ length: 255 }).notNull(),
-    token: d.varchar({ length: 255 }).notNull(),
-    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  }),
-  (t) => [primaryKey({ columns: [t.identifier, t.token] })]
-);
-
 export const webSearchTask = createTable("web_search_task", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
-  userId: d
-    .varchar({ length: 255 })
-    .notNull()
-    .references(() => users.id),
+  userId: d.varchar({ length: 255 }).notNull(),
   query: d.text().notNull(),
   status: d
     .varchar({ length: 20 })
@@ -376,10 +296,6 @@ export const webSearchTask = createTable("web_search_task", (d) => ({
     .notNull()
     .defaultNow(),
   completedAt: d.timestamp({ mode: "date", withTimezone: true }),
-}));
-
-export const webSearchTaskRelations = relations(webSearchTask, ({ one }) => ({
-  user: one(users, { fields: [webSearchTask.userId], references: [users.id] }),
 }));
 
 export const UserFileChapter = userFileChapter.$inferSelect;
