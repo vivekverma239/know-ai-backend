@@ -14,6 +14,7 @@ SERVICE_NAME=${SERVICE_NAME:-knowsis-backend}
 AR_REPO=${AR_REPO:-apps}
 IMAGE_NAME=${IMAGE_NAME:-knowsis-backend}
 IMAGE_TAG=${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}
+# IMAGE_TAG=${IMAGE_TAG:-latest}
 PORT=${PORT:-3000}
 CPU=${CLOUD_RUN_CPU:-1}
 MEMORY=${CLOUD_RUN_MEMORY:-512Mi}
@@ -44,7 +45,7 @@ echo "Setting gcloud project: ${PROJECT_ID}"
 #   --description "Docker images for ${PROJECT_ID}" >/dev/null
 
 # echo "Building and pushing image via Cloud Build: ${IMAGE_URI}"
-# gcloud builds submit --tag "${IMAGE_URI}" --quiet
+gcloud builds submit --tag "${IMAGE_URI}" --quiet
 
 DEPLOY_ARGS=(
   --image "${IMAGE_URI}"
@@ -98,10 +99,10 @@ fi
 
 
 
-# Ensure NODE_ENV present if not added yet from file
-if ! printf '%s\n' "${DEPLOY_ARGS[@]}" | grep -q "--set-env-vars NODE_ENV="; then
-  DEPLOY_ARGS+=(--set-env-vars NODE_ENV="${DEFAULT_NODE_ENV}")
-fi
+# # Ensure NODE_ENV present if not added yet from file
+# if ! printf '%s\n' "${DEPLOY_ARGS[@]}" | grep -q "--set-env-vars NODE_ENV="; then
+#   DEPLOY_ARGS+=(--set-env-vars NODE_ENV="${DEFAULT_NODE_ENV}")
+# fi
 
 
 echo "DEPLOY_ARGS: ${DEPLOY_ARGS[@]}" > deploy-cloudrun.log
