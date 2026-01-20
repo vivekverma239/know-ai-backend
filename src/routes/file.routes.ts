@@ -485,7 +485,15 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         const storageService = getStorage();
         try {
           await storageService.deleteFile(filePath);
-        } catch {}
+        } catch (error) {
+          logger.warn("Failed to delete file from storage (file may not exist)", {
+            error: error instanceof Error ? error.message : String(error),
+            filePath,
+            fileId: file.id,
+            operation: "deleteFile:storage",
+          });
+          // Continue with database cleanup even if storage deletion fails
+        }
         await getDb()
           .delete(userFileSection)
           .where(eq(userFileSection.fileId, id));

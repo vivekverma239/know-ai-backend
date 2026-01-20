@@ -5,6 +5,9 @@ import { MODELS } from "@/@types/llm";
 import { initLogger, wrapAISDKModel } from "braintrust";
 import { perplexity } from "@ai-sdk/perplexity";
 import { logger as appLogger } from "@/utils/logger";
+import { traceManager } from "@/utils/tracing";
+import { getRequestId } from "@/utils/requestContext";
+import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
 import {
   streamText,
   generateObject,
@@ -252,6 +255,17 @@ export const generateTextWrapper = async ({
   const llm = getLLM(model);
   const providerOptions = getProviderOptions(model, reasoningLevel);
 
+  // Start tracing span for this LLM call
+  const span = traceManager.startSpan("llm:generateText", {
+    model,
+    functionName,
+    userID,
+    sessionID,
+    requestId: getRequestId(),
+    messageCount: messages.length,
+    hasTools: !!tools,
+  });
+
   try {
     const response = await generateText({
       model: llm,
@@ -266,6 +280,8 @@ export const generateTextWrapper = async ({
           ...(sessionID && { sessionId: sessionID }),
           ...(lastMessageID && { messageId: lastMessageID }),
           ...(functionName && { functionName }),
+          spanId: span.id,
+          requestId: getRequestId(),
         },
       },
       onStepFinish: (step) => {
@@ -275,10 +291,61 @@ export const generateTextWrapper = async ({
       maxRetries: 3,
     });
 
+    // Record token usage in span
+    if (response.usage) {
+      traceManager.recordTokenUsage(span.id, {
+        promptTokens: response.usage.promptTokens,
+        completionTokens: response.usage.completionTokens,
+        totalTokens: response.usage.totalTokens,
+        model,
+        timestamp: new Date(),
+        operationId: span.id,
+        operationName: functionName || "generateText",
+      });
+
+      // Calculate and log cost using tokenlens
+      try {
+        const cost = await calculateUsageCost(
+          model,
+          response.usage.promptTokens,
+          response.usage.completionTokens
+        );
+        appLogger.info("LLM call completed with cost", {
+          model,
+          functionName,
+          promptTokens: response.usage.promptTokens,
+          completionTokens: response.usage.completionTokens,
+          totalTokens: response.usage.totalTokens,
+          cost: formatCost(cost),
+          costUSD: cost,
+          spanId: span.id,
+        });
+      } catch (error) {
+        appLogger.debug("Cost calculation failed (non-blocking)", {
+          model,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // End span with success metadata
+    traceManager.endSpan(span.id, {
+      finishReason: response.finishReason,
+      stepCount: response.steps?.length,
+      responseLength: response.text?.length,
+    });
+
     return ok(response);
   } catch (error) {
+    // Record error in span
+    traceManager.recordError(span.id, error);
+    traceManager.endSpan(span.id);
+
     appLogger.error("Error in generateTextWrapper", {
       error: error instanceof Error ? error.message : String(error),
+      model,
+      functionName,
+      spanId: span.id,
     });
     return err(error as Error);
   }
@@ -306,6 +373,13 @@ export const generateObjectWrapper = async <T>({
 }): Promise<Result<T, Error>> => {
   const llm = getLLM(model);
 
+  // Start tracing span for this LLM call
+  const span = traceManager.startSpan("llm:generateObject", {
+    model,
+    requestId: getRequestId(),
+    messageCount: messages.length,
+  });
+
   let retryCount = 0;
   while (retryCount < 3) {
     try {
@@ -319,6 +393,10 @@ export const generateObjectWrapper = async <T>({
         experimental_telemetry: {
           isEnabled: true,
           tracer: getTracer(),
+          metadata: {
+            spanId: span.id,
+            requestId: getRequestId(),
+          },
         },
         experimental_repairText: ({ text }) => {
           try {
@@ -336,18 +414,62 @@ export const generateObjectWrapper = async <T>({
         },
       });
 
+      // Record token usage if available
+      if (response.usage) {
+        traceManager.recordTokenUsage(span.id, {
+          promptTokens: response.usage.promptTokens,
+          completionTokens: response.usage.completionTokens,
+          totalTokens: response.usage.totalTokens,
+          model,
+          timestamp: new Date(),
+          operationId: span.id,
+          operationName: "generateObject",
+        });
+
+        // Calculate and log cost using tokenlens
+        try {
+          const cost = await calculateUsageCost(
+            model,
+            response.usage.promptTokens,
+            response.usage.completionTokens
+          );
+          appLogger.info("LLM generateObject completed with cost", {
+            model,
+            promptTokens: response.usage.promptTokens,
+            completionTokens: response.usage.completionTokens,
+            totalTokens: response.usage.totalTokens,
+            cost: formatCost(cost),
+            costUSD: cost,
+            spanId: span.id,
+          });
+        } catch (error) {
+          appLogger.debug("Cost calculation failed (non-blocking)", {
+            model,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      // End span with success
+      traceManager.endSpan(span.id, { retryCount });
+
       return ok(response.object as T);
     } catch (error) {
       appLogger.error("Error in generateObjectWrapper", {
         error: error instanceof Error ? error.message : String(error),
         retryCount,
+        spanId: span.id,
       });
       retryCount++;
       if (retryCount === 3) {
+        traceManager.recordError(span.id, error);
+        traceManager.endSpan(span.id, { retryCount });
         return err(error as Error);
       }
     }
   }
+  traceManager.recordError(span.id, new Error("Failed to generate object"));
+  traceManager.endSpan(span.id, { retryCount });
   return err(new Error("Failed to generate object"));
 };
 

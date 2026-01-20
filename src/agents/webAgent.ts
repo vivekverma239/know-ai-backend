@@ -171,7 +171,14 @@ export const webAgent = async (query: string, context: ToolContext) => {
     let sources: SourcesType | null = null;
     try {
         sources = parseJson(response.text) as SourcesType | null;
-    } catch (error) { }
+    } catch (error) {
+        agentLogger.error("Failed to parse JSON response from web search", {
+            error: error instanceof Error ? error.message : String(error),
+            responsePreview: response.text.substring(0, 200),
+            operation: "webAgent:parseJson",
+        });
+        // sources remains null, will try alternative parsing below
+    }
 
     if (!sources) {
         const res = (parseJson(response.text) as SourcesType) ?? null;

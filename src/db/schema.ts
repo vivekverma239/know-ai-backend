@@ -392,4 +392,43 @@ export const structuredReports = createTable("structured_report", (d) => ({
   modelConfig: d.jsonb().$type<ModelConfig>(),
 }));
 
+/**
+ * Token usage log table for tracking LLM usage and costs
+ * This table stores detailed token usage information for analytics and cost tracking
+ */
+export const tokenUsageLog = createTable(
+  "token_usage_log",
+  (d) => ({
+    id: d.uuid().primaryKey().defaultRandom(),
+    requestId: d.varchar({ length: 255 }).notNull(),
+    operationId: d.varchar({ length: 255 }).notNull(),
+    operationName: d.varchar({ length: 255 }).notNull(),
+    userId: d.varchar({ length: 255 }),
+    sessionId: d.varchar({ length: 255 }),
+    orgId: d.varchar({ length: 255 }),
+    model: d.varchar({ length: 255 }).notNull(),
+    promptTokens: d.integer().notNull(),
+    completionTokens: d.integer().notNull(),
+    totalTokens: d.integer().notNull(),
+    costEstimate: d.numeric({ precision: 10, scale: 6 }),
+    timestamp: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    metadata: d.jsonb().$type<Record<string, unknown>>(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (table) => ({
+    requestIdIdx: index("token_usage_log_request_id_idx").on(table.requestId),
+    userIdIdx: index("token_usage_log_user_id_idx").on(table.userId),
+    orgIdIdx: index("token_usage_log_org_id_idx").on(table.orgId),
+    timestampIdx: index("token_usage_log_timestamp_idx").on(table.timestamp),
+    sessionIdIdx: index("token_usage_log_session_id_idx").on(table.sessionId),
+    modelIdx: index("token_usage_log_model_idx").on(table.model),
+  })
+);
+
 export const UserFileChapter = userFileChapter.$inferSelect;

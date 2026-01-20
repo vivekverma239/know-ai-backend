@@ -7,6 +7,8 @@ import { logger } from "@/utils/logger";
 
 import swaggerUI from "@fastify/swagger-ui";
 import corsPlugin from "./plugins/cors.plugin";
+import loggingPlugin from "./plugins/logging.plugin";
+import { createErrorHandler } from "./utils/errorHandler";
 // import multipartPlugin from "./plugins/multipart.plugin";
 import authPlugin, { authFn } from "./plugins/auth.plugin";
 
@@ -20,10 +22,22 @@ import chatStreamRoutes from "./routes/chatStream.routes";
 import finAgentRoutes from "./routes/finAgent.routes";
 import structuredReportRoutes from "./routes/structuredReport.routes";
 import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
+import analyticsRoutes from "./routes/analytics.routes";
 
 const fastify = Fastify({ logger: true });
 
 const start = async () => {
+  // Register logging plugin FIRST to ensure all requests are logged
+  const logLevel = process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error" | undefined;
+  await fastify.register(loggingPlugin, {
+    logLevel: logLevel || "info",
+    skipPaths: ["/api/v1/health", "/metrics", "/docs"],
+    slowRequestThreshold: parseInt(process.env.SLOW_REQUEST_THRESHOLD_MS || "5000", 10),
+  });
+
+  // Register global error handler
+  createErrorHandler(fastify);
+
   // Plugins
   await fastify.register(corsPlugin);
   await fastify.register(multipart, {
@@ -90,6 +104,7 @@ const start = async () => {
   await fastify.register(finAgentRoutes, { prefix: "/api/v1/agent/fin" });
   await fastify.register(structuredReportRoutes, { prefix: "/api/v1/report" });
   await fastify.register(structuredReportCallbackRoutes, { prefix: "/api/structured-report-callback" });
+  await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
 
   // Start server
   const start = async () => {

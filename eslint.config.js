@@ -60,6 +60,8 @@ export default tseslint.config(
         { drizzleObjectName: ["db", "ctx.db"] },
       ],
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
+      // Disallow explicit use of 'any' type
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {
