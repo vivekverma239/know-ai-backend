@@ -4,6 +4,20 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { MODELS } from "@/@types/llm";
 import { initLogger, wrapAISDKModel } from "braintrust";
 import { perplexity } from "@ai-sdk/perplexity";
+import {
+  streamText,
+  generateObject,
+  generateText,
+  type ModelMessage,
+  type GenerateTextResult,
+  type StepResult,
+  type ToolSet,
+  stepCountIs,
+} from "ai";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { err, ok, type Result } from "neverthrow";
+import { type z } from "zod";
+import { getTracer } from "@lmnr-ai/lmnr";
 
 const logger = initLogger({
   projectName: "LaraAI",
@@ -132,3 +146,284 @@ export function getLLM(model: MODELS) {
       throw new Error("Invalid model");
   }
 }
+
+export const REASONING_MODELS = [
+  MODELS.GEMINI_2_5_FLASH,
+  MODELS.GEMINI_2_5_FLASH_LITE,
+  MODELS.GEMINI_2_5_PRO,
+  // MODELS.GEMINI_3_FLASH, // Not in target types yet, add if needed or comment out
+  MODELS.O4_MINI,
+  MODELS.GPT_5,
+];
+
+/**
+ * Get the provider options for a model
+ * @param model - The model to use
+ * @param reasoningLevel - The reasoning level to use
+ * @returns The provider options
+ */
+export const getProviderOptions = (
+  model: MODELS,
+  reasoningLevel: "none" | "default" | "high",
+) => {
+  if (!REASONING_MODELS.includes(model)) {
+    return undefined;
+  }
+
+  return {
+    google: {
+      thinkingConfig: {
+        thinkingBudget:
+          reasoningLevel === "high"
+            ? 1024
+            : reasoningLevel === "default"
+              ? 512
+              : 0,
+        includeThoughts: true,
+      },
+    } satisfies GoogleGenerativeAIProviderOptions,
+    openai: {
+      reasoningEffort:
+        reasoningLevel === "high"
+          ? "high"
+          : reasoningLevel === "default"
+            ? "medium"
+            : "low",
+      reasoningSummary: "detailed",
+    },
+    openrouter: {
+      reasoning: {
+        enabled: true,
+        max_tokens: 2048,
+      },
+    },
+  };
+};
+
+/**
+ * Generate text with a wrapper
+ * @param model - The model to use
+ * @param messages - The messages to send to the model
+ * @param systemPrompt - The system prompt to send to the model
+ * @param reasoningLevel - The reasoning level to use
+ * @param tools - The tools to use
+ * @returns The response from the model
+ */
+export const generateTextWrapper = async ({
+  model,
+  messages,
+  systemPrompt,
+  reasoningLevel = "none",
+  tools,
+  userID,
+  sessionID,
+  lastMessageID,
+  onStepFinishCallback,
+  functionName,
+}: {
+  model: MODELS;
+  messages: ModelMessage[];
+  systemPrompt: string;
+  reasoningLevel: "none" | "default" | "high";
+  tools?: ToolSet;
+  userID?: string;
+  sessionID?: string;
+  lastMessageID?: string;
+  onStepFinishCallback?: (stepResult: StepResult<ToolSet>) => void;
+  functionName?: string;
+}): Promise<Result<GenerateTextResult<ToolSet, never>, Error>> => {
+  // Check if last message is a assistant message
+  if (messages[messages.length - 1]?.role === "assistant") {
+    messages.push({
+      role: "user",
+      content: `<system>No message from user, please send a message in continuation of the conversation and system message.</system>`,
+    });
+  }
+
+  // Check if system prompt is not attached
+  if (messages[0]?.role !== "system") {
+    messages.unshift({
+      role: "system",
+      content: systemPrompt,
+    });
+  }
+
+  const llm = getLLM(model);
+  const providerOptions = getProviderOptions(model, reasoningLevel);
+
+  try {
+    const response = await generateText({
+      model: llm,
+      messages: messages,
+      tools,
+      providerOptions: providerOptions,
+      experimental_telemetry: {
+        isEnabled: true,
+        tracer: getTracer(),
+        metadata: {
+          ...(userID && { userId: userID }),
+          ...(sessionID && { sessionId: sessionID }),
+          ...(lastMessageID && { messageId: lastMessageID }),
+          ...(functionName && { functionName }),
+        },
+      },
+      onStepFinish: (step) => {
+        onStepFinishCallback?.(step);
+      },
+      stopWhen: stepCountIs(10),
+      maxRetries: 3,
+    });
+
+    return ok(response);
+  } catch (error) {
+    console.error({
+      type: "ERROR",
+      message: `Error in generateTextWrapper: ${error as Error}`,
+    });
+    return err(error as Error);
+  }
+};
+
+/**
+ * Generate an object with a wrapper
+ * @param model - The model to use
+ * @param messages - The messages to send to the model
+ * @param schema - The schema to use
+ * @param systemPrompt - The system prompt to send to the model
+ * @param reasoningLevel - The reasoning level to use
+ * @returns The response from the model
+ */
+export const generateObjectWrapper = async <T>({
+  model,
+  messages,
+  schema,
+  reasoningLevel = "none",
+}: {
+  model: MODELS;
+  messages: ModelMessage[];
+  schema: z.ZodType;
+  reasoningLevel: "none" | "default" | "high";
+}): Promise<Result<T, Error>> => {
+  const llm = getLLM(model);
+
+  let retryCount = 0;
+  while (retryCount < 3) {
+    try {
+      const providerOptions = getProviderOptions(model, reasoningLevel);
+      const response = await generateObject({
+        model: llm,
+        messages: messages,
+        schema,
+        providerOptions: providerOptions,
+        maxRetries: 3,
+        experimental_telemetry: {
+          isEnabled: true,
+          tracer: getTracer(),
+        },
+        experimental_repairText: ({ text }) => {
+          try {
+            const data = JSON.parse(text) as T;
+            // Try validating the data
+            const validation = schema.safeParse(data);
+            if (validation.success) {
+              return Promise.resolve(text);
+            } else {
+              return Promise.resolve(null);
+            }
+          } catch (error) {
+            return Promise.resolve(null);
+          }
+        },
+      });
+
+      return ok(response.object as T);
+    } catch (error) {
+      console.log(error);
+      console.error({
+        type: "ERROR",
+        message: `Error in generateObjectWrapper: ${error as Error}`,
+      });
+      retryCount++;
+      if (retryCount === 3) {
+        return err(error as Error);
+      }
+    }
+  }
+  return err(new Error("Failed to generate object"));
+};
+
+export const streamTextWrapper = async ({
+  model,
+  messages,
+  systemPrompt,
+  reasoningLevel = "none",
+  tools,
+  onFinish,
+  requestHeaders,
+}: {
+  model: MODELS;
+  messages: ModelMessage[];
+  systemPrompt: string;
+  reasoningLevel: "none" | "default" | "high";
+  tools?: ToolSet;
+  onFinish: (responseMessage: ModelMessage) => Promise<void>;
+  requestHeaders?: Headers;
+}) => {
+  const llm = getLLM(model);
+  const providerOptions = getProviderOptions(model, reasoningLevel);
+
+  const modelMessages = messages;
+  if (modelMessages[0]?.role !== "system") {
+    modelMessages.unshift({
+      role: "system",
+      content: systemPrompt,
+    } as ModelMessage);
+  }
+  let retryCount = 0;
+
+  while (retryCount < 3) {
+    try {
+      const response = streamText({
+        model: llm,
+        messages: modelMessages,
+        tools,
+        providerOptions: providerOptions,
+        experimental_telemetry: {
+          isEnabled: true,
+          tracer: getTracer(),
+        },
+        stopWhen: stepCountIs(100),
+        maxRetries: 3,
+      });
+
+      const origin = requestHeaders?.get("Origin") ?? "*";
+      const corsHeaders: Record<string, string> = {
+        "Access-Control-Allow-Origin": origin,
+        "Vary": "Origin",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": "true",
+      };
+      // const combinedHeaders: Record<string, string> = { ...corsHeaders };
+      // for (const [k, v] of corsHeaders.entries()) {
+      //   const key = String(k);
+      //   if (!key.toLowerCase().startsWith("access-control-")) {
+      //     combinedHeaders[key] = v as string;
+      //   }
+      // }
+
+      return ok(response);
+    } catch (error) {
+      console.error({
+        type: "ERROR",
+        message: `Error in streamTextWrapper: ${error as Error}`,
+      });
+      retryCount++;
+      if (retryCount === 3) {
+        return err(error as Error);
+      }
+    }
+  }
+  return err(new Error("Failed to stream text"));
+};
+

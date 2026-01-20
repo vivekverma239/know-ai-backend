@@ -3,7 +3,6 @@ dotenv.config();
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
-import fastifyAuth from "@fastify/auth";
 
 import swaggerUI from "@fastify/swagger-ui";
 import corsPlugin from "./plugins/cors.plugin";
@@ -93,8 +92,7 @@ const start = async () => {
         host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
       });
       console.log(
-        `✅ Server running at http://${
-          process.env.ENV === "prod" ? "0.0.0.0" : "localhost"
+        `✅ Server running at http://${process.env.ENV === "prod" ? "0.0.0.0" : "localhost"
         }:3000`
       );
       console.log("📖 Docs at http://localhost:3000/docs");
