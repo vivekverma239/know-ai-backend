@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { ToolContext } from "./toolContext";
 import { bullAddFiles, getFileStatuses } from "@/service/files";
+import { logger } from "@/utils/logger";
 
 export const getBulkFileIndexingTool = ({
     context,
@@ -59,10 +60,13 @@ export const getBulkFileIndexingTool = ({
                     message: "Files added to the knowledge base",
                 };
             } catch (error) {
-                console.error("Error adding files to the knowledge base", error);
+                logger.error("Error adding files to the knowledge base", {
+                    error: error instanceof Error ? error.message : String(error),
+                    pdfs: pdfs.length,
+                });
                 return {
                     success: false,
-                    message: "Error adding files to the knowledge base",
+                    message: `Error adding files to the knowledge base: ${error instanceof Error ? error.message : "Unknown error"}`,
                 };
             }
         },

@@ -1,4 +1,5 @@
 import { logger } from "@/utils/logger";
+import { env } from "@/utils/env";
 
 export interface ScraperResult {
     url: string;
@@ -18,8 +19,8 @@ export class ScraperService {
     private readonly apiKey: string;
 
     constructor() {
-        this.baseUrl = process.env.SCRAPER_SERVICE_URL || "";
-        this.apiKey = process.env.SCRAPER_SERVICE_API_KEY || "";
+        this.baseUrl = env.get("SCRAPER_SERVICE_URL");
+        this.apiKey = env.get("SCRAPER_SERVICE_API_KEY");
     }
 
     private async fetch<T>(endpoint: string, body: any): Promise<T> {
@@ -61,8 +62,10 @@ export class ScraperService {
             );
             return response.results;
         } catch (error) {
-            console.log("error", error);
-            logger.error("Failed to scrape PDFs in bulk", { error, urls });
+            logger.error("Failed to scrape PDFs in bulk", {
+                error: error instanceof Error ? error.message : String(error),
+                urlCount: urls.length,
+            });
             return urls.map((url) => ({ url, success: false, error: String(error) }));
         }
     }

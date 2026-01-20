@@ -14,7 +14,6 @@ export const downloadPDF = async (urls: string[]) => {
     },
   });
 
-  //   console.log("Response", await response.json());
 
   // Response blob is a zip file containing the pdfs, unzip and store in data/files/pdfs
   const zip = await response.blob();
@@ -40,17 +39,8 @@ export const downloadPDF = async (urls: string[]) => {
 
       // Write the PDF file
       await fs.promises.writeFile(pdfPath, pdfBuffer);
-      console.log(`Extracted PDF: ${entry.entryName}`);
     }
   }
-
-  console.log(
-    `Extracted ${
-      zipEntries.filter((entry) =>
-        entry.entryName.toLowerCase().endsWith(".pdf")
-      ).length
-    } PDF files to ${pdfDir}`
-  );
 };
 
 /**

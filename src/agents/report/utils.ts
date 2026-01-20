@@ -13,32 +13,35 @@ export const mergeTokenUsage = (
     // Initialize model entry if it doesn't exist
     if (!usageRecord[model]) {
         usageRecord[model] = {
-            promptTokens: 0,
-            completionTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
             totalTokens: 0,
-        } as any;
+            reasoningTokens: 0,
+            cachedInputTokens: 0,
+        };
     }
 
-    const modelUsage = usageRecord[model] as any;
-    const usageData = newUsage as any;
+    const modelUsage = usageRecord[model];
+    if (!modelUsage) return; // Type guard for TypeScript
+    const usageData = newUsage as Record<string, unknown>;
 
     // Handle different property name variations
-    modelUsage.promptTokens =
-        (modelUsage.promptTokens ?? 0) +
+    modelUsage.inputTokens =
+        (modelUsage.inputTokens ?? 0) +
         ((usageData.inputTokens as number) ??
             (usageData.promptTokens as number) ??
             0);
-
-    modelUsage.completionTokens =
-        (modelUsage.completionTokens ?? 0) +
+    modelUsage.outputTokens =
+        (modelUsage.outputTokens ?? 0) +
         ((usageData.outputTokens as number) ??
             (usageData.completionTokens as number) ??
             0);
-
     modelUsage.totalTokens =
         (modelUsage.totalTokens ?? 0) + ((usageData.totalTokens as number) ?? 0);
-
-    if (usageData.reasoningTokens) {
-        modelUsage.reasoningTokens = (modelUsage.reasoningTokens ?? 0) + usageData.reasoningTokens;
-    }
+    modelUsage.reasoningTokens =
+        (modelUsage.reasoningTokens ?? 0) +
+        ((usageData.reasoningTokens as number) ?? 0);
+    modelUsage.cachedInputTokens =
+        (modelUsage.cachedInputTokens ?? 0) +
+        ((usageData.cachedInputTokens as number) ?? 0);
 };

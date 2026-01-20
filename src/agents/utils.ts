@@ -50,14 +50,20 @@ export const getSubPDFFn = (fileId: string, userId: string) => {
 
 export const getPageContentFn = (fileId: string, userId: string) => {
     const getPageContent = async (pages: number[]) => {
-        const filePages = await db.query.userFilePage.findMany({
-            where: and(
-                // TODO: Uncomment this when we want to put a filter on the user id
-                // eq(userFile.userId, userId),
-                eq(userFilePage.fileId, fileId),
-                inArray(userFilePage.pageNumber, pages),
-            ),
-        });
+        const filePages = await db
+            .select({
+                pageNumber: userFilePage.pageNumber,
+                content: userFilePage.content,
+            })
+            .from(userFilePage)
+            .innerJoin(userFile, eq(userFilePage.fileId, userFile.id))
+            .where(
+                and(
+                    eq(userFile.userId, userId),
+                    eq(userFilePage.fileId, fileId),
+                    inArray(userFilePage.pageNumber, pages),
+                ),
+            );
         return filePages.map((page: { pageNumber: number; content: string }) => ({
             pageNumber: page.pageNumber,
             content: page.content,

@@ -232,7 +232,6 @@ export const chapterAgentV2 = async ({
   };
   callback?.(documentSearchStep);
 
-  console.log(JSON.stringify(filteredChapters.chapters, null, 2));
 
   const chapters = filteredChapters.chapters;
 

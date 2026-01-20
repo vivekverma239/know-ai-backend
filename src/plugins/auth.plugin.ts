@@ -8,14 +8,12 @@ import {
 // since Fastify's type system is complex and doesn't easily support custom request types
 
 const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
-  console.log("Request URL", request.url);
   // Check for required headers
   const userId = request.headers["x-user-id"] as string;
   const orgId = request.headers["x-org-id"] as string;
   const authHeader = request.headers.authorization;
 
   // Validate required headers
-  console.log("Request URL", request.url);
   if (!request.url.includes("callback")) {
     if (!userId) {
       return reply.code(400).send({
@@ -60,14 +58,10 @@ const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
     email: request.headers["x-user-email"] as string,
     name: request.headers["x-user-name"] as string,
   };
-  console.log("Request user", request.user);
 };
 
 const authPlugin = async (fastify: FastifyInstance) => {
-  console.log("Auth plugin");
   fastify.decorate("authenticate", authFn);
-  console.log("Auth plugin decorated");
-  console.log(fastify.authenticate);
 };
 
 export default authPlugin;

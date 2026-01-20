@@ -217,9 +217,7 @@ export const parseTOC = async (doc: Buffer) => {
   });
 
   const end = performance.now();
-  console.log("Time taken", end - start);
 
-  console.log("Token usage", combinedTOC.usage);
 
   // Save combinedTOC to a file
   fs.writeFileSync(
@@ -262,6 +260,5 @@ export const responseFromPDF = async (doc: Buffer, question: string) => {
       },
     ],
   });
-  console.log("Token usage", response.usage);
   return response.text;
 };

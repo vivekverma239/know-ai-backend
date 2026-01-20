@@ -12,11 +12,8 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { getLLM } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
 import { logger } from "@/utils/logger";
+import { env } from "@/utils/env";
 import type { ToolContext } from "./toolContext";
-
-// Ensure keys are strictly process.env
-const EXA_API_KEY = process.env.EXA_API_KEY;
-const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
 
 export const getWebsiteContentTool = ({
     context,
@@ -32,7 +29,7 @@ export const getWebsiteContentTool = ({
                 .describe("Full URL to fetch, e.g. 'https://example.com/page'."),
         }),
         execute: async ({ url }) => {
-            const exa = new Exa(EXA_API_KEY);
+            const exa = new Exa(env.get("EXA_API_KEY"));
 
             const startTime = Date.now();
             logger.debug(`Exa getting contents for ${url}`);
@@ -63,13 +60,8 @@ export const getFirecrawlScrapeTool = ({ context }: { context: ToolContext }) =>
                 .describe("Full URL to scrape, e.g. 'https://example.com/page'."),
         }),
         execute: async ({ url }) => {
-            if (!FIRECRAWL_API_KEY) {
-                logger.error("Firecrawl API key (FIRECRAWL_API_KEY) is not configured");
-                return "Firecrawl is not configured. Please set FIRECRAWL_API_KEY in the environment.";
-            }
-
             const firecrawl = new FirecrawlApp({
-                apiKey: FIRECRAWL_API_KEY,
+                apiKey: env.get("FIRECRAWL_API_KEY"),
             });
 
             const startTime = Date.now();
@@ -111,7 +103,7 @@ export const getWebSearchTool = ({ context }: { context: ToolContext }) => {
                 .optional(),
         }),
         execute: async ({ query, queryType = "neural", category }) => {
-            const exa = new Exa(EXA_API_KEY);
+            const exa = new Exa(env.get("EXA_API_KEY"));
             const startTime = Date.now();
             logger.debug(`Exa searching for ${query}`);
             const response = await exa.search(query, {

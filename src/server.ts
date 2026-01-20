@@ -3,6 +3,7 @@ dotenv.config();
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
+import { logger } from "@/utils/logger";
 
 import swaggerUI from "@fastify/swagger-ui";
 import corsPlugin from "./plugins/cors.plugin";
@@ -16,6 +17,9 @@ import fileRoutes from "./routes/file.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 import parsingCallbackRoutes from "./routes/parsingCallback.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
+import finAgentRoutes from "./routes/finAgent.routes";
+import structuredReportRoutes from "./routes/structuredReport.routes";
+import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
 
 const fastify = Fastify({ logger: true });
 
@@ -69,7 +73,7 @@ const start = async () => {
   //   await fastify.register(authPlugin);
   fastify.decorate("authenticate", authFn);
 
-  console.log("authenticate", fastify.authenticate);
+  logger.debug("Authenticate plugin registered", { authenticate: !!fastify.authenticate });
   // Routes
   await fastify.register(healthRoutes, { prefix: "/api/v1/health" });
   await fastify.register(chatRoutes, { prefix: "/api/v1/chat-session" });
@@ -83,6 +87,9 @@ const start = async () => {
   });
   await fastify.register(parsingCallbackRoutes, { prefix: "/api/v1" });
   await fastify.register(chatStreamRoutes, { prefix: "/api/v1/chat" });
+  await fastify.register(finAgentRoutes, { prefix: "/api/v1/agent/fin" });
+  await fastify.register(structuredReportRoutes, { prefix: "/api/v1/report" });
+  await fastify.register(structuredReportCallbackRoutes, { prefix: "/api/structured-report-callback" });
 
   // Start server
   const start = async () => {
@@ -91,11 +98,11 @@ const start = async () => {
         port: 3000,
         host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
       });
-      console.log(
-        `✅ Server running at http://${process.env.ENV === "prod" ? "0.0.0.0" : "localhost"
-        }:3000`
-      );
-      console.log("📖 Docs at http://localhost:3000/docs");
+      logger.info("Server started successfully", {
+        host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
+        port: 3000,
+        docsUrl: "http://localhost:3000/docs",
+      });
     } catch (err) {
       fastify.log.error(err);
       process.exit(1);

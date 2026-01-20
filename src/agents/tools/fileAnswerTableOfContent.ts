@@ -176,12 +176,16 @@ Current date: ${new Date().toISOString()}
 export const fileAnswerAgent = async ({
     query,
     fileIds,
+    userId,
+    orgId,
     model = MODELS.GROK_CODE_FAST_1,
     maxIterations = 15,
     addUsage,
 }: {
     query: string;
     fileIds: string[];
+    userId: string;
+    orgId: string;
     model?: MODELS;
     maxIterations?: number;
     addUsage?: (usage: { usage: LanguageModelUsage; model: string }) => void;
@@ -548,6 +552,8 @@ export const getFileAnswerAgentTool = ({
             const result = await fileAnswerAgent({
                 query,
                 fileIds,
+                userId: context.userId,
+                orgId: context.orgId,
                 model,
                 addUsage: context.addUsage,
             });
@@ -603,6 +609,8 @@ export const getFileAnswerTool = ({
                 const result = await fileAnswerAgent({
                     query,
                     fileIds: [fileIdWithoutFile],
+                    userId: context.userId,
+                    orgId: context.orgId,
                     model,
                     addUsage: context.addUsage,
                 });
@@ -619,8 +627,12 @@ export const getFileAnswerTool = ({
                 }
                 return "Error: " + result.error;
             } catch (error) {
-                console.error("Error in file answer", error);
-                return "Error in file answer";
+                logger.error("Error in file answer", {
+                    error: error instanceof Error ? error.message : String(error),
+                    query: query.substring(0, 100),
+                    fileId,
+                });
+                return `Error in file answer: ${error instanceof Error ? error.message : "Unknown error"}`;
             }
         },
     });

@@ -21,7 +21,10 @@ export const downloadPDFWithScraperService = async ({
     const urls = pdfSources.map((s) => s.url);
     const results = await scraperService.scrapePdfBulk(urls);
 
-    console.log("results", results);
+    logger.info("PDF scraping results received", {
+        totalResults: results.length,
+        successCount: results.filter((r) => r.success).length,
+    });
     const processedResults = await Promise.all(
         results.map(async (result, index) => {
             // index might not match if scraper returns results out of order or filtered?
@@ -186,7 +189,11 @@ export const downloadPDFTask = async ({
                 url: result.url,
             };
         } catch (error) {
-            console.error(`Error downloading PDF for ${source.fileId}:`, error);
+            logger.error("Error downloading PDF", {
+                fileId: source.fileId,
+                url: source.url,
+                error: error instanceof Error ? error.message : String(error),
+            });
             // Return error result but don't throw to allow other downloads to continue
             return {
                 id: source.fileId,
@@ -248,7 +255,10 @@ export const urlToMarkdownTask = async ({ urls }: { urls: string[] }) => {
                 url: result.url,
             };
         } catch (error) {
-            console.error(`Error converting URL to markdown for ${url}:`, error);
+            logger.error("Error converting URL to markdown", {
+                url,
+                error: error instanceof Error ? error.message : String(error),
+            });
             // Return error result but don't throw to allow other conversions to continue
             return {
                 id: "",

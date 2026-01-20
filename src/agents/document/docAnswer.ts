@@ -20,11 +20,12 @@ Follow these guidelines:
 - DO NOT USE YOUR OWN KNOWLEDGE, ONLY USE THE INFORMATION FROM THE PROVIDED PAGES.
 - Use appropirate inline citations to denote which pages are being used to support the answer.
 
-Citation format: 
+Citation format:
  - Use following format for inline citations:
   [page_{number}] where {number} is the page number of the page being referenced.
-  For Example: 
+  For Example:
    Apple revenue of Q3 2024 was $100 billion [page_23].
+ - Note: This simplified format is used for single-document contexts. For multi-document scenarios, use [fileID/page=pageNumber].
 `;
 
 type PageUrl = {

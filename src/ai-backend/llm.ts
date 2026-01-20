@@ -4,6 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { MODELS } from "@/@types/llm";
 import { initLogger, wrapAISDKModel } from "braintrust";
 import { perplexity } from "@ai-sdk/perplexity";
+import { logger as appLogger } from "@/utils/logger";
 import {
   streamText,
   generateObject,
@@ -276,9 +277,8 @@ export const generateTextWrapper = async ({
 
     return ok(response);
   } catch (error) {
-    console.error({
-      type: "ERROR",
-      message: `Error in generateTextWrapper: ${error as Error}`,
+    appLogger.error("Error in generateTextWrapper", {
+      error: error instanceof Error ? error.message : String(error),
     });
     return err(error as Error);
   }
@@ -338,10 +338,9 @@ export const generateObjectWrapper = async <T>({
 
       return ok(response.object as T);
     } catch (error) {
-      console.log(error);
-      console.error({
-        type: "ERROR",
-        message: `Error in generateObjectWrapper: ${error as Error}`,
+      appLogger.error("Error in generateObjectWrapper", {
+        error: error instanceof Error ? error.message : String(error),
+        retryCount,
       });
       retryCount++;
       if (retryCount === 3) {
@@ -414,9 +413,9 @@ export const streamTextWrapper = async ({
 
       return ok(response);
     } catch (error) {
-      console.error({
-        type: "ERROR",
-        message: `Error in streamTextWrapper: ${error as Error}`,
+      appLogger.error("Error in streamTextWrapper", {
+        error: error instanceof Error ? error.message : String(error),
+        retryCount,
       });
       retryCount++;
       if (retryCount === 3) {

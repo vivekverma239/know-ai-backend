@@ -1,31 +1,8 @@
 import { type ModelMessage, type TextPart } from "ai";
 import { z } from "zod";
-// MOCKS
-const _ = {
-    range: (start: number, end: number) => {
-        const length = end - start;
-        return Array.from({ length }, (_, i) => start + i);
-    },
-    chunk: (array: any[], size: number) => {
-        const chunked = [];
-        for (let i = 0; i < array.length; i += size) {
-            chunked.push(array.slice(i, i + size));
-        }
-        return chunked;
-    }
-};
-const pLimit = (concurrency: number) => (fn: any) => fn();
-const cliProgress = {
-    SingleBar: class {
-        constructor(opt: any) { }
-        start(total: number, startValue: number) { }
-        increment() { }
-        stop() { }
-    }
-};
-const extractText = async (pdf: any) => ({ totalPages: 0, text: [] });
-const getDocumentProxy = async (buffer: any) => ({});
-// END MOCKS
+import _ from "lodash";
+import pLimit from "p-limit";
+import { extractText, getDocumentProxy } from "unpdf";
 import { MODELS } from "@/@types/llm";
 import { generateObjectWrapper } from "@/ai-backend/llm";
 import withTokenTracking, { type TokenUsage } from "@/utils/asyncHook";
@@ -395,12 +372,16 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
 
     const limit = pLimit(5); // lower concurrency to reduce peak memory
     const tasks = [] as Promise<void>[];
-    const progress = new cliProgress.SingleBar({
-        format: "Parsing pages {bar} {percentage}% | {value}/{total}",
-    });
     const batchSize = 20; // smaller batch to limit memory
-    progress.start(Math.ceil(totalPages / batchSize), 0);
+    const totalBatches = Math.ceil(totalPages / batchSize);
 
+    agentLogger.info(`📄 Starting PDF page parsing`, {
+        totalPages,
+        batchSize,
+        totalBatches,
+    });
+
+    let completedBatches = 0;
     for (let i = 0; i < totalPages; i += batchSize) {
         tasks.push(
             limit(async () => {
@@ -419,7 +400,12 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
                     return;
                 }
                 extractedPages.push(...response.value.pages);
-                progress.increment();
+                completedBatches++;
+                agentLogger.info(`📊 Batch progress`, {
+                    completed: completedBatches,
+                    total: totalBatches,
+                    percentage: Math.round((completedBatches / totalBatches) * 100),
+                });
             }),
         );
     }
