@@ -1,5 +1,8 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { logger, logError } from "@/utils/logger";
 import { v4 as uuidv4 } from "uuid";
+import { getRequestId, getRequestContext } from "@/utils/requestContext";
+import { calculateUsageCost } from "@/utils/tokenlens";
 
 // Types for token tracking
 export interface TokenUsage {
@@ -101,10 +104,72 @@ export function withTokenTracking<T>(
       return result;
     } catch (error) {
       // Log error with token context
-      console.error(`Error in operation ${operationName}:`, error);
       throw error;
     }
   });
+}
+
+/**
+ * Calculate cost estimate for token usage using tokenlens
+ */
+async function calculateCost(model: string, promptTokens: number, completionTokens: number): Promise<number> {
+  try {
+    return await calculateUsageCost(model, promptTokens, completionTokens);
+  } catch (error) {
+    logger.warn("Failed to calculate cost with tokenlens, using fallback", {
+      model,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Return 0 if tokenlens fails - the fallback in tokenlens.ts will handle it
+    return 0;
+  }
+}
+
+/**
+ * Persist token usage to database
+ * This is called asynchronously and failures are logged but don't block the main flow
+ */
+async function persistTokenUsage(usage: TokenUsage): Promise<void> {
+  try {
+    // Dynamically import to avoid circular dependencies
+    const { getDb } = await import("@/db");
+    const { tokenUsageLog } = await import("@/db/schema");
+
+    const requestId = getRequestId();
+    const requestContext = getRequestContext();
+
+    // Calculate cost using tokenlens
+    const costEstimate = await calculateCost(usage.model, usage.promptTokens, usage.completionTokens);
+
+    await getDb().insert(tokenUsageLog).values({
+      requestId: requestId || "unknown",
+      operationId: usage.operationId,
+      operationName: usage.operationName,
+      userId: requestContext?.userId,
+      sessionId: requestContext?.sessionId,
+      orgId: requestContext?.orgId,
+      model: usage.model,
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+      totalTokens: usage.totalTokens,
+      costEstimate: costEstimate.toFixed(6),
+      timestamp: usage.timestamp,
+      metadata: {},
+    });
+
+    logger.debug("Token usage persisted to database with tokenlens cost", {
+      operationId: usage.operationId,
+      model: usage.model,
+      totalTokens: usage.totalTokens,
+      costEstimate,
+    });
+  } catch (error) {
+    logError(error, {
+      operationId: usage.operationId,
+      operation: "persistTokenUsage",
+      message: "Failed to persist token usage to database",
+    });
+  }
 }
 
 // Function to record token usage for a specific LLM call
@@ -113,9 +178,7 @@ export function recordTokenUsage(
 ): void {
   const context = tokenTrackingStorage.getStore();
   if (!context) {
-    console.warn(
-      "No token tracking context found. Make sure to use withTokenTracking."
-    );
+    logger.warn("No token tracking context found. Make sure to use withTokenTracking.");
     return;
   }
 
@@ -133,13 +196,23 @@ export function recordTokenUsage(
   TokenUsageAggregator.getInstance().addUsage(context.operationId, fullUsage);
 
   // Log the usage
-  console.log(`Token usage recorded for ${context.operationName}:`, {
+  logger.debug(`Token usage recorded for ${context.operationName}`, {
     promptTokens: usage.promptTokens,
     completionTokens: usage.completionTokens,
     totalTokens: usage.totalTokens,
     model: usage.model,
     operationId: context.operationId,
   });
+
+  // Persist to database asynchronously (don't block on this)
+  if (process.env.PERSIST_TOKEN_USAGE !== "false") {
+    persistTokenUsage(fullUsage).catch((error) => {
+      // Error already logged in persistTokenUsage, but log again at top level if needed
+      logger.debug("Token usage persistence failed (non-blocking)", {
+        operationId: fullUsage.operationId,
+      });
+    });
+  }
 }
 
 // Function to get current operation context
@@ -323,13 +396,13 @@ export function createTokenTrackedStreamText() {
 export function logTokenUsageSummary(operationId?: string): void {
   if (operationId) {
     const usage = getTotalTokenUsageByOperationId(operationId);
-    console.log(`Token usage summary for ${operationId}:`, usage);
+    logger.debug(`Token usage summary for ${operationId}`, { usage });
   } else {
     const context = getCurrentTokenContext();
     if (context) {
       const usage = getCurrentTotalTokenUsage();
       if (usage) {
-        console.log(`Token usage summary for current operation:`, usage);
+        logger.debug("Token usage summary for current operation", { usage });
       }
     }
   }
@@ -355,7 +428,6 @@ export function withCustomTokenTracking<T>(
       const result = await fn();
       return result;
     } catch (error) {
-      console.error(`Error in operation ${operationName}:`, error);
       throw error;
     }
   });

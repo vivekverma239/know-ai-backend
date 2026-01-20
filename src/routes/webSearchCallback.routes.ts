@@ -116,7 +116,11 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
             );
           });
           const result = (await Promise.race([
-            webAgent(task.query),
+            webAgent(task.query, {
+              userId: task.userId,
+              orgId: "", // OrgId unused in web search tools currently or unavailable in task
+              sessionId: taskId,
+            }),
             timeoutPromise,
           ])) as Awaited<ReturnType<typeof webAgent>>;
 

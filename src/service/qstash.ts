@@ -19,7 +19,6 @@ export const sendQstashMessage = async <T>(
 ) => {
   // Consider adding error handling here
   const url = `${process.env.APP_URL}/${urlPath}`;
-  console.log(url);
   const res = await qstashClient.publishJSON({
     url,
     body: data,
@@ -29,6 +28,5 @@ export const sendQstashMessage = async <T>(
     },
     timeout: 60 * 10,
   });
-  console.log(res);
   return res;
 };

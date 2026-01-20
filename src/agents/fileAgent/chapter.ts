@@ -188,7 +188,6 @@ export const chapterAgentV3 = async ({
   };
   callback?.(documentSearchStep);
 
-  console.log(JSON.stringify(filteredChapters.chapters, null, 2));
 
   const chapters = filteredChapters.chapters;
 
@@ -248,21 +247,12 @@ export const chapterAgentV3 = async ({
                   (chunk) => !alreadyLookedAtChunks.includes(chunk.id!)
                 );
 
-                console.log(
-                  `Chunks found: ${validChunks.length} Page: ${page} Search Query: ${searchQuery}`
-                );
-
-                for (const chunk of validChunks) {
-                  console.log(chunk.content.slice(0, 100));
-                }
-
                 const queryAgentResponse = await queryAgent(
                   searchQuery,
                   query,
                   validChunks
                 );
 
-                console.log("🧠 Query Agent Response:", queryAgentResponse);
                 chunkSearchStep.message = "Chunks analyzed";
                 chunkSearchStep.status = "done";
                 chunkSearchStep.metadata = {
@@ -291,11 +281,7 @@ export const chapterAgentV3 = async ({
           stopWhen: stepCountIs(25),
           onStepFinish: (step) => {
             const reasoning = step.reasoning;
-            if (reasoning) {
-              console.log("🧠 Reasoning:", reasoning);
-            }
             if (step.finishReason === "tool-calls") {
-              console.log(step.toolCalls);
             }
           },
           providerOptions: {

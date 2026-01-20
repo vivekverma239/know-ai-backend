@@ -485,7 +485,15 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         const storageService = getStorage();
         try {
           await storageService.deleteFile(filePath);
-        } catch {}
+        } catch (error) {
+          logger.warn("Failed to delete file from storage (file may not exist)", {
+            error: error instanceof Error ? error.message : String(error),
+            filePath,
+            fileId: file.id,
+            operation: "deleteFile:storage",
+          });
+          // Continue with database cleanup even if storage deletion fails
+        }
         await getDb()
           .delete(userFileSection)
           .where(eq(userFileSection.fileId, id));
@@ -591,9 +599,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       },
     },
     handler: async (request, reply) => {
-      console.log("Uploading file");
       const user = request.user;
-      console.log("User", user);
       if (!user) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
@@ -667,7 +673,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "File uploaded successfully and parsing started",
         });
       } catch (error) {
-        console.log("Error uploading file", error);
         logger.error(`Error uploading file:`, { error });
         return reply.code(400).send({
           error:
@@ -772,7 +777,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "Admin file uploaded successfully and parsing started",
         });
       } catch (error) {
-        console.log("Error uploading admin file", error);
         logger.error(`Error uploading admin file:`, { error });
         return reply.code(400).send({
           error:

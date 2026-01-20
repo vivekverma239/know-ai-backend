@@ -133,7 +133,6 @@ export const fileAgent = async ({
           pages: z.array(z.number()),
         }),
         execute: async ({ pages }) => {
-          console.log("🔍 Getting page content for", pages);
           const pageContent = await pageTool(
             pages.map((page) => page - 1),
             fileId
@@ -187,7 +186,6 @@ export const fileAgentWithChapters = async ({
     limit: 3,
     documentIds: [fileId],
   });
-  console.log(JSON.stringify(similarChapters, null, 2));
   const responses = await Promise.all(
     similarChapters.map((chapter) =>
       fileAgent({

@@ -176,10 +176,15 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         response: { 200: AgentResultSchema },
       },
       handler: async (request, reply) => {
+        const userId = request.user!.id;
         const { query } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
-        const result = await webAgent(query);
+        const result = await webAgent(query, {
+          userId: userId,
+          orgId: _orgId ?? "",
+          sessionId: "direct-invocation",
+        });
         return reply.send(result ?? { sources: [], helpfulText: "" });
       },
     }

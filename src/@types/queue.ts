@@ -8,6 +8,6 @@ export type WebSearchProcessingData = {
 };
 
 export type QstashMessage<T> = {
-  type: "file_processing" | "web_search_processing";
+  type: "file_processing" | "web_search_processing" | "structured_report_processing";
   data: T;
 };

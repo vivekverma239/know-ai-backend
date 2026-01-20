@@ -52,6 +52,7 @@ export const similaritySearchChunks = async ({
       documentId: chunk.documentId,
       content: chunk.content,
       similarity: chunk.similarity,
+      pageNumber: chunk.startPage,
     };
   });
 };
