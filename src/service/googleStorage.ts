@@ -1,5 +1,6 @@
 import { Storage, Bucket, File } from "@google-cloud/storage";
 import fs from "fs";
+import { logger } from "@/utils/logger";
 
 interface JWTInput {
   type?: string;
@@ -49,7 +50,6 @@ export class GoogleStorageService {
     const buffer =
       typeof data === "string" ? Buffer.from(data, "base64") : data;
 
-    console.log("ContentType", contentType);
 
     try {
       await file.save(buffer, {
@@ -59,7 +59,7 @@ export class GoogleStorageService {
       });
       return path;
     } catch (error) {
-      console.error("Error uploading to Google Cloud Storage:", error);
+      logger.error("Error uploading to Google Cloud Storage:", { error: error });
       throw new Error("Failed to upload file");
     }
   }
@@ -74,7 +74,7 @@ export class GoogleStorageService {
       const [data] = await file.download();
       return data;
     } catch (error) {
-      console.error("Error downloading from Google Cloud Storage:", error);
+      logger.error("Error downloading from Google Cloud Storage:", { error: error });
       throw new Error("Failed to download file");
     }
   }
@@ -88,7 +88,7 @@ export class GoogleStorageService {
     try {
       await file.delete();
     } catch (error) {
-      console.error("Error deleting from Google Cloud Storage:", error);
+      logger.error("Error deleting from Google Cloud Storage:", { error: error });
       throw new Error("Failed to delete file");
     }
   }
@@ -103,7 +103,7 @@ export class GoogleStorageService {
       });
       return files;
     } catch (error) {
-      console.error("Error listing files from Google Cloud Storage:", error);
+      logger.error("Error listing files from Google Cloud Storage:", { error: error });
       throw new Error("Failed to list files");
     }
   }
@@ -123,7 +123,7 @@ export class GoogleStorageService {
       return signedUrl;
     } catch (error) {
       const err = error as Error;
-      console.error("Error generating signed URL:", err.message);
+      logger.error("Error generating signed URL:", { error: err.message });
       throw new Error("Failed to generate signed URL");
     }
   }
@@ -141,7 +141,7 @@ export class GoogleStorageService {
       return signedUrl;
     } catch (error) {
       const err = error as Error;
-      console.error("Error generating signed URL:", err.message);
+      logger.error("Error generating signed URL:", { error: err.message });
       throw new Error("Failed to generate signed URL");
     }
   }
@@ -153,7 +153,7 @@ export class GoogleStorageService {
       const [data] = await file.download();
       return data;
     } catch (error) {
-      console.error("Error getting file from Google Cloud Storage:", error);
+      logger.error("Error getting file from Google Cloud Storage:", { error: error });
       throw new Error("Failed to get file");
     }
   }
@@ -178,7 +178,7 @@ export class GoogleStorageService {
     try {
       await sourceFile.copy(targetFile);
     } catch (error) {
-      console.error("Error copying file in Google Cloud Storage:", error);
+      logger.error("Error copying file in Google Cloud Storage:", { error: error });
       throw new Error("Failed to copy file");
     }
   }
@@ -194,7 +194,7 @@ export class GoogleStorageService {
       });
       return signedUrl;
     } catch (error) {
-      console.error("Error generating signed URL:", error);
+      logger.error("Error generating signed URL:", { error: error });
       throw new Error("Failed to generate signed URL");
     }
   }

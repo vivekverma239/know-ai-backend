@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { logger } from "@/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 
 // Types for token tracking
@@ -101,7 +102,6 @@ export function withTokenTracking<T>(
       return result;
     } catch (error) {
       // Log error with token context
-      console.error(`Error in operation ${operationName}:`, error);
       throw error;
     }
   });
@@ -113,9 +113,7 @@ export function recordTokenUsage(
 ): void {
   const context = tokenTrackingStorage.getStore();
   if (!context) {
-    console.warn(
-      "No token tracking context found. Make sure to use withTokenTracking."
-    );
+    logger.warn("No token tracking context found. Make sure to use withTokenTracking.");
     return;
   }
 
@@ -133,7 +131,7 @@ export function recordTokenUsage(
   TokenUsageAggregator.getInstance().addUsage(context.operationId, fullUsage);
 
   // Log the usage
-  console.log(`Token usage recorded for ${context.operationName}:`, {
+  logger.debug(`Token usage recorded for ${context.operationName}`, {
     promptTokens: usage.promptTokens,
     completionTokens: usage.completionTokens,
     totalTokens: usage.totalTokens,
@@ -323,13 +321,13 @@ export function createTokenTrackedStreamText() {
 export function logTokenUsageSummary(operationId?: string): void {
   if (operationId) {
     const usage = getTotalTokenUsageByOperationId(operationId);
-    console.log(`Token usage summary for ${operationId}:`, usage);
+    logger.debug(`Token usage summary for ${operationId}`, { usage });
   } else {
     const context = getCurrentTokenContext();
     if (context) {
       const usage = getCurrentTotalTokenUsage();
       if (usage) {
-        console.log(`Token usage summary for current operation:`, usage);
+        logger.debug("Token usage summary for current operation", { usage });
       }
     }
   }
@@ -355,7 +353,6 @@ export function withCustomTokenTracking<T>(
       const result = await fn();
       return result;
     } catch (error) {
-      console.error(`Error in operation ${operationName}:`, error);
       throw error;
     }
   });

@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as getSignedUrlS3 } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
+import { logger } from "@/utils/logger";
 
 export const supabaseClient = new S3Client({
   forcePathStyle: true,
@@ -43,7 +44,6 @@ export class StorageService {
     const buffer =
       typeof data === "string" ? Buffer.from(data, "base64") : data;
 
-    console.log("ContentType", contentType);
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -55,7 +55,10 @@ export class StorageService {
       await this.client.send(command);
       return key;
     } catch (error) {
-      console.error("Error uploading to R2:", error);
+      logger.error("Error uploading to R2", {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+      });
       throw new Error("Failed to upload file");
     }
   }
@@ -75,7 +78,10 @@ export class StorageService {
       if (!data) throw new Error("No data received");
       return Buffer.from(data);
     } catch (error) {
-      console.error("Error downloading from R2:", error);
+      logger.error("Error downloading from R2", {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+      });
       throw new Error("Failed to download file");
     }
   }
@@ -92,7 +98,10 @@ export class StorageService {
     try {
       await this.client.send(command);
     } catch (error) {
-      console.error("Error deleting from R2:", error);
+      logger.error("Error deleting from R2", {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+      });
       throw new Error("Failed to delete file");
     }
   }
@@ -110,7 +119,10 @@ export class StorageService {
       const response = await this.client.send(command);
       return response.Contents ?? [];
     } catch (error) {
-      console.error("Error listing files from R2:", error);
+      logger.error("Error listing files from R2", {
+        error: error instanceof Error ? error.message : String(error),
+        prefix,
+      });
       throw new Error("Failed to list files");
     }
   }
@@ -132,7 +144,10 @@ export class StorageService {
       return signedUrl;
     } catch (error) {
       const err = error as Error;
-      console.error("Error generating signed URL:", err.message);
+      logger.error("Error generating signed URL", {
+        error: err.message,
+        key,
+      });
       throw new Error("Failed to generate signed URL");
     }
   }
@@ -151,7 +166,10 @@ export class StorageService {
       return signedUrl;
     } catch (error) {
       const err = error as Error;
-      console.error("Error generating signed URL:", err.message);
+      logger.error("Error generating signed upload URL", {
+        error: err.message,
+        key,
+      });
       throw new Error("Failed to generate signed URL");
     }
   }
@@ -168,7 +186,10 @@ export class StorageService {
       if (!data) throw new Error("No data received");
       return Buffer.from(data);
     } catch (error) {
-      console.error("Error getting file from R2:", error);
+      logger.error("Error getting file from R2", {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+      });
       throw new Error("Failed to get file");
     }
   }
@@ -199,7 +220,11 @@ export class StorageService {
     try {
       await this.client.send(command);
     } catch (error) {
-      console.error("Error copying file in Supabase:", error);
+      logger.error("Error copying file in storage", {
+        error: error instanceof Error ? error.message : String(error),
+        sourcePath,
+        targetPath,
+      });
       throw new Error("Failed to copy file");
     }
   }
@@ -217,7 +242,10 @@ export class StorageService {
       });
       return signedUrl;
     } catch (error) {
-      console.error("Error generating signed URL:", error);
+      logger.error("Error generating signed URL for upload", {
+        error: error instanceof Error ? error.message : String(error),
+        key,
+      });
       throw new Error("Failed to generate signed URL");
     }
   }

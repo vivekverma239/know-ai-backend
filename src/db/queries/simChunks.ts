@@ -20,6 +20,8 @@ export type SimilarChunk = Omit<
 > & {
   similarity: number;
   id?: string;
+  startPage?: number | null;
+  endPage?: number | null;
 };
 
 export const getSimilarChunks = async ({

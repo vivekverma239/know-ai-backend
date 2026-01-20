@@ -2,6 +2,10 @@ import type { Subsection } from "@/@types/fileIndex";
 import type { MessageParts } from "@/@types/message";
 import type { PageSummary } from "@/@types/metadata";
 import type { TokenUsage } from "@/@types/tokenUsage";
+import type { LanguageModelUsage } from "ai";
+
+import { type MODELS } from "@/@types/llm";
+import type { Toc, DocumentMetadata, ChunkPageSummary } from "@/agents/document/parseToCMeta";
 import { relations, sql } from "drizzle-orm";
 import { index, pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 // import { type AdapterAccountType } from "next-auth/adapters";
@@ -52,6 +56,14 @@ export type FileMetadata = {
   // pageSummaries?: PageSummary[];
 };
 
+export type Source = {
+  id: string;
+  url: string;
+  title: string;
+  summary: string;
+  pageNumbers: number[];
+};
+
 export const userFile = createTable("user_file", (d) => ({
   id: d
     .uuid()
@@ -79,6 +91,19 @@ export const userFile = createTable("user_file", (d) => ({
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  type: d
+    .varchar({ length: 255 })
+    .$type<"pdf" | "structured_report" | "web_article">()
+    .notNull()
+    .default("pdf"),
+  webArticleMetadata: d.jsonb().$type<{
+    url: string;
+    title: string;
+    content: string;
+  }>(),
+  structuredReportId: d
+    .uuid()
+    .references(() => structuredReports.id, { onDelete: "cascade" }),
 }));
 
 export const userFilePage = createTable("file_page", (d) => ({
@@ -92,6 +117,27 @@ export const userFilePage = createTable("file_page", (d) => ({
     .references(() => userFile.id),
   pageNumber: d.integer().notNull(),
   content: d.text().notNull(),
+}));
+
+export const userFileToCMeta = createTable("user_file_to_c_meta", (d) => ({
+  id: d
+    .uuid()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  fileId: d
+    .uuid()
+    .notNull()
+    .references(() => userFile.id)
+    .unique(),
+  toc: d.jsonb().$type<Toc>(),
+  metadata: d.jsonb().$type<DocumentMetadata>(),
+  pages: d.jsonb().$type<ChunkPageSummary[]>(),
+  tokenUsage: d.jsonb().$type<TokenUsage>(),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
 export const userFileCluster = createTable("file_cluster", (d) => ({
@@ -296,6 +342,54 @@ export const webSearchTask = createTable("web_search_task", (d) => ({
     .notNull()
     .defaultNow(),
   completedAt: d.timestamp({ mode: "date", withTimezone: true }),
+}));
+
+export const structuredReportTemplate = createTable(
+  "structured_report_template",
+  (d) => ({
+    id: d.uuid().primaryKey().defaultRandom(),
+    userId: d.varchar({ length: 255 }).notNull(), // Assuming direct user ID storage without relation for now, or match existing pattern
+    title: d.varchar({ length: 255 }).notNull(),
+    taskDescription: d.text().notNull(),
+    prompts: d.jsonb().$type<{
+      initialResearchPrompt: string;
+      subQuestionsIdentificationPrompt: string;
+      finalReportPrompt: string;
+    }>(),
+  })
+);
+
+export type ModelConfig = {
+  initialResearch?: MODELS | string;
+  subQuestionsIdentification?: MODELS | string;
+  subQuestionAnswer?: MODELS | string;
+  finalReport?: MODELS | string;
+  subQuestionAnswerMethod?: "fileAgent" | "similaritySearch";
+};
+
+// Placeholder for StepOutputs until full agent port
+export type StepOutputs = Record<string, any>;
+
+export const structuredReports = createTable("structured_report", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  userId: d.varchar({ length: 255 }).notNull(),
+  templateId: d
+    .uuid()
+    .notNull()
+    .references(() => structuredReportTemplate.id),
+  topic: d.varchar({ length: 255 }).notNull(),
+  referencePeriod: d.varchar({ length: 255 }),
+  status: d
+    .varchar({ length: 20 })
+    .$type<"pending" | "in_progress" | "completed" | "failed">()
+    .notNull()
+    .default("pending"),
+  stepOutputs: d.jsonb().$type<StepOutputs>(),
+  finalOutput: d.text(),
+  metadata: d.jsonb().$type<{ title?: string; summary?: string }>().default({}),
+  usage: d.jsonb().$type<Record<string, LanguageModelUsage>>(),
+  sources: d.jsonb().$type<Source[]>(),
+  modelConfig: d.jsonb().$type<ModelConfig>(),
 }));
 
 export const UserFileChapter = userFileChapter.$inferSelect;
