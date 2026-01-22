@@ -56,45 +56,76 @@ if (isDevelopment) {
 }
 
 /**
- * Production transport: JSON logs with file rotation
- * Note: In production, consider using an external log aggregation service
- * like CloudWatch, Datadog, or Elasticsearch instead of file-based logging
+ * Production transport: JSON logs
+ *
+ * For Google Cloud Run/GKE/Compute Engine:
+ * - Logs written to stdout/stderr are automatically captured by Google Cloud Logging
+ * - No additional configuration needed - just write JSON to stdout
+ * - Google Cloud Logging automatically indexes and enriches the logs
+ *
+ * For other environments:
+ * - Can optionally write to files with rotation
+ * - Consider using log aggregation services (CloudWatch, Datadog, etc.)
  */
-if (!isDevelopment && process.env.LOG_FILE) {
-  loggerConfig.transport = {
-    targets: [
-      // Console output (JSON format)
-      {
-        target: "pino/file",
-        level: "info",
-        options: {
-          destination: 1, // stdout
-        },
+if (!isDevelopment) {
+  // Google Cloud mode: Write JSON logs to stdout only
+  // Google Cloud Logging automatically captures and indexes these
+  if (process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT) {
+    loggerConfig.transport = {
+      target: "pino/file",
+      level: logLevel,
+      options: {
+        destination: 1, // stdout - captured by Google Cloud Logging
       },
-      // Error logs to separate file
-      ...(process.env.LOG_ERROR_FILE
-        ? [
-            {
-              target: "pino/file",
-              level: "error",
-              options: {
-                destination: process.env.LOG_ERROR_FILE,
-                mkdir: true,
+    };
+  }
+  // File-based logging for other environments
+  else if (process.env.LOG_FILE) {
+    loggerConfig.transport = {
+      targets: [
+        // Console output (JSON format)
+        {
+          target: "pino/file",
+          level: "info",
+          options: {
+            destination: 1, // stdout
+          },
+        },
+        // Error logs to separate file
+        ...(process.env.LOG_ERROR_FILE
+          ? [
+              {
+                target: "pino/file",
+                level: "error",
+                options: {
+                  destination: process.env.LOG_ERROR_FILE,
+                  mkdir: true,
+                },
               },
-            },
-          ]
-        : []),
-      // All logs to main file (would require pino-roll or similar for rotation)
-      {
-        target: "pino/file",
-        level: logLevel,
-        options: {
-          destination: process.env.LOG_FILE,
-          mkdir: true,
+            ]
+          : []),
+        // All logs to main file (would require pino-roll or similar for rotation)
+        {
+          target: "pino/file",
+          level: logLevel,
+          options: {
+            destination: process.env.LOG_FILE,
+            mkdir: true,
+          },
         },
+      ],
+    };
+  }
+  // Default production: JSON to stdout
+  else {
+    loggerConfig.transport = {
+      target: "pino/file",
+      level: logLevel,
+      options: {
+        destination: 1, // stdout
       },
-    ],
-  };
+    };
+  }
 }
 
 /**

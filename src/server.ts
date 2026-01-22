@@ -1,5 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
+
+// Initialize OpenTelemetry FIRST before any other imports
+// This ensures auto-instrumentation works properly
+import { initializeOpenTelemetry } from "@/utils/otel";
+initializeOpenTelemetry();
+
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
@@ -23,6 +29,7 @@ import finAgentRoutes from "./routes/finAgent.routes";
 import structuredReportRoutes from "./routes/structuredReport.routes";
 import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
 import analyticsRoutes from "./routes/analytics.routes";
+import ingestionRoutes from "./routes/ingestion.routes";
 
 const fastify = Fastify({ logger: true });
 
@@ -105,6 +112,7 @@ const start = async () => {
   await fastify.register(structuredReportRoutes, { prefix: "/api/v1/report" });
   await fastify.register(structuredReportCallbackRoutes, { prefix: "/api/structured-report-callback" });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
+  await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
 
   // Start server
   const start = async () => {
