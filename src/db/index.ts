@@ -12,7 +12,11 @@ const globalForDb = globalThis as unknown as {
 };
 
 export const getDb = () => {
-  const conn = globalForDb.conn ?? postgres(process.env.DATABASE_URL!);
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required to initialize the database connection.");
+  }
+  const conn = globalForDb.conn ?? postgres(databaseUrl);
   if (process.env.NODE_ENV !== "production") globalForDb.conn = conn;
 
   return drizzle(conn, { schema });

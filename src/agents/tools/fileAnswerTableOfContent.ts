@@ -518,12 +518,12 @@ export const getFileAnswerAgentTool = ({
       }
 
       // Add usage for all models used
-      Object.entries(result.value.usage).forEach(([modelName, usage]) => {
+      for (const [modelName, usage] of Object.entries(result.value.usage)) {
         context.addUsage?.({
           usage,
           model: modelName,
         });
-      });
+      }
 
       return {
         answer: result.value.answer,

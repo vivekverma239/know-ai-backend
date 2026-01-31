@@ -492,12 +492,16 @@ export const processStructuredReport = async ({
     if (stepOutputs.finalReport && !reprocess) {
       finalReportOutput = stepOutputs.finalReport;
     } else {
+      const initialResearchOutput = stepOutputs.initialResearch;
+      if (!initialResearchOutput) {
+        throw new Error("Missing initial research output for final report generation.");
+      }
       finalReportOutput = await processFinalReport({
         taskDescription: outline.taskDescription,
         finalReportPrompt: prompts.finalReportPrompt,
         topic: report.topic,
         referencePeriod: report.referencePeriod || "",
-        initialResearchOutput: stepOutputs.initialResearch!,
+        initialResearchOutput,
         subQuestions: stepOutputs.subQuestionAnswer?.subQuestions,
         model: modelConfig.finalReport as MODELS | undefined,
       });

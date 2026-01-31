@@ -161,7 +161,10 @@ const MAX_LIMIT = 200;
 const clampLimit = (limit?: number) => Math.min(limit ?? 50, MAX_LIMIT);
 
 const applyPagination = <
-  T extends { limit: (value: number) => any; offset?: (value: number) => any },
+  T extends {
+    limit: (value: number) => unknown;
+    offset?: (value: number) => unknown;
+  },
 >(
   query: T,
   limit: number,
