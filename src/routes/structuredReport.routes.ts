@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 import { eq, desc, count, and, getTableColumns } from "drizzle-orm";
 import {
+    ModelConfig,
     structuredReportTemplate,
     structuredReports,
     userFile,
@@ -12,8 +13,6 @@ import { sendQstashMessage } from "@/service/qstash";
 import { getEmbeddings } from "@/ai-backend/embeddings";
 
 const structuredReportRoutes = async (fastify: FastifyInstance) => {
-    // --- Templates ---
-
     // Create template
     fastify.post(
         "/templates",
@@ -33,8 +32,9 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
                 }),
             },
             handler: async (request, reply) => {
-                const userId = request.user!.id;
-                const body = request.body as any;
+                const userId = request.user?.id;
+                if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+                const body = request.body as { title: string; taskDescription: string; prompts: { initialResearchPrompt: string; subQuestionsIdentificationPrompt: string; finalReportPrompt: string } };
                 const [template] = await getDb()
                     .insert(structuredReportTemplate)
                     .values({
@@ -86,8 +86,9 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
                 }),
             },
             handler: async (request, reply) => {
-                const userId = request.user!.id;
-                const body = request.body as any;
+                const userId = request.user?.id;
+                if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+                const body = request.body as { templateId: string; topic: string; referencePeriod?: string; modelConfig?: ModelConfig };
 
                 const [report] = await getDb()
                     .insert(structuredReports)
@@ -131,7 +132,7 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
                 params: Type.Object({ id: Type.String() }),
             },
             handler: async (request, reply) => {
-                const { id } = request.params as any;
+                const { id } = request.params as { id: string };
                 const report = await getDb().query.structuredReports.findFirst({
                     where: eq(structuredReports.id, id),
                 });
@@ -151,7 +152,8 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
                 tags: ["Structured Reports"],
             },
             handler: async (request, reply) => {
-                const userId = request.user!.id;
+                const userId = request.user?.id;
+                if (!userId) return reply.code(401).send({ error: "Unauthorized" });
                 const reports = await getDb()
                     .select({
                         ...getTableColumns(structuredReports),

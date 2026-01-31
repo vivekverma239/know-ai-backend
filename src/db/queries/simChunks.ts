@@ -11,7 +11,7 @@ import {
   notInArray,
   getTableColumns,
 } from "drizzle-orm";
-import { type Chunk } from "@/@types";
+import type { Chunk } from "@/@types";
 import { chunks, userFile, userFileChapter, userFileCluster } from "../schema";
 
 export type SimilarChunk = Omit<

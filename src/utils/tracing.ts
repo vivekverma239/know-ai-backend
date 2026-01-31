@@ -1,4 +1,4 @@
-import { trace, context, Span as OtelSpan, SpanStatusCode, Tracer } from "@opentelemetry/api";
+import { trace, context, type Span as OtelSpan, SpanStatusCode, type Tracer } from "@opentelemetry/api";
 import { logger, logError } from "@/utils/logger";
 import { getRequestId, getRequestContext } from "@/utils/requestContext";
 import type { TokenUsage } from "@/utils/asyncHook";
@@ -330,11 +330,11 @@ export const traceManager = TraceManager.getInstance();
  * }
  */
 export function Traced(operationName?: string) {
-  return function (
+  return (
     target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor
-  ) {
+  ) => {
     const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
     const targetWithConstructor = target as { constructor: { name: string } };
     const name = operationName || `${targetWithConstructor.constructor.name}.${propertyKey}`;
@@ -354,14 +354,14 @@ export function Traced(operationName?: string) {
 /**
  * Helper function to create a traced function wrapper
  */
-export function traced<T extends (...args: unknown[]) => Promise<unknown>>(
+export function traced<TArgs extends unknown[], TResult>(
   name: string,
-  fn: T,
+  fn: (...args: TArgs) => Promise<TResult>,
   metadata?: Record<string, unknown>
-): T {
-  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-    return traceManager.withSpan(name, async () => fn(...args), metadata);
-  }) as T;
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs): Promise<TResult> => {
+    return traceManager.withSpan<TResult>(name, async () => fn(...args), metadata);
+  };
 }
 
 /**

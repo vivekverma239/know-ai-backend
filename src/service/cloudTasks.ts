@@ -1,4 +1,4 @@
-import { CloudTasksClient, protos } from "@google-cloud/tasks";
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
 
 type CreateTaskParams = {
   queue: string;

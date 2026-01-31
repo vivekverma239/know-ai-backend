@@ -1,11 +1,11 @@
-import { CloudTasksClient, protos } from "@google-cloud/tasks";
-import {
-  type TaskQueueConfig,
-  type TaskOptions,
-  type TaskStatus,
-  type QueueStats,
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
+import type {
+  TaskQueueConfig,
+  TaskOptions,
+  TaskStatus,
+  QueueStats,
 } from "@/@types/taskQueue";
-import { err, ok, Result } from "neverthrow";
+import { err, ok, type Result } from "neverthrow";
 import { logger } from "@/utils/logger";
 
 type ITask = protos.google.cloud.tasks.v2.ITask;

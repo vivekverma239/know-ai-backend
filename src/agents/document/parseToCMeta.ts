@@ -1,4 +1,4 @@
-import { type ModelMessage, type TextPart } from "ai";
+import type { ModelMessage, TextPart } from "ai";
 import { z } from "zod";
 import _ from "lodash";
 import pLimit from "p-limit";
@@ -83,7 +83,7 @@ export const parseTocFromPageSummaries = async (
         phase: "parseTocFromPageSummaries",
     });
 
-    agentLogger.info(`📚 Starting TOC extraction`, {
+    agentLogger.info("📚 Starting TOC extraction", {
         totalPages: pageSummaries.length,
         batches: Math.ceil(pageSummaries.length / 50),
     });
@@ -177,7 +177,7 @@ You are an expert document analyst specializing in table of contents extraction.
                             reasoningLevel: "default",
                         });
                         if (response.isErr()) {
-                            agentLogger.error(`❌ Failed to extract TOC for batch`, {
+                            agentLogger.error("❌ Failed to extract TOC for batch", {
                                 batchStart: i,
                                 batchEnd: i + 50,
                                 error: response.error,
@@ -185,7 +185,7 @@ You are an expert document analyst specializing in table of contents extraction.
                             throw new Error("Failed to extract toc for batch");
                         }
 
-                        agentLogger.debug(`✅ TOC batch extracted`, {
+                        agentLogger.debug("✅ TOC batch extracted", {
                             batchStart: i,
                             batchEnd: i + 50,
                             sectionsFound: response.value.sections.length,
@@ -194,14 +194,14 @@ You are an expert document analyst specializing in table of contents extraction.
                         toc.push(...response.value.sections);
                         break;
                     } catch (error: unknown) {
-                        agentLogger.warn(`⚠️  TOC batch extraction retry`, {
+                        agentLogger.warn("⚠️  TOC batch extraction retry", {
                             batchStart: i,
                             retryCount: retryCount + 1,
                             error: error instanceof Error ? error.message : String(error),
                         });
                         retryCount++;
                         if (retryCount === 3) {
-                            agentLogger.error(`❌ TOC batch extraction failed after retries`, {
+                            agentLogger.error("❌ TOC batch extraction failed after retries", {
                                 batchStart: i,
                                 maxRetries: 3,
                             });
@@ -216,7 +216,7 @@ You are an expert document analyst specializing in table of contents extraction.
 
     const sortedToc = toc.sort((a, b) => a.pageStart - b.pageStart);
 
-    agentLogger.info(`✅ TOC extraction completed`, {
+    agentLogger.info("✅ TOC extraction completed", {
         totalSections: sortedToc.length,
         totalSubsections: sortedToc.reduce((sum, s) => sum + s.subsections.length, 0),
     });
@@ -304,7 +304,7 @@ export const parsePageSummaries = async (
                 text: `Here are images for pages ${start} to ${end}`,
             },
             ...(currentPages ?? [])
-                .map((page: PageText, index: number) => [
+                .flatMap((page: PageText, index: number) => [
                     {
                         type: "text",
                         text: `Page number: ${start + index}`,
@@ -313,10 +313,9 @@ export const parsePageSummaries = async (
                         type: "text",
                         text: `<page num="${start + index}">${page.text}</page>`,
                     } as TextPart,
-                ])
-                .flat(),
+                ]),
             ...(previousPages ?? [])
-                .map((page: PageText, index: number) => [
+                .flatMap((page: PageText, index: number) => [
                     {
                         type: "text",
                         text: `Page number: ${start - 10 + index}`,
@@ -325,8 +324,7 @@ export const parsePageSummaries = async (
                         type: "text",
                         text: `<page num="${start - 10 + index}">${page.text}</page>`,
                     } as TextPart,
-                ])
-                .flat(),
+                ]),
         ],
     });
 
@@ -358,7 +356,7 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
     const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
     const { totalPages, text } = await extractText(pdf);
 
-    agentLogger.info(`📖 Extracted text from PDF`, {
+    agentLogger.info("📖 Extracted text from PDF", {
         totalPages,
     });
 
@@ -375,7 +373,7 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
     const batchSize = 20; // smaller batch to limit memory
     const totalBatches = Math.ceil(totalPages / batchSize);
 
-    agentLogger.info(`📄 Starting PDF page parsing`, {
+    agentLogger.info("📄 Starting PDF page parsing", {
         totalPages,
         batchSize,
         totalBatches,
@@ -392,7 +390,7 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
                 const response = await parsePageSummaries(pages, start, end);
 
                 if (response.isErr()) {
-                    agentLogger.error(`❌ Failed to parse page summaries batch`, {
+                    agentLogger.error("❌ Failed to parse page summaries batch", {
                         batchStart: start,
                         batchEnd: end,
                         error: response.error,
@@ -401,7 +399,7 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
                 }
                 extractedPages.push(...response.value.pages);
                 completedBatches++;
-                agentLogger.info(`📊 Batch progress`, {
+                agentLogger.info("📊 Batch progress", {
                     completed: completedBatches,
                     total: totalBatches,
                     percentage: Math.round((completedBatches / totalBatches) * 100),
@@ -412,16 +410,16 @@ const parsePDFFromText = async (pdfBuffer: Buffer) => {
 
     await Promise.all(tasks);
     const missingPages = _.range(1, totalPages + 1).filter(
-        (page: any) => !extractedPages.some((p) => p.pageNumber === page),
+        (page: number) => !extractedPages.some((p) => p.pageNumber === page),
     );
     if (missingPages.length > 0) {
-        agentLogger.warn(`⚠️  Some pages were not parsed`, {
+        agentLogger.warn("⚠️  Some pages were not parsed", {
             missingPageCount: missingPages.length,
             missingPages,
         });
     }
 
-    agentLogger.info(`✅ PDF text parsing completed`, {
+    agentLogger.info("✅ PDF text parsing completed", {
         totalPages,
         parsedPages: extractedPages.length,
     });
@@ -435,7 +433,7 @@ export const parseMetadataFromPages = async (pages: ChunkPageSummary[]) => {
         phase: "parseMetadataFromPages",
     });
 
-    agentLogger.info(`📋 Starting metadata extraction`, {
+    agentLogger.info("📋 Starting metadata extraction", {
         totalPages: pages.length,
         batches: Math.ceil(pages.length / 200),
     });
@@ -491,8 +489,8 @@ export const parseMetadataFromPages = async (pages: ChunkPageSummary[]) => {
     }
 
     const allResponses = responses
-        .map((r: any) => (r.isOk() ? r.value : null))
-        .filter((r: any): r is DocumentMetadata => r !== null);
+        .map((r) => (r.isOk() ? r.value : null))
+        .filter((r): r is DocumentMetadata => r !== null);
 
     // Combine the responses
 
@@ -513,7 +511,7 @@ export const parseMetadataFromPages = async (pages: ChunkPageSummary[]) => {
             },
             {
                 role: "user",
-                content: allResponses.map((r: any) => JSON.stringify(r)).join("\n"),
+                content: allResponses.map((r) => JSON.stringify(r)).join("\n"),
             },
         ],
         schema: DocumentMetadataSchema,
@@ -521,13 +519,13 @@ export const parseMetadataFromPages = async (pages: ChunkPageSummary[]) => {
     });
 
     if (response.isErr()) {
-        agentLogger.error(`❌ Failed to combine metadata`, {
+        agentLogger.error("❌ Failed to combine metadata", {
             error: response.error,
         });
         throw new Error("Failed to extract metadata from pages");
     }
 
-    agentLogger.info(`✅ Metadata extraction completed`, {
+    agentLogger.info("✅ Metadata extraction completed", {
         title: response.value.title,
     });
 
@@ -542,46 +540,46 @@ export const parseToCMeta = async (
         phase: "parseToCMeta",
     });
 
-    agentLogger.info(`🚀 Starting document parsing`, {
+    agentLogger.info("🚀 Starting document parsing", {
         bufferSize: pdfBuffer.length,
     });
 
     return await withTokenTracking("parseToCMeta", async () => {
-        agentLogger.info(`📄 Parsing pages from document`);
+        agentLogger.info("📄 Parsing pages from document");
         const start = performance.now();
         const pages = await parsePDFFromText(pdfBuffer);
         const end = performance.now();
         const parsingPagesTime = end - start;
 
-        agentLogger.info(`✅ Pages parsed`, {
+        agentLogger.info("✅ Pages parsed", {
             pageCount: pages.length,
             timeMs: parsingPagesTime,
             timeSec: (parsingPagesTime / 1000).toFixed(2),
         });
 
-        agentLogger.info(`📋 Parsing metadata from pages`);
+        agentLogger.info("📋 Parsing metadata from pages");
         const metadata = await parseMetadataFromPages(pages);
         const end2 = performance.now();
         const parsingMetadataTime = end2 - end;
 
-        agentLogger.info(`✅ Metadata parsed`, {
+        agentLogger.info("✅ Metadata parsed", {
             title: metadata.title,
             timeMs: parsingMetadataTime,
             timeSec: (parsingMetadataTime / 1000).toFixed(2),
         });
 
-        agentLogger.info(`📚 Parsing table of contents`);
+        agentLogger.info("📚 Parsing table of contents");
         const toc = await parseTocFromPageSummaries(pages);
         const end3 = performance.now();
         const parsingTocTime = end3 - end2;
 
-        agentLogger.info(`✅ TOC parsed`, {
+        agentLogger.info("✅ TOC parsed", {
             sectionCount: toc.length,
             timeMs: parsingTocTime,
             timeSec: (parsingTocTime / 1000).toFixed(2),
         });
 
-        agentLogger.info(`🎉 Document parsing complete`, {
+        agentLogger.info("🎉 Document parsing complete", {
             totalTimeMs: end3 - start,
             totalTimeSec: ((end3 - start) / 1000).toFixed(2),
             pageCount: pages.length,

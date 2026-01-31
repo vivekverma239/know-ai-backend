@@ -20,7 +20,7 @@ import {
 } from "ai";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { err, ok, type Result } from "neverthrow";
-import { type z } from "zod";
+import type { z } from "zod";
 import { getTracer } from "@lmnr-ai/lmnr";
 
 const logger = initLogger({
@@ -240,7 +240,7 @@ export const generateTextWrapper = async ({
   if (messages[messages.length - 1]?.role === "assistant") {
     messages.push({
       role: "user",
-      content: `<system>No message from user, please send a message in continuation of the conversation and system message.</system>`,
+      content: "<system>No message from user, please send a message in continuation of the conversation and system message.</system>",
     });
   }
 
@@ -256,12 +256,13 @@ export const generateTextWrapper = async ({
   const providerOptions = getProviderOptions(model, reasoningLevel);
 
   // Start tracing span for this LLM call
+  const requestId = getRequestId();
   const span = traceManager.startSpan("llm:generateText", {
     model,
     functionName,
     userID,
     sessionID,
-    requestId: getRequestId(),
+    requestId,
     messageCount: messages.length,
     hasTools: !!tools,
   });
@@ -280,8 +281,8 @@ export const generateTextWrapper = async ({
           ...(sessionID && { sessionId: sessionID }),
           ...(lastMessageID && { messageId: lastMessageID }),
           ...(functionName && { functionName }),
+          ...(requestId && { requestId }),
           spanId: span.id,
-          requestId: getRequestId(),
         },
       },
       onStepFinish: (step) => {
@@ -293,10 +294,14 @@ export const generateTextWrapper = async ({
 
     // Record token usage in span
     if (response.usage) {
+      const promptTokens = response.usage.inputTokens ?? 0;
+      const completionTokens = response.usage.outputTokens ?? 0;
+      const totalTokens = response.usage.totalTokens ?? promptTokens + completionTokens;
+
       traceManager.recordTokenUsage(span.id, {
-        promptTokens: response.usage.promptTokens,
-        completionTokens: response.usage.completionTokens,
-        totalTokens: response.usage.totalTokens,
+        promptTokens,
+        completionTokens,
+        totalTokens,
         model,
         timestamp: new Date(),
         operationId: span.id,
@@ -307,15 +312,15 @@ export const generateTextWrapper = async ({
       try {
         const cost = await calculateUsageCost(
           model,
-          response.usage.promptTokens,
-          response.usage.completionTokens
+          promptTokens,
+          completionTokens
         );
         appLogger.info("LLM call completed with cost", {
           model,
           functionName,
-          promptTokens: response.usage.promptTokens,
-          completionTokens: response.usage.completionTokens,
-          totalTokens: response.usage.totalTokens,
+          promptTokens,
+          completionTokens,
+          totalTokens,
           cost: formatCost(cost),
           costUSD: cost,
           spanId: span.id,
@@ -374,9 +379,10 @@ export const generateObjectWrapper = async <T>({
   const llm = getLLM(model);
 
   // Start tracing span for this LLM call
+  const requestId = getRequestId();
   const span = traceManager.startSpan("llm:generateObject", {
     model,
-    requestId: getRequestId(),
+    requestId,
     messageCount: messages.length,
   });
 
@@ -394,8 +400,8 @@ export const generateObjectWrapper = async <T>({
           isEnabled: true,
           tracer: getTracer(),
           metadata: {
+            ...(requestId && { requestId }),
             spanId: span.id,
-            requestId: getRequestId(),
           },
         },
         experimental_repairText: ({ text }) => {
@@ -405,9 +411,8 @@ export const generateObjectWrapper = async <T>({
             const validation = schema.safeParse(data);
             if (validation.success) {
               return Promise.resolve(text);
-            } else {
-              return Promise.resolve(null);
             }
+              return Promise.resolve(null);
           } catch (error) {
             return Promise.resolve(null);
           }
@@ -416,10 +421,14 @@ export const generateObjectWrapper = async <T>({
 
       // Record token usage if available
       if (response.usage) {
+        const promptTokens = response.usage.inputTokens ?? 0;
+        const completionTokens = response.usage.outputTokens ?? 0;
+        const totalTokens = response.usage.totalTokens ?? promptTokens + completionTokens;
+
         traceManager.recordTokenUsage(span.id, {
-          promptTokens: response.usage.promptTokens,
-          completionTokens: response.usage.completionTokens,
-          totalTokens: response.usage.totalTokens,
+          promptTokens,
+          completionTokens,
+          totalTokens,
           model,
           timestamp: new Date(),
           operationId: span.id,
@@ -430,14 +439,14 @@ export const generateObjectWrapper = async <T>({
         try {
           const cost = await calculateUsageCost(
             model,
-            response.usage.promptTokens,
-            response.usage.completionTokens
+            promptTokens,
+            completionTokens
           );
           appLogger.info("LLM generateObject completed with cost", {
             model,
-            promptTokens: response.usage.promptTokens,
-            completionTokens: response.usage.completionTokens,
-            totalTokens: response.usage.totalTokens,
+            promptTokens,
+            completionTokens,
+            totalTokens,
             cost: formatCost(cost),
             costUSD: cost,
             spanId: span.id,
@@ -547,4 +556,3 @@ export const streamTextWrapper = async ({
   }
   return err(new Error("Failed to stream text"));
 };
-

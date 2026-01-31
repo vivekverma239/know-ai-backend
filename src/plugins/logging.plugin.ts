@@ -222,5 +222,5 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
 
 export default fp(loggingPlugin, {
   name: "logging-plugin",
-  fastify: "4.x",
+  fastify: "5.x",
 });

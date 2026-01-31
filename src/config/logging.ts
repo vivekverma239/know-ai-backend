@@ -73,7 +73,6 @@ if (!isDevelopment) {
   if (process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT) {
     loggerConfig.transport = {
       target: "pino/file",
-      level: logLevel,
       options: {
         destination: 1, // stdout - captured by Google Cloud Logging
       },
@@ -120,7 +119,6 @@ if (!isDevelopment) {
   else {
     loggerConfig.transport = {
       target: "pino/file",
-      level: logLevel,
       options: {
         destination: 1, // stdout
       },
@@ -135,7 +133,7 @@ if (!isDevelopment) {
 export const logRotationConfig = {
   frequency: process.env.LOG_ROTATION_FREQUENCY || "daily", // daily, hourly
   size: process.env.LOG_ROTATION_SIZE || "100m", // 100MB
-  maxFiles: parseInt(process.env.LOG_ROTATION_MAX_FILES || "30", 10), // Keep 30 days
+  maxFiles: Number.parseInt(process.env.LOG_ROTATION_MAX_FILES || "30", 10), // Keep 30 days
 };
 
 /**

@@ -23,7 +23,7 @@ export class ScraperService {
         this.apiKey = env.get("SCRAPER_SERVICE_API_KEY");
     }
 
-    private async fetch<T>(endpoint: string, body: any): Promise<T> {
+    private async fetch<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
         if (!this.baseUrl) {
             throw new Error("SCRAPER_SERVICE_URL is not defined");
         }

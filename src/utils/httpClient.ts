@@ -168,7 +168,7 @@ export class TracedHttpClient {
         // If we have retries left, continue to next iteration
         if (attemptCount <= retries) {
           // Exponential backoff: 1s, 2s, 4s, etc.
-          const backoffMs = Math.min(1000 * Math.pow(2, attemptCount - 1), 10000);
+          const backoffMs = Math.min(1000 * 2 ** (attemptCount - 1), 10000);
           await new Promise((resolve) => setTimeout(resolve, backoffMs));
           continue;
         }
@@ -234,7 +234,7 @@ export class TracedHttpClient {
       throw new Error(`Expected JSON response, got ${contentType}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   /**

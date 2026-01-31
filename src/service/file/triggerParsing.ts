@@ -1,10 +1,12 @@
 import { getStorage } from "../googleStorage";
 import { eq } from "drizzle-orm";
 import { getDb } from "../../db";
-import { userFile } from "../../db/schema";
+import { userFile, userFileToCMeta } from "../../db/schema";
 import { logger, logError } from "../../utils/logger";
 import { traceManager } from "../../utils/tracing";
 import { httpClient } from "../../utils/httpClient";
+import { StorageService } from "../storage";
+import { parseToCMeta } from "@/agents/document/parseToCMeta";
 
 export const parsePDF = async (fileId: string): Promise<void> => {
   return traceManager.withSpan(
@@ -279,4 +281,38 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
     },
     { fileId, operation: "parsePDFHeirarchialIndex" }
   );
+};
+
+
+export const parseToCMetaService = async (fileId: string): Promise<void> => {
+  const file = await getDb().query.userFile.findFirst({
+    where: eq(userFile.id, fileId),
+  });
+  if (!file) {
+    throw new Error("File not found");
+  }
+  const storage = new StorageService();
+  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const pdfBuffer = await storage.downloadFile(path);
+  const { result, tokenUsage } = await parseToCMeta(pdfBuffer);
+
+  // Save to db
+  await getDb()
+    .insert(userFileToCMeta)
+    .values({
+      fileId: file.id,
+      toc: result.toc,
+      metadata: result.metadata,
+      pages: result.pages,
+      tokenUsage: tokenUsage ?? null,
+    })
+    .onConflictDoUpdate({
+      target: userFileToCMeta.fileId,
+      set: {
+        toc: result.toc,
+        metadata: result.metadata,
+        pages: result.pages,
+        tokenUsage: tokenUsage ?? null,
+      },
+    });
 };

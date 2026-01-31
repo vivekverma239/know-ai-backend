@@ -43,7 +43,7 @@ const ingestionRoutes = async (fastify: FastifyInstance) => {
 
             try {
                 // Verify signature from QStash
-                const signature = (request.headers["upstash-signature"] ||
+                const signature = (request.headers["upstash-signature"] ??
                     request.headers["Upstash-Signature"]) as string | undefined;
 
                 if (!signature) {

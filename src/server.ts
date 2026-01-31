@@ -39,7 +39,7 @@ const start = async () => {
   await fastify.register(loggingPlugin, {
     logLevel: logLevel || "info",
     skipPaths: ["/api/v1/health", "/metrics", "/docs"],
-    slowRequestThreshold: parseInt(process.env.SLOW_REQUEST_THRESHOLD_MS || "5000", 10),
+    slowRequestThreshold: Number.parseInt(process.env.SLOW_REQUEST_THRESHOLD_MS || "5000", 10),
   });
 
   // Register global error handler

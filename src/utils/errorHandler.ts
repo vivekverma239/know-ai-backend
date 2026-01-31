@@ -12,8 +12,8 @@ export class AppError extends Error {
 
   constructor(
     message: string,
-    statusCode: number = 500,
-    isOperational: boolean = true,
+    statusCode = 500,
+    isOperational = true,
     context: Record<string, unknown> = {}
   ) {
     super(message);
@@ -51,7 +51,7 @@ export class ValidationError extends AppError {
 export class ExternalAPIError extends AppError {
   constructor(
     message: string,
-    statusCode: number = 502,
+    statusCode = 502,
     context: Record<string, unknown> = {}
   ) {
     super(message, statusCode, true, { ...context, errorType: "external_api" });
@@ -148,9 +148,20 @@ export function sanitizeErrorMessage(error: Error | AppError, isDevelopment: boo
 export function createErrorResponse(
   error: Error | AppError,
   requestId?: string,
-  isDevelopment: boolean = false
+  isDevelopment = false
 ): Record<string, unknown> {
-  const response: Record<string, unknown> = {
+  type ErrorResponse = {
+    error: {
+      message: string;
+      requestId: string;
+      type?: string;
+      name?: string;
+      stack?: string;
+      context?: unknown;
+    };
+  };
+
+  const response: ErrorResponse = {
     error: {
       message: sanitizeErrorMessage(error, isDevelopment),
       requestId: requestId || "unknown",
@@ -159,9 +170,13 @@ export function createErrorResponse(
 
   // Add error type if it's an AppError
   if (error instanceof AppError) {
+    const errorType =
+      typeof error.context.errorType === "string"
+        ? error.context.errorType
+        : "application_error";
     response.error = {
       ...response.error,
-      type: error.context.errorType || "application_error",
+      type: errorType,
     };
   }
 
@@ -249,12 +264,7 @@ export function asyncHandler<T>(
   handler: (request: FastifyRequest, reply: FastifyReply) => Promise<T>
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<T> => {
-    try {
       return await handler(request, reply);
-    } catch (error) {
-      // Let Fastify's error handler process it
-      throw error;
-    }
   };
 }
 

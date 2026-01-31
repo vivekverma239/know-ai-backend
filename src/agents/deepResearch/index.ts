@@ -81,7 +81,7 @@ export const chunkSearch = async ({
     metadata: {
       chunks: sortedChunks.slice(0, 10).map((c) => ({
         document: documents.find((d) => d.id === c.documentId)?.title,
-        content: c.content.slice(0, 100) + "...",
+        content: `${c.content.slice(0, 100)}...`,
       })),
     },
   });
@@ -113,7 +113,7 @@ export const processDeepSearchQuery = async ({
   };
   callback?.(queryExpansionStep);
 
-  logger.info(`Running chapter agent`);
+  logger.info("Running chapter agent");
 
   const responseCall = () =>
     observe(

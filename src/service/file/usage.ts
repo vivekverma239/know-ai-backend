@@ -1,5 +1,5 @@
 import { userFile } from "@/db/schema";
-import { type TokenUsage } from "@/@types/tokenUsage";
+import type { TokenUsage } from "@/@types/tokenUsage";
 import { mergeTokenUsage } from "@/utils/tokenUsage";
 import { getDb } from "@/db";
 import { eq } from "drizzle-orm";

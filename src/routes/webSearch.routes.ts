@@ -29,14 +29,19 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       },
       handler: async (request, reply) => {
         // added by auth plugin
-        const userId: string = request.user!.id;
-        const { query } = request.body;
-        const _requestedUserId = request.body.userId;
+        const _requestedUserId = request.user?.id;
         const _orgId = request.body.orgId;
+        const { query } = request.body;
+        if (!_requestedUserId) {
+          return reply.code(400).send({ message: "User ID is required" });
+        }
+        if (!_orgId) {
+          return reply.code(400).send({ message: "Org ID is required" });
+        }
 
         const task = await getDb()
           .insert(webSearchTask)
-          .values({ userId, query, status: "pending" })
+          .values({ userId: _requestedUserId, query, status: "pending" })
           .returning();
 
         if (task[0]) {
@@ -47,7 +52,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
             });
             logger.info("Web search task queued", {
               taskId: task[0].id,
-              userId,
+              userId: _requestedUserId,
             });
           } catch (error) {
             logger.error("Failed to queue web search task", { error });
@@ -82,14 +87,13 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       // added by auth plugin
-      const userId: string = request.user!.id;
       const { id } = request.params;
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
       const task = await getDb().query.webSearchTask.findFirst({
         where: eq(webSearchTask.id, id),
       });
-      if (!task || task.userId !== userId) {
+      if (!task || task.userId !== _requestedUserId) {
         return reply.code(404).send({ message: "Task not found" });
       }
       return reply.send(task);
@@ -107,11 +111,17 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       // added by auth plugin
-      const userId: string = request.user!.id;
+
       const _requestedUserId = request.query.userId;
       const _orgId = request.query.orgId;
+      if (!_requestedUserId) {
+        return reply.code(400).send({ message: "User ID is required" });
+      }
+      if (!_orgId) {
+        return reply.code(400).send({ message: "Org ID is required" });
+      }
       const tasks = await getDb().query.webSearchTask.findMany({
-        where: eq(webSearchTask.userId, userId),
+        where: eq(webSearchTask.userId, _requestedUserId),
         orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
       });
       return reply.send(tasks);
@@ -135,14 +145,13 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       },
       handler: async (request, reply) => {
         // added by auth plugin
-        const userId: string = request.user!.id;
         const { taskId } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
         const task = await getDb().query.webSearchTask.findFirst({
           where: eq(webSearchTask.id, taskId),
         });
-        if (!task || task.userId !== userId || task.status !== "failed") {
+        if (!task || task.userId !== _requestedUserId || task.status !== "failed") {
           return reply
             .code(400)
             .send({ message: "Task not eligible for retry" });
@@ -176,12 +185,12 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
         response: { 200: AgentResultSchema },
       },
       handler: async (request, reply) => {
-        const userId = request.user!.id;
+
         const { query } = request.body;
         const _requestedUserId = request.body.userId;
         const _orgId = request.body.orgId;
         const result = await webAgent(query, {
-          userId: userId,
+          userId: _requestedUserId,
           orgId: _orgId ?? "",
           sessionId: "direct-invocation",
         });

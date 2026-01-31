@@ -1,10 +1,11 @@
 import type { Subsection } from "@/@types/fileIndex";
 import type { MessageParts } from "@/@types/message";
 import type { PageSummary } from "@/@types/metadata";
-import type { TokenUsage } from "@/@types/tokenUsage";
+import type { TokenUsage as AsyncTokenUsage } from "@/utils/asyncHook";
 import type { LanguageModelUsage } from "ai";
+import type { TokenUsage } from "@/@types/tokenUsage";
 
-import { type MODELS } from "@/@types/llm";
+import type { MODELS } from "@/@types/llm";
 import type { Toc, DocumentMetadata, ChunkPageSummary } from "@/agents/document/parseToCMeta";
 import { relations, sql } from "drizzle-orm";
 import { index, pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
@@ -132,7 +133,7 @@ export const userFileToCMeta = createTable("user_file_to_c_meta", (d) => ({
   toc: d.jsonb().$type<Toc>(),
   metadata: d.jsonb().$type<DocumentMetadata>(),
   pages: d.jsonb().$type<ChunkPageSummary[]>(),
-  tokenUsage: d.jsonb().$type<TokenUsage>(),
+  tokenUsage: d.jsonb().$type<AsyncTokenUsage | null>().default(null),
   createdAt: d
     .timestamp({ withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)

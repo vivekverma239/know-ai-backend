@@ -50,8 +50,7 @@ export const parseCitations = async (
             if (!fileMatch) continue;
 
             const fileId = fileMatch[1]!;
-            const pageNumbers = fileMatch[2]!
-                .split(",")
+            const pageNumbers = fileMatch[2]?.split(",")
                 .map((p) => p.trim())
                 .filter((p) => p.length > 0)
                 .map((p) => Number(p))

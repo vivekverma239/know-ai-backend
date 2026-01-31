@@ -1,5 +1,5 @@
 import { Client } from "@upstash/qstash";
-import { type QstashMessage } from "@/@types/queue";
+import type { QstashMessage } from "@/@types/queue";
 
 export const qstashClient = new Client({
   token: process.env.QSTASH_TOKEN!,

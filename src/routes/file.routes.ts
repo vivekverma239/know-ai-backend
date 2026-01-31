@@ -108,11 +108,10 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       if (status && status !== "all")
         whereConditions.push(eq(userFile.status, status));
       if ((search?.trim?.() ?? "") !== "") {
-        const searchTerms = search!
-          .trim()
+        const searchTerms = search?.trim()
           .split(/\s+/)
           .filter((term) => term.length > 0);
-        if (searchTerms.length > 0) {
+        if (searchTerms && searchTerms.length > 0) {
           const searchConditions = searchTerms.map((term) => {
             const exactMatch = sql`(${userFile.name} ~* ${`\\b${term}\\b`})`;
             const partialMatch = sql`(${userFile.name} ILIKE ${`%${term}%`})`;
@@ -530,11 +529,10 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       },
     },
     handler: async (request, reply) => {
-      const user = request.user;
-      if (!user) {
+      const userId = request.user?.id;
+      if (!userId) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const userId: string = request.user!.id;
       const { fileId } = request.body;
       const storageService = getStorage();
       const signedUrl = await storageService.createUploadSignedUrl(
@@ -673,7 +671,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "File uploaded successfully and parsing started",
         });
       } catch (error) {
-        logger.error(`Error uploading file:`, { error });
+        logger.error("Error uploading file:", { error });
         return reply.code(400).send({
           error:
             error instanceof Error ? error.message : "Failed to upload file",
@@ -777,7 +775,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "Admin file uploaded successfully and parsing started",
         });
       } catch (error) {
-        logger.error(`Error uploading admin file:`, { error });
+        logger.error("Error uploading admin file:", { error });
         return reply.code(400).send({
           error:
             error instanceof Error

@@ -202,7 +202,7 @@ export const fileAnswerAgent = async ({
         // Clean file IDs (remove 'file_' prefix if present)
         const cleanFileIds = fileIds.map((id) => id.replace("file_", ""));
 
-        agentLogger.info(`🚀 Starting file answer agent`, {
+        agentLogger.info("🚀 Starting file answer agent", {
             queryLength: query.length,
             fileIds: cleanFileIds,
             fileCount: cleanFileIds.length,
@@ -232,7 +232,7 @@ Summary: ${fileInfo.documentSummary}
 
 This is a structured report. Use getStructuredReportContent tool to retrieve its full content.
 `;
-                } else {
+                }
                     const tocString = fileInfo.toc
                         .map((section, idx) => {
                             const subsections =
@@ -256,7 +256,6 @@ Summary: ${fileInfo.documentSummary}
 Table of Contents:
 ${tocString || "  - No table of contents available"}
 `;
-                }
             })
             .join("\n");
 
@@ -318,7 +317,7 @@ ${tocString || "  - No table of contents available"}
                         return `Error: Cannot fetch pages from file ${fileId}`;
                     }
 
-                    agentLogger.info(`📄 Fetching pages from file`, {
+                    agentLogger.info("📄 Fetching pages from file", {
                         fileId,
                         fileName: fileInfo.fileName,
                         pages,
@@ -383,7 +382,7 @@ ${tocString || "  - No table of contents available"}
                         return `Error: File ${fileId} is not a PDF file or not found`;
                     }
 
-                    agentLogger.info(`🔍 Similarity search in file`, {
+                    agentLogger.info("🔍 Similarity search in file", {
                         fileId,
                         fileName: fileInfo.fileName,
                         query: searchQuery,
@@ -434,7 +433,7 @@ ${tocString || "  - No table of contents available"}
                         return `Error: File ${fileId} is not a structured report or not found`;
                     }
 
-                    agentLogger.info(`📋 Getting structured report content`, {
+                    agentLogger.info("📋 Getting structured report content", {
                         fileId,
                         fileName: fileInfo.fileName,
                     });
@@ -472,7 +471,7 @@ ${tocSections}
             stopWhen: stepCountIs(maxIterations),
             onStepFinish: (step) => {
                 if (step.toolCalls) {
-                    agentLogger.debug(`🔧 Tool calls`, {
+                    agentLogger.debug("🔧 Tool calls", {
                         toolCallCount: step.toolCalls.length,
                         toolNames: step.toolCalls.map((tc) => tc.toolName),
                     });
@@ -490,7 +489,7 @@ ${tocSections}
             });
         }
 
-        agentLogger.info(`✅ Agent completed`, {
+        agentLogger.info("✅ Agent completed", {
             steps: response.steps.length,
             answerLength: response.text.length,
             filesProcessed: filesTocInfo.length,
@@ -502,11 +501,11 @@ ${tocSections}
             filesProcessed: filesTocInfo.length,
         });
     } catch (error) {
-        agentLogger.error(`❌ Agent error`, {
+        agentLogger.error("❌ Agent error", {
             error: error instanceof Error ? error.message : String(error),
         });
         return err(
-            "Error: " + (error instanceof Error ? error.message : "Unknown error"),
+            `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
     }
 };
@@ -625,7 +624,7 @@ export const getFileAnswerTool = ({
                     });
                     return result.value.answer;
                 }
-                return "Error: " + result.error;
+                return `Error: ${result.error}`;
             } catch (error) {
                 logger.error("Error in file answer", {
                     error: error instanceof Error ? error.message : String(error),

@@ -1,5 +1,5 @@
 import multipart from "@fastify/multipart";
-import { type FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 
 const multipartPlugin = async (fastify: FastifyInstance) => {
   await fastify.register(multipart, {

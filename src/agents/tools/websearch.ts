@@ -170,7 +170,7 @@ export const getPerplexitySearchTool = ({
 
                 return {
                     text: response.text.trim(),
-                    sources: (response as any).sources, // response.sources might be vendor specific, handled by wrapper? AI SDK generic response might not have it unless extended.
+                    sources: (response).sources, // response.sources might be vendor specific, handled by wrapper? AI SDK generic response might not have it unless extended.
                     // For now returning text. If provider support sources in output or metadata, we should extract.
                 };
             } catch (error) {

@@ -1,5 +1,5 @@
-import { type Message } from "@/@types/message";
-import { type Message as SQLMessage } from "@/@types";
+import type { Message } from "@/@types/message";
+import type { Message as SQLMessage } from "@/@types";
 
 import { getDb } from "..";
 import { messages, chatSession } from "../schema";

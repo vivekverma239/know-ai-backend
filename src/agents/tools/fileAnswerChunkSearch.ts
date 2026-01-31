@@ -117,10 +117,10 @@ const getFileInfo = async (fileIds: string[]): Promise<FileInfo[]> => {
     });
     return files.map((f) => ({
         id: f.id,
-        name: (f.metadata as any)?.title ?? f.name ?? "Untitled",
+        name: (f.metadata)?.title ?? f.name ?? "Untitled",
         type: f.type || "unknown",
         userId: f.userId,
-        metadata: f.metadata as any,
+        metadata: f.metadata as { title?: string; shortSummary?: string } | null,
     }));
 };
 
@@ -140,10 +140,10 @@ const getStructuredReportContent = async (
         if (!report) {
             return err("Report not found");
         }
-        return ok((report.stepOutputs as any)?.finalReport?.report ?? "");
+        return ok((report.stepOutputs)?.finalReport?.report ?? "");
     } catch (error) {
         return err(
-            "Error: " + (error instanceof Error ? error.message : "Unknown error"),
+            `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
     }
 };
@@ -371,7 +371,7 @@ export const fileAnswerChunkSearchAgent = async ({
                 messages: [
                     {
                         role: "system",
-                        content: `You are given a question by an expert financial analyst, your job is to rephrase the question and add additional context. Be concise.`,
+                        content: "You are given a question by an expert financial analyst, your job is to rephrase the question and add additional context. Be concise.",
                     },
                     { role: "user", content: query },
                 ],
@@ -417,7 +417,7 @@ export const fileAnswerChunkSearchAgent = async ({
         const fileContext = filesInfo
             .map(
                 (f) =>
-                    `- ${f.id}: ${(f.metadata as any)?.title ?? f.name ?? "Untitled"} (${f.type})`,
+                    `- ${f.id}: ${(f.metadata)?.title ?? f.name ?? "Untitled"} (${f.type})`,
             )
             .join("\n");
 
@@ -491,6 +491,6 @@ export const fileAnswerChunkSearchAgent = async ({
             iterations: response.steps.length,
         });
     } catch (error) {
-        return err("Error: " + (error instanceof Error ? error.message : "Unknown error"));
+        return err(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
 };

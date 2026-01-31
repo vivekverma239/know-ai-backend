@@ -73,8 +73,8 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
                     userId: userId,
                 } as unknown as SQLMessage;
 
-                const msgWithContent = message as any;
-                if (msgWithContent.content) {
+                const msgWithContent = message as FinAgentUIMessage;
+                if (msgWithContent.parts.length > 0) {
                     // simplified content extraction for syncMessages if needed
                 }
 
@@ -94,14 +94,14 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
 
             return reply.send(
                 result.toUIMessageStreamResponse({
-                    originalMessages: messages as any,
+                    originalMessages: messages as FinAgentUIMessage[],
                     onFinish: async ({ messages, responseMessage }) => {
                         // Final sync of messages handled in result.toUIMessageStreamResponse?
                         // Usually we want to save the assistant response.
                         // The result.toUIMessageStreamResponse handles it via onFinish callback messages.
                         const lastMessage = messages[messages.length - 1];
                         if (lastMessage) {
-                            await saveMessage(lastMessage as any);
+                            await saveMessage(lastMessage);
                         }
                     },
                 })

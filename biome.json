@@ -1,0 +1,20 @@
+{
+  "files": {
+    "include": ["src/**/*.ts", "test/**/*.ts"],
+    "ignore": ["dist", "node_modules", "data", "build", "coverage"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  }
+}

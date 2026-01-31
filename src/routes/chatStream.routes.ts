@@ -89,16 +89,16 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       const saveMessage = async (msgs: CoreMessageExt[]) => {
         const backendMessages: SQLMessage[] = msgs.map(
           (m: CoreMessageExt) =>
-            ({
-              id: m.id,
-              role: m.role,
-              metadata: m.metadata,
-              createdAt: new Date(),
-              updatedAt: null,
-              sessionId: sessionId,
-              parts: [],
-              userId: userId,
-            } as SQLMessage)
+          ({
+            id: m.id,
+            role: m.role,
+            metadata: m.metadata,
+            createdAt: new Date(),
+            updatedAt: null,
+            sessionId: sessionId,
+            parts: [],
+            userId: userId,
+          } as SQLMessage)
         );
         await syncMessages(backendMessages);
         if (backendMessages.length === 2) {
@@ -214,7 +214,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           //       responseMessages: res.response.messages,
           //     });
           //     const last = updated[updated.length - 1];
-          //     if (last) last.metadata = { agent: "knowledgeBase", model } as any;
+          //     if (last) last.metadata = { agent: "knowledgeBase", model } as { agent: "deepResearch" | "knowledgeBase"; model?: MODELS };
           //     await saveMessage(updated as CoreMessageExt[]);
           //   },
           messages: [

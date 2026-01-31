@@ -7,7 +7,7 @@ import {
     tool,
 } from "ai";
 import z from "zod";
-import { type TocSection } from "@/agents/document/parseToCMeta";
+import type { TocSection } from "@/agents/document/parseToCMeta";
 import { generateTextWrapper } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
 import { logger, createContextLogger } from "@/utils/logger";
@@ -49,7 +49,7 @@ export const quickAnswer = async ({
         phase: "quickAnswer",
     });
 
-    agentLogger.info(`📖 Starting quick answer`, {
+    agentLogger.info("📖 Starting quick answer", {
         query: query.substring(0, 100),
         documentTitle,
         pageCount: pages.length,
@@ -96,7 +96,7 @@ Document Summary: ${documentSummary}
 
     const end = performance.now();
 
-    agentLogger.info(`✅ Quick answer completed`, {
+    agentLogger.info("✅ Quick answer completed", {
         timeMs: end - start,
         timeSec: ((end - start) / 1000).toFixed(2),
         responseLength: response.isOk() ? response.value.text.length : 0,
@@ -221,14 +221,14 @@ const subPDFAnswerTool = (
                 pages: pagesUrl,
             });
             if (response.isErr()) {
-                toolLogger.error(`❌ Quick answer V2 failed`, {
+                toolLogger.error("❌ Quick answer V2 failed", {
                     query: query.substring(0, 100),
                     pages,
                 });
                 return "Error";
             }
 
-            toolLogger.debug(`✅ Quick answer V2 response`, {
+            toolLogger.debug("✅ Quick answer V2 response", {
                 responseLength: response.value?.text.length ?? 0,
                 responsePreview: response.value?.text.substring(0, 200) ?? "",
             });
@@ -269,7 +269,7 @@ const subPDFAnswerToolUsingSubPDF = (
                 usage: response.value?.totalUsage as LanguageModelUsage,
                 model: MODELS.GEMINI_2_5_FLASH_LITE,
             });
-            logger.info(`Sub PDF answer tool response`);
+            logger.info("Sub PDF answer tool response");
             return response.value?.text;
         },
     });
@@ -409,7 +409,7 @@ export const getAnswerFromDocUsingSubPDF = async ({
         phase: "getAnswerFromDocUsingSubPDF",
     });
 
-    agentLogger.info(`📚 Getting answer from doc using sub-PDF`, {
+    agentLogger.info("📚 Getting answer from doc using sub-PDF", {
         query: query.substring(0, 100),
         documentTitle,
         tocSections: toc.length,
@@ -465,12 +465,12 @@ export const getAnswerFromDocUsingSubPDF = async ({
     });
 
     if (!response.isErr()) {
-        agentLogger.info(`✅ Answer from sub-PDF completed`, {
+        agentLogger.info("✅ Answer from sub-PDF completed", {
             responseLength: response.value?.text.length ?? 0,
             totalUsage: response.value?.totalUsage,
         });
     } else {
-        agentLogger.error(`❌ Answer from sub-PDF failed`, {
+        agentLogger.error("❌ Answer from sub-PDF failed", {
             error: response.error,
         });
     }
@@ -506,7 +506,7 @@ export const getAnswerFromDocUsingParsedPDF = async ({
         phase: "getAnswerFromDocUsingParsedPDF",
     });
 
-    agentLogger.info(`📚 Getting answer from doc using parsed PDF`, {
+    agentLogger.info("📚 Getting answer from doc using parsed PDF", {
         query: query.substring(0, 100),
         documentTitle,
         tocSections: toc.length,
@@ -577,12 +577,12 @@ export const getAnswerFromDocUsingParsedPDF = async ({
     });
 
     if (!response.isErr()) {
-        agentLogger.info(`✅ Answer from parsed PDF completed`, {
+        agentLogger.info("✅ Answer from parsed PDF completed", {
             responseLength: response.value?.text.length ?? 0,
             totalUsage: response.value?.totalUsage,
         });
     } else {
-        agentLogger.error(`❌ Answer from parsed PDF failed`, {
+        agentLogger.error("❌ Answer from parsed PDF failed", {
             error: response.error,
         });
     }

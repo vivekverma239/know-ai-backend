@@ -81,8 +81,8 @@ export async function calculateModelCost(
         tokenlensModel,
         provider,
         cost: tokenCosts.totalTokenCostUSD,
-        inputTokens: usage.promptTokens,
-        outputTokens: usage.completionTokens,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
       });
 
       return tokenCosts.totalTokenCostUSD ?? 0;
@@ -94,7 +94,6 @@ export async function calculateModelCost(
         provider,
         error: error instanceof Error ? error.message : String(error),
       });
-      continue;
     }
   }
 
@@ -125,8 +124,8 @@ export async function getUsageDetails(
 
   for (const stepUsage of allStepUsage) {
     // Aggregate tokens
-    totalTokens.inputTokens += stepUsage.promptTokens ?? 0;
-    totalTokens.outputTokens += stepUsage.completionTokens ?? 0;
+    totalTokens.inputTokens += stepUsage.inputTokens ?? 0;
+    totalTokens.outputTokens += stepUsage.outputTokens ?? 0;
     totalTokens.totalTokens += stepUsage.totalTokens ?? 0;
 
     // Calculate cost for this step
@@ -138,8 +137,8 @@ export async function getUsageDetails(
       costBreakdown.push({
         model: stepUsage.model,
         cost: stepCost,
-        inputTokens: stepUsage.promptTokens ?? 0,
-        outputTokens: stepUsage.completionTokens ?? 0,
+        inputTokens: stepUsage.inputTokens ?? 0,
+        outputTokens: stepUsage.outputTokens ?? 0,
       });
     }
   }
@@ -160,8 +159,8 @@ export async function calculateUsageCost(
   completionTokens: number
 ): Promise<number> {
   const usage: LanguageModelUsage = {
-    promptTokens,
-    completionTokens,
+    inputTokens: promptTokens,
+    outputTokens: completionTokens,
     totalTokens: promptTokens + completionTokens,
   };
 

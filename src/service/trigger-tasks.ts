@@ -1,13 +1,13 @@
 import { scraperService } from "@/service/scraper";
 import { StorageService } from "@/service/storage";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { logger } from "@/utils/logger";
 
 const storage = new StorageService(); // Assuming instantiation needed
 
 // Scraping app API URL - can be overridden via environment variable
 const SCRAPING_APP_URL =
-    process.env.SCRAPING_APP_URL ||
+    process.env.SCRAPING_APP_URL ??
     "https://pdf-generator-api-z5z6k2buaq-de.a.run.app";
 
 /**
@@ -29,14 +29,14 @@ export const downloadPDFWithScraperService = async ({
         results.map(async (result, index) => {
             // index might not match if scraper returns results out of order or filtered?
 
-            const source = pdfSources.find(s => s.url === result.url) || pdfSources[index];
+            const source = pdfSources.find(s => s.url === result.url) ?? pdfSources[index];
 
             if (!result.success || !result.downloadUrl) {
                 return {
-                    id: source!.fileId,
+                    id: source?.fileId,
                     storagePath: "",
                     url: result.url,
-                    error: result.error || "Failed to scrape PDF",
+                    error: result.error ?? "Failed to scrape PDF",
                 };
             }
 
@@ -47,7 +47,7 @@ export const downloadPDFWithScraperService = async ({
                 const buffer = await response.arrayBuffer();
 
                 // Upload to our storage
-                const storagePath = `web-search/pdfs/${source!.fileId}.pdf`;
+                const storagePath = `web-search/pdfs/${source?.fileId}.pdf`;
                 await storage.uploadFile({
                     data: Buffer.from(buffer),
                     path: storagePath,
@@ -55,7 +55,7 @@ export const downloadPDFWithScraperService = async ({
                 });
 
                 return {
-                    id: source!.fileId,
+                    id: source?.fileId,
                     storagePath: storagePath,
                     url: result.url,
                 };
@@ -64,7 +64,7 @@ export const downloadPDFWithScraperService = async ({
                     error: String(error),
                 });
                 return {
-                    id: source!.fileId,
+                    id: source?.fileId,
                     storagePath: "",
                     url: result.url,
                     error: String(error),
@@ -96,7 +96,7 @@ export const urlToMarkdownWithScraperService = async ({
                     id: "",
                     storagePath: "",
                     url: result.url,
-                    error: result.error || "Failed to scrape markdown",
+                    error: result.error ?? "Failed to scrape markdown",
                 };
             }
 
@@ -180,7 +180,7 @@ export const downloadPDFTask = async ({
             const result = await response.json() as { success: boolean; error?: string; fileId: string; storagePath: string; url: string };
 
             if (!result.success) {
-                throw new Error(result.error || "Failed to download PDF");
+                throw new Error(result.error ?? "Failed to download PDF");
             }
 
             return {
@@ -246,7 +246,7 @@ export const urlToMarkdownTask = async ({ urls }: { urls: string[] }) => {
             const result = await response.json() as { success: boolean; error?: string; urlHash: string; storagePath: string; url: string };
 
             if (!result.success) {
-                throw new Error(result.error || "Failed to convert URL to markdown");
+                throw new Error(result.error ?? "Failed to convert URL to markdown");
             }
 
             return {

@@ -42,7 +42,7 @@ export const getFileAnswerTool = (
             });
 
             try {
-                toolLogger.info(`📖 File answer query`, {
+                toolLogger.info("📖 File answer query", {
                     fileId,
                     query: query.substring(0, 100),
                 });
@@ -53,7 +53,7 @@ export const getFileAnswerTool = (
                     where: eq(userFile.id, fileIdWithoutFile),
                 });
                 if (!toc) {
-                    toolLogger.warn(`⚠️  Table of Contents not found`, { fileId });
+                    toolLogger.warn("⚠️  Table of Contents not found", { fileId });
                     return "Error: Table of Contents not found";
                 }
                 if (!file) {
@@ -81,7 +81,7 @@ export const getFileAnswerTool = (
                     query,
                     documentTitle: toc?.metadata?.title ?? "",
                     documentSummary: toc?.metadata?.summary ?? "",
-                    toc: (toc?.toc as any)?.sections ?? [],
+                    toc: (toc?.toc)?.sections ?? [],
                     getPageContentFn: getPageContent,
                     similaritySearchChunksFn: similaritySearchChunksFn,
                     addUsage: addUsage,
@@ -89,7 +89,7 @@ export const getFileAnswerTool = (
                 });
 
                 if (answer.isErr()) {
-                    return "Error: " + answer.error.message;
+                    return `Error: ${answer.error.message}`;
                 }
                 addUsage?.({
                     usage: answer.value.totalUsage,
@@ -98,7 +98,7 @@ export const getFileAnswerTool = (
 
                 return answer.value.text;
             } catch (error) {
-                toolLogger.error(`❌ Error in file answer`, {
+                toolLogger.error("❌ Error in file answer", {
                     error: error instanceof Error ? error.message : String(error),
                     fileId,
                     query: query.substring(0, 100),
@@ -127,9 +127,9 @@ export const getFileSearchTool = (userId: string, orgId: string) => {
             });
 
             try {
-                toolLogger.info(`🔍 File search query`, { query });
+                toolLogger.info("🔍 File search query", { query });
                 const files = await similaritySearchDocuments({ query, userId, orgId });
-                toolLogger.debug(`📄 Files found`, {
+                toolLogger.debug("📄 Files found", {
                     count: files.length,
                     fileIds: files.map((f) => `file_${f.id}`),
                 });
@@ -139,7 +139,7 @@ export const getFileSearchTool = (userId: string, orgId: string) => {
                     summary: file.summary,
                 }));
             } catch (error) {
-                toolLogger.error(`❌ Error in file search`, {
+                toolLogger.error("❌ Error in file search", {
                     error: error instanceof Error ? error.message : String(error),
                     query,
                 });
@@ -150,7 +150,10 @@ export const getFileSearchTool = (userId: string, orgId: string) => {
 };
 
 export const prepareSectionSummary = async (
-    section: any,
+    section: {
+        title: string;
+        sectionOutline: string;
+    },
     report: {
         title: string;
         sections: {
@@ -165,7 +168,7 @@ export const prepareSectionSummary = async (
         phase: "prepareSectionSummary",
     });
 
-    agentLogger.info(`📝 Preparing section summary`, {
+    agentLogger.info("📝 Preparing section summary", {
         sectionTitle: section.title,
         reportTitle: report.title,
         sectionCount: report.sections.length,
@@ -249,14 +252,14 @@ Remember: Your goal is to create a comprehensive, well-researched report section
     });
 
     if (answer.isErr()) {
-        agentLogger.error(`❌ Error preparing section summary`, {
+        agentLogger.error("❌ Error preparing section summary", {
             error: answer.error,
             sectionTitle: section.title,
         });
         return err(answer.error);
     }
 
-    agentLogger.info(`✅ Section summary prepared`, {
+    agentLogger.info("✅ Section summary prepared", {
         answerLength: answer.value.text.length,
         answerPreview: answer.value.text.substring(0, 200),
         steps: answer.value.steps.length,
@@ -268,7 +271,7 @@ Remember: Your goal is to create a comprehensive, well-researched report section
             toolCalls: step.toolCalls,
             toolResults: step.toolResults,
             content: step.text,
-            reasoning: (step as any).reasoning,
+            reasoning: step.reasoning,
             finishReason: step.finishReason,
             usage: step.usage,
             text: step.text,

@@ -3,6 +3,11 @@ import {
     streamText,
     type UIMessage,
     type LanguageModelUsage,
+    type CoreMessage,
+    convertToModelMessages,
+    type StepResult,
+    ToolSet,
+    stepCountIs,
 } from "ai";
 import { v4 as uuidv4 } from "uuid";
 import type { ToolContext } from "./tools/toolContext";
@@ -92,20 +97,17 @@ export const finAgent = async ({
         userId: context.userId,
         sessionId: context.sessionId,
         orgId: context.orgId,
-        addUsage: (usage: any) => {
+        addUsage: (addUsage: { usage: LanguageModelUsage; model: string }) => {
             // Implement usage tracking callback
-            agentLogger.debug("Usage update", usage);
+            agentLogger.debug("Usage update", addUsage);
         },
-        saveMessage: async (msg: any) => {
-            // Implement save message callback
-        }
-    } as any as ToolContext;
+    };
 
     const systemPrompt = getFinAgentPrompt({ webSearchEnabled: webSearch });
 
     const stream = streamText({
         model: getLLM(model),
-        messages: messages.map((m: any) => ({ role: m.role, content: m.content }) as any), // Cast to any or CoreMessage
+        messages: convertToModelMessages(messages),
         system: systemPrompt,
         tools: {
             fileSearchAgent: fileSearchAgentAsTool({ context: toolContext }),
@@ -123,16 +125,12 @@ export const finAgent = async ({
             fileStatusTool: getFileStatusTool({ context: toolContext }),
             ...getTodoListTools({ context: toolContext }),
         },
-        maxSteps: 15,
-        onStepFinish: async (step: any) => {
-            // Log steps
-            agentLogger.debug("Step finished", { step });
-        },
+        stopWhen: stepCountIs(15),
         experimental_telemetry: {
             isEnabled: true,
             tracer: getTracer(),
         }
-    } as any);
+    });
 
     return stream;
 };

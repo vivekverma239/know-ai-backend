@@ -10,7 +10,7 @@ import {
 } from "ai";
 import { getLLM } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
-import fs from "fs";
+import fs from "node:fs";
 import plimit from "p-limit";
 
 interface SplitPDFOptions {
@@ -172,7 +172,7 @@ export const parseTOC = async (doc: Buffer) => {
       },
       {
         type: "text",
-        text: `Here are previous 10 pages of the document for additional context`,
+        text: "Here are previous 10 pages of the document for additional context",
       },
     ] as (TextPart | ImagePart | FilePart)[];
 

@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ToolContext } from "./toolContext";
-import { bullAddFiles, getFileStatuses } from "@/service/files";
+import { bulkAddFiles, getFileStatuses } from "@/service/files";
 import { logger } from "@/utils/logger";
 
 export const getBulkFileIndexingTool = ({
@@ -49,7 +49,7 @@ export const getBulkFileIndexingTool = ({
             }[];
         }) => {
             try {
-                await bullAddFiles({
+                await bulkAddFiles({
                     pdfs,
                     webArticles,
                     userId: context.userId,

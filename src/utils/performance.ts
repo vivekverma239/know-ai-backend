@@ -6,14 +6,14 @@ import { traceManager } from "@/utils/tracing";
  * Operations taking longer than this will be logged as warnings
  */
 const SLOW_OPERATION_THRESHOLD =
-  parseInt(process.env.SLOW_OPERATION_THRESHOLD_MS || "5000", 10);
+  Number.parseInt(process.env.SLOW_OPERATION_THRESHOLD_MS || "5000", 10);
 
 /**
  * Critical operation threshold in milliseconds
  * Operations taking longer than this will be logged as errors
  */
 const CRITICAL_OPERATION_THRESHOLD =
-  parseInt(process.env.CRITICAL_OPERATION_THRESHOLD_MS || "30000", 10);
+  Number.parseInt(process.env.CRITICAL_OPERATION_THRESHOLD_MS || "30000", 10);
 
 /**
  * Measure and log operation duration
@@ -94,11 +94,11 @@ export async function timed<T>(
  * }
  */
 export function Timed(operationName?: string, slowThreshold?: number) {
-  return function (
+  return (
     target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor
-  ) {
+  ) => {
     const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
     const name = operationName || `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`;
     const threshold = slowThreshold || SLOW_OPERATION_THRESHOLD;
@@ -217,7 +217,7 @@ class PerformanceMetrics {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
     }
-    this.metrics.get(name)!.push(value);
+    this.metrics.get(name)?.push(value);
 
     // Keep only last 1000 measurements to avoid memory issues
     const values = this.metrics.get(name)!;

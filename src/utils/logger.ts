@@ -1,6 +1,6 @@
 import pino from "pino";
-import { AsyncLocalStorage } from "async_hooks";
-import process from "process";
+import { AsyncLocalStorage } from "node:async_hooks";
+import process from "node:process";
 
 // Create async storage for context
 const asyncStorage = new AsyncLocalStorage<Map<string, unknown>>();

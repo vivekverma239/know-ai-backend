@@ -24,7 +24,7 @@ import {
     processIndividualSubQuestion,
 } from "./subquestionProcessor";
 import { createContextLogger } from "@/utils/logger";
-import { parseCitations } from "@/utils/citation";
+import { parseSources } from "@/service/citations";
 
 export const initialResearchOutputSchema = z.object({
     researchOutput: z.string(),
@@ -74,12 +74,12 @@ const db = getDb();
 
 // Simple retry helper
 async function executeWithRetries<T>(fn: () => Promise<T>, label: string, retries = 3): Promise<T> {
-    let lastError: any;
+    let lastError: Error | undefined;
     for (let i = 0; i < retries; i++) {
         try {
             return await fn();
         } catch (error) {
-            lastError = error;
+            lastError = error as Error;
         }
     }
     throw lastError;
@@ -318,7 +318,7 @@ const persistStepOutput = async (
     stepOutputs: Partial<StepOutputs>,
     usage?: Record<string, LanguageModelUsage>,
 ) => {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
         stepOutputs: stepOutputs,
     };
 
@@ -391,11 +391,11 @@ export const processStructuredReport = async ({
     });
     if (!outline) throw new Error("Report template not found");
 
-    const prompts = outline.prompts as any;
-    const modelConfig = (report.modelConfig as any) ?? {};
+    const prompts = outline.prompts as Record<string, string>;
+    const modelConfig = (report.modelConfig) ?? {};
 
-    const stepOutputs: Partial<StepOutputs> = (report.stepOutputs as any) || {};
-    const usage: Record<string, LanguageModelUsage> = (report.usage as any) ?? {};
+    const stepOutputs: Partial<StepOutputs> = (report.stepOutputs) || {};
+    const usage: Record<string, LanguageModelUsage> = (report.usage) ?? {};
 
     const aggregateUsage = (newUsage: Record<string, LanguageModelUsage>) => {
         for (const [m, mu] of Object.entries(newUsage)) {
@@ -409,7 +409,7 @@ export const processStructuredReport = async ({
 
     try {
         // Step 1: Initial Research
-        let initialResearchOutput: any;
+        let initialResearchOutput: InitialResearchOutput & { usage?: Record<string, LanguageModelUsage> };
         if (stepOutputs.initialResearch && !reprocess) {
             initialResearchOutput = stepOutputs.initialResearch;
         } else {
@@ -420,15 +420,15 @@ export const processStructuredReport = async ({
                 referencePeriod: report.referencePeriod || "",
                 userId: report.userId,
                 orgId: "",
-                model: modelConfig.initialResearch || MODELS.GROK_CODE_FAST_1,
+                model: modelConfig.initialResearch as MODELS | undefined,
             });
             stepOutputs.initialResearch = { researchOutput: initialResearchOutput.researchOutput };
-            aggregateUsage(initialResearchOutput.usage);
+            aggregateUsage(initialResearchOutput.usage ?? {});
             await persistStepOutput(reportId, stepOutputs, usage);
         }
 
         // Step 2: Sub-questions identification
-        let subQuestionsOutput: any;
+        let subQuestionsOutput: SubQuestionsIdentificationOutput & { usage?: Record<string, LanguageModelUsage> };
         if (stepOutputs.subQuestionsIdentification && !reprocess) {
             subQuestionsOutput = stepOutputs.subQuestionsIdentification;
         } else {
@@ -438,10 +438,10 @@ export const processStructuredReport = async ({
                 subQuestionsIdentificationPrompt: prompts.subQuestionsIdentificationPrompt,
                 topic: report.topic,
                 referencePeriod: report.referencePeriod || "",
-                model: modelConfig.subQuestionsIdentification || MODELS.GROK_CODE_FAST_1,
+                model: modelConfig.subQuestionsIdentification as MODELS | undefined,
             });
             stepOutputs.subQuestionsIdentification = { subQuestions: subQuestionsOutput.subQuestions };
-            aggregateUsage(subQuestionsOutput.usage);
+            aggregateUsage(subQuestionsOutput.usage ?? {});
             await persistStepOutput(reportId, stepOutputs, usage);
         }
 
@@ -465,7 +465,7 @@ export const processStructuredReport = async ({
                         referencePeriod: report.referencePeriod || "",
                         userId: report.userId,
                         orgId: "",
-                        model: modelConfig.subQuestionAnswer || MODELS.GROK_CODE_FAST_1,
+                        model: modelConfig.subQuestionAnswer as MODELS | undefined,
                     })
                     : await processIndividualSubQuestion({
                         taskDescription: outline.taskDescription,
@@ -474,12 +474,12 @@ export const processStructuredReport = async ({
                         referencePeriod: report.referencePeriod || "",
                         userId: report.userId,
                         orgId: "",
-                        model: modelConfig.subQuestionAnswer || MODELS.GROK_CODE_FAST_1,
+                        model: modelConfig.subQuestionAnswer as MODELS | undefined,
                     });
 
                 aggregateUsage(answer.usage);
                 stepOutputs.subQuestionAnswer!.subQuestions = [
-                    ...stepOutputs.subQuestionAnswer!.subQuestions,
+                    ...(stepOutputs.subQuestionAnswer?.subQuestions ?? []),
                     answer
                 ];
                 await persistStepOutput(reportId, stepOutputs, usage);
@@ -490,7 +490,7 @@ export const processStructuredReport = async ({
         await Promise.all(tasks);
 
         // Step 4: Final report
-        let finalReportOutput: any;
+        let finalReportOutput: FinalReportOutput & { usage?: Record<string, LanguageModelUsage> };
         if (stepOutputs.finalReport && !reprocess) {
             finalReportOutput = stepOutputs.finalReport;
         } else {
@@ -500,24 +500,24 @@ export const processStructuredReport = async ({
                 topic: report.topic,
                 referencePeriod: report.referencePeriod || "",
                 initialResearchOutput: stepOutputs.initialResearch!,
-                subQuestions: stepOutputs.subQuestionAnswer!.subQuestions,
-                model: modelConfig.finalReport || MODELS.GROK_CODE_FAST_1,
+                subQuestions: stepOutputs.subQuestionAnswer?.subQuestions,
+                model: modelConfig.finalReport as MODELS | undefined,
             });
             stepOutputs.finalReport = { report: finalReportOutput.report };
-            aggregateUsage(finalReportOutput.usage);
+            aggregateUsage(finalReportOutput.usage ?? {});
             await persistStepOutput(reportId, stepOutputs, usage);
         }
 
         // Finalize
         const meta = await getReportTitleAndSummary(finalReportOutput.report);
-        const citations = await parseCitations(finalReportOutput.report);
+        const sources = await parseSources(finalReportOutput.report);
 
         await db.update(structuredReports)
             .set({
                 status: "completed",
                 finalOutput: finalReportOutput.report,
                 metadata: meta,
-                sources: citations as any,
+                sources: sources,
             })
             .where(eq(structuredReports.id, reportId));
 

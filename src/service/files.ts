@@ -6,8 +6,8 @@ import { getLLM } from "@/ai-backend/llm";
 import { MODELS } from "@/@types/llm";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { parsePDF } from "./pdfParsing";
 import { and, eq, inArray } from "drizzle-orm";
+import { parsePDF } from "./file/triggerParsing";
 
 const db = getDb();
 
@@ -64,7 +64,7 @@ const generateSummaryAndMetadata = async (content: string) => {
     return { metadata };
 };
 
-export const bullAddFiles = async ({
+export const bulkAddFiles = async ({
     pdfs,
     webArticles,
     userId,
@@ -100,7 +100,7 @@ export const bullAddFiles = async ({
         const pdfBuffer = await storageService.downloadFile(pdf.storagePath);
         await storageService.uploadFile({
             data: pdfBuffer,
-            path: `files/${userId}/${files[index]!.id}/${files[index]!.id}.pdf`,
+            path: `files/${userId}/${files[index]?.id}/${files[index]?.id}.pdf`,
         });
         index++;
     }

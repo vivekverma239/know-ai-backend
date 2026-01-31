@@ -46,6 +46,10 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
             }),
             requestId: Type.String(),
           }),
+          500: Type.Object({
+            error: Type.String(),
+            requestId: Type.String(),
+          }),
         },
       },
     },
@@ -112,7 +116,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
         return reply.send({
           summary,
           totals,
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       } catch (error) {
         logError(error, {
@@ -122,7 +126,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         return reply.code(500).send({
           error: "Failed to retrieve token usage summary",
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       }
     }
@@ -154,6 +158,10 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
                 requestCount: Type.Number(),
               })
             ),
+            requestId: Type.String(),
+          }),
+          500: Type.Object({
+            error: Type.String(),
             requestId: Type.String(),
           }),
         },
@@ -204,7 +212,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         return reply.send({
           users: users.filter((u) => u.userId !== null),
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       } catch (error) {
         logError(error, {
@@ -214,7 +222,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         return reply.code(500).send({
           error: "Failed to retrieve token usage by user",
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       }
     }
@@ -247,6 +255,10 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
                 avgTokensPerCall: Type.Number(),
               })
             ),
+            requestId: Type.String(),
+          }),
+          500: Type.Object({
+            error: Type.String(),
             requestId: Type.String(),
           }),
         },
@@ -298,7 +310,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         return reply.send({
           operations,
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       } catch (error) {
         logError(error, {
@@ -308,7 +320,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         return reply.code(500).send({
           error: "Failed to retrieve token usage by operation",
-          requestId: requestId || "unknown",
+          requestId: requestId ?? "unknown",
         });
       }
     }

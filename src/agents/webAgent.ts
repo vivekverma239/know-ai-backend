@@ -2,7 +2,7 @@ import { getLLM } from "@/ai-backend/llm";
 import { generateText, stepCountIs } from "ai";
 import { MODELS } from "@/@types/llm";
 import { parseJson } from "@/utils/parseJson";
-import { type GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createContextLogger } from "@/utils/logger";
 import { getWebSearchTool, getFirecrawlScrapeTool, getWebsiteContentTool } from "./tools/websearch";
 import type { ToolContext } from "./tools/toolContext";
@@ -121,7 +121,7 @@ export const webAgent = async (query: string, context: ToolContext) => {
     // Use a capable model
     const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
 
-    agentLogger.info(`🔍 Starting web search`, {
+    agentLogger.info("🔍 Starting web search", {
         query: query.substring(0, 100),
         model: modelToUse,
     });
@@ -140,13 +140,13 @@ export const webAgent = async (query: string, context: ToolContext) => {
 
         },
         onStepFinish: (step) => {
-            agentLogger.debug(`🤔 Step finished`, {
+            agentLogger.debug("🤔 Step finished", {
                 reasoning: step.reasoning,
                 hasToolCalls: !!step.toolCalls,
                 toolCallCount: step.toolCalls?.length ?? 0,
             });
             if (step.toolCalls) {
-                agentLogger.debug(`🔧 Tool calls`, {
+                agentLogger.debug("🔧 Tool calls", {
                     toolCallCount: step.toolCalls.length,
                     toolNames: step.toolCalls.map((tc) => tc.toolName),
                 });
@@ -163,7 +163,7 @@ export const webAgent = async (query: string, context: ToolContext) => {
         temperature: 1,
     });
 
-    agentLogger.debug(`💰 Token usage`, {
+    agentLogger.debug("💰 Token usage", {
         usage: response.usage,
     });
 
@@ -197,7 +197,7 @@ export const webAgent = async (query: string, context: ToolContext) => {
     // Replace json with markdown code block
     const helpfulText = response.text.replace(/```json\s*([\s\S]*?)\s*```/, "");
 
-    agentLogger.info(`✅ Web search completed`, {
+    agentLogger.info("✅ Web search completed", {
         query: query.substring(0, 100),
         sourceCount: sources?.sources?.length ?? 0,
         sources: sources?.sources?.map((s) => ({
@@ -246,7 +246,7 @@ export const webAgentComplex = async (query: string, context: ToolContext) => {
 
     const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
 
-    agentLogger.info(`🔬 Starting complex web search`, {
+    agentLogger.info("🔬 Starting complex web search", {
         query: query.substring(0, 100),
         model: modelToUse,
     });
@@ -273,12 +273,12 @@ export const webAgentComplex = async (query: string, context: ToolContext) => {
         }
     }
 
-    agentLogger.debug(`🤔 Reasoning`, {
+    agentLogger.debug("🤔 Reasoning", {
         reasoning: response.reasoning,
     });
 
     if (!subtasks) {
-        agentLogger.warn(`⚠️  No subtasks identified`, {
+        agentLogger.warn("⚠️  No subtasks identified", {
             query: query.substring(0, 100),
             responsePreview: response.text.substring(0, 200),
         });
@@ -288,7 +288,7 @@ export const webAgentComplex = async (query: string, context: ToolContext) => {
         };
     }
 
-    agentLogger.info(`📋 Subtasks identified`, {
+    agentLogger.info("📋 Subtasks identified", {
         subtaskCount: subtasks.subtasks.length,
         subtasks: subtasks.subtasks,
     });
@@ -296,10 +296,9 @@ export const webAgentComplex = async (query: string, context: ToolContext) => {
     const allResources = (
         await Promise.all(subtasks.subtasks.map((subtask) => webAgent(subtask, context)))
     )
-        .map((resource) => resource.sources)
-        .flat();
+        .flatMap((resource) => resource.sources);
 
-    agentLogger.info(`✅ Complex web search completed`, {
+    agentLogger.info("✅ Complex web search completed", {
         query: query.substring(0, 100),
         subtaskCount: subtasks.subtasks.length,
         totalResources: allResources.length,

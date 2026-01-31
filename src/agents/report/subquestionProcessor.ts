@@ -39,7 +39,7 @@ export const processIndividualSubQuestion = async ({
         question: subQuestion.question.substring(0, 80),
     });
 
-    agentLogger.info(`💡 Processing sub-question (file agent method)`, {
+    agentLogger.info("💡 Processing sub-question (file agent method)", {
         question: subQuestion.question,
         documentIds: subQuestion.documentsIds,
         documentCount: subQuestion.documentsIds.length,
@@ -90,7 +90,7 @@ ${COMMON_CITATION_PROMPT}`;
         });
 
         if (result.isErr()) {
-            agentLogger.error(`❌ Error processing sub-question`, {
+            agentLogger.error("❌ Error processing sub-question", {
                 error: result.error,
                 question: subQuestion.question,
             });
@@ -104,13 +104,13 @@ ${COMMON_CITATION_PROMPT}`;
             };
         }
 
-        agentLogger.info(`✅ Sub-question answered`, {
+        agentLogger.info("✅ Sub-question answered", {
             answerLength: result.value.answer.length,
             answerPreview: result.value.answer.substring(0, 200),
             filesProcessed: result.value.filesProcessed,
         });
 
-        agentLogger.debug(`📊 Sub-question usage`, {
+        agentLogger.debug("📊 Sub-question usage", {
             usage: result.value.usage,
         });
 
@@ -121,7 +121,7 @@ ${COMMON_CITATION_PROMPT}`;
             usage: result.value.usage,
         };
     } catch (error) {
-        agentLogger.error(`❌ Error processing sub-question`, {
+        agentLogger.error("❌ Error processing sub-question", {
             error: error instanceof Error ? error.message : String(error),
             question: subQuestion.question,
         });
@@ -168,7 +168,7 @@ export const processIndividualSubQuestionWithChunkSearch = async ({
         question: subQuestion.question.substring(0, 80),
     });
 
-    agentLogger.info(`💡 Processing sub-question (chunk search method)`, {
+    agentLogger.info("💡 Processing sub-question (chunk search method)", {
         question: subQuestion.question,
         documentIds: subQuestion.documentsIds,
         documentCount: subQuestion.documentsIds.length,
@@ -219,7 +219,7 @@ ${COMMON_CITATION_PROMPT}`;
         });
 
         if (result.isErr()) {
-            agentLogger.error(`❌ Error processing sub-question with chunk search`, {
+            agentLogger.error("❌ Error processing sub-question with chunk search", {
                 error: result.error,
                 question: subQuestion.question,
             });
@@ -233,14 +233,14 @@ ${COMMON_CITATION_PROMPT}`;
             };
         }
 
-        agentLogger.info(`✅ Sub-question answered with chunk search`, {
+        agentLogger.info("✅ Sub-question answered with chunk search", {
             answerLength: result.value.answer.length,
             answerPreview: result.value.answer.substring(0, 200),
             chunksSearched: result.value.chunksSearched,
             iterations: result.value.iterations,
         });
 
-        agentLogger.debug(`📊 Sub-question usage (chunk search)`, {
+        agentLogger.debug("📊 Sub-question usage (chunk search)", {
             usage: result.value.usage,
         });
 
@@ -251,7 +251,7 @@ ${COMMON_CITATION_PROMPT}`;
             usage: result.value.usage,
         };
     } catch (error) {
-        agentLogger.error(`❌ Error processing sub-question with chunk search`, {
+        agentLogger.error("❌ Error processing sub-question with chunk search", {
             error: error instanceof Error ? error.message : String(error),
             question: subQuestion.question,
         });

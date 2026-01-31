@@ -1,5 +1,5 @@
-import { Storage, Bucket, File } from "@google-cloud/storage";
-import fs from "fs";
+import { Storage, type Bucket, type File } from "@google-cloud/storage";
+import fs from "node:fs";
 import { logger } from "@/utils/logger";
 
 interface JWTInput {

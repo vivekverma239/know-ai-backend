@@ -90,7 +90,7 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                 const internalData = mapToInternal(data);
 
                 if (action === "insert" || action === "update") {
-                    logger.info(`Processing ${action} for ${type}`, { id: data["id"] });
+                    logger.info(`Processing ${action} for ${type}`, { id: data.id });
 
                     if (type === "highlight_entity") {
                         const relTable = highlightsEntitiesRel;
@@ -131,7 +131,7 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                         }
                     }
                 } else if (action === "delete") {
-                    logger.info(`Processing delete for ${type}`, { id: data["id"] });
+                    logger.info(`Processing delete for ${type}`, { id: data.id });
 
                     if (type === "highlight_entity") {
                         const relTable = highlightsEntitiesRel;
@@ -139,8 +139,8 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                             .delete(relTable)
                             .where(
                                 and(
-                                    eq(relTable.highlightId, internalData["highlightId"] as number),
-                                    eq(relTable.entityId, internalData["entityId"] as number)
+                                    eq(relTable.highlightId, internalData.highlightId as number),
+                                    eq(relTable.entityId, internalData.entityId as number)
                                 )
                             );
                     } else if (type === "highlight_tag") {
@@ -149,12 +149,12 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                             .delete(relTable)
                             .where(
                                 and(
-                                    eq(relTable.highlightId, internalData["highlightId"] as number),
-                                    eq(relTable.tagId, internalData["tagId"] as number)
+                                    eq(relTable.highlightId, internalData.highlightId as number),
+                                    eq(relTable.tagId, internalData.tagId as number)
                                 )
                             );
                     } else {
-                        const id = data["id"] as number;
+                        const id = data.id as number;
                         switch (type) {
                             case "highlight": await getDb().delete(highlights).where(eq(highlights.id, id)); break;
                             case "entity": await getDb().delete(entities).where(eq(entities.id, id)); break;

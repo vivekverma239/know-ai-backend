@@ -1,4 +1,4 @@
-import { AsyncLocalStorage } from "async_hooks";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { logger, logError } from "@/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 import { getRequestId, getRequestContext } from "@/utils/requestContext";
@@ -43,7 +43,7 @@ class TokenUsageAggregator {
     if (!this.totalUsage.has(operationId)) {
       this.totalUsage.set(operationId, []);
     }
-    this.totalUsage.get(operationId)!.push(usage);
+    this.totalUsage.get(operationId)?.push(usage);
   }
 
   getUsage(operationId: string): TokenUsage[] {
@@ -99,13 +99,8 @@ export function withTokenTracking<T>(
   };
 
   return tokenTrackingStorage.run(context, async () => {
-    try {
-      const result = await fn();
-      return result;
-    } catch (error) {
-      // Log error with token context
-      throw error;
-    }
+    const result = await fn();
+    return result;
   });
 }
 
@@ -132,8 +127,8 @@ async function calculateCost(model: string, promptTokens: number, completionToke
 async function persistTokenUsage(usage: TokenUsage): Promise<void> {
   try {
     // Dynamically import to avoid circular dependencies
-    const { getDb } = await import("@/db");
-    const { tokenUsageLog } = await import("@/db/schema");
+    const { getDb } = await import("../db/index.js");
+    const { tokenUsageLog } = await import("../db/schema.js");
 
     const requestId = getRequestId();
     const requestContext = getRequestContext();
@@ -281,22 +276,22 @@ export function getAllTokenUsage(): Map<string, TokenUsage[]> {
 // Type for AI SDK response with usage information
 interface AIResponseWithUsage {
   usage?: {
-    promptTokens?: number;
-    completionTokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
     totalTokens?: number;
   };
   telemetry?: {
     usage?: {
-      promptTokens?: number;
-      completionTokens?: number;
+      inputTokens?: number;
+      outputTokens?: number;
       totalTokens?: number;
     };
     model?: string;
   };
   data?: {
     usage?: {
-      promptTokens?: number;
-      completionTokens?: number;
+      inputTokens?: number;
+      outputTokens?: number;
       totalTokens?: number;
     };
     model?: string;
@@ -335,32 +330,46 @@ export function withTokenTrackingForAI<
 function extractTokenUsageFromAIResponse(
   response: AIResponseWithUsage
 ): Omit<TokenUsage, "operationId" | "operationName" | "timestamp"> | null {
+  const getPromptTokens = (usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  }): { promptTokens: number; completionTokens: number; totalTokens: number } => {
+    const promptTokens = usage?.inputTokens ?? 0;
+    const completionTokens = usage?.outputTokens ?? 0;
+    const totalTokens = usage?.totalTokens ?? promptTokens + completionTokens;
+    return { promptTokens, completionTokens, totalTokens };
+  };
+
   // Check for common AI SDK response patterns
   if (response?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.usage);
     return {
-      promptTokens: response.usage.promptTokens ?? 0,
-      completionTokens: response.usage.completionTokens ?? 0,
-      totalTokens: response.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.model ?? "unknown",
     };
   }
 
   // Check for Braintrust telemetry data
   if (response?.telemetry?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.telemetry.usage);
     return {
-      promptTokens: response.telemetry.usage.promptTokens ?? 0,
-      completionTokens: response.telemetry.usage.completionTokens ?? 0,
-      totalTokens: response.telemetry.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.telemetry.model ?? "unknown",
     };
   }
 
   // Check for other common patterns
   if (response?.data?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.data.usage);
     return {
-      promptTokens: response.data.usage.promptTokens ?? 0,
-      completionTokens: response.data.usage.completionTokens ?? 0,
-      totalTokens: response.data.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.data.model ?? "unknown",
     };
   }
@@ -424,12 +433,8 @@ export function withCustomTokenTracking<T>(
   };
 
   return tokenTrackingStorage.run(context, async () => {
-    try {
-      const result = await fn();
-      return result;
-    } catch (error) {
-      throw error;
-    }
+    const result = await fn();
+    return result;
   });
 }
 

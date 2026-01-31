@@ -1,9 +1,9 @@
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
-  ATTR_DEPLOYMENT_ENVIRONMENT,
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from "@opentelemetry/semantic-conventions";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { TraceExporter } from "@google-cloud/opentelemetry-cloud-trace-exporter";
@@ -41,7 +41,7 @@ function createTraceExporter(): SpanExporter {
       // Uses Application Default Credentials (ADC)
       // Set GOOGLE_APPLICATION_CREDENTIALS env var to service account key path
     });
-  } else {
+  }
     // Default: OTLP exporter (works with Jaeger, Tempo, Honeycomb, etc.)
     const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318/v1/traces";
     logger.info("Using OTLP exporter", { endpoint: otlpEndpoint });
@@ -52,7 +52,6 @@ function createTraceExporter(): SpanExporter {
         ? JSON.parse(process.env.OTEL_EXPORTER_OTLP_HEADERS)
         : {},
     });
-  }
 }
 
 /**
@@ -70,10 +69,10 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
 
   try {
     // Create resource with service information
-    const resource = new Resource({
+    const resource = resourceFromAttributes({
       [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "knowsis-ai-backend",
       [ATTR_SERVICE_VERSION]: process.env.npm_package_version || "1.0.0",
-      [ATTR_DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || "development",
+      [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || "development",
     });
 
     // Create appropriate trace exporter
@@ -93,7 +92,13 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
           },
           // Add request ID to spans
           requestHook: (span, request) => {
-            const requestId = request.headers["x-request-id"];
+            if (!("headers" in request)) {
+              return;
+            }
+            const requestIdHeader = request.headers["x-request-id"];
+            const requestId = Array.isArray(requestIdHeader)
+              ? requestIdHeader[0]
+              : requestIdHeader;
             if (requestId) {
               span.setAttribute("request.id", requestId);
             }
@@ -115,7 +120,7 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
 
     logger.info("OpenTelemetry initialized successfully", {
       serviceName: resource.attributes[ATTR_SERVICE_NAME],
-      environment: resource.attributes[ATTR_DEPLOYMENT_ENVIRONMENT],
+      environment: resource.attributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT],
       exporterType: process.env.OTEL_EXPORTER_TYPE || "otlp",
       projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || "default",
     });

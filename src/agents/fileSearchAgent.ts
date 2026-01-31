@@ -21,7 +21,7 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
         userId: context.userId,
     });
 
-    agentLogger.info(`🔍 Starting file search agent`, {
+    agentLogger.info("🔍 Starting file search agent", {
         query: query.substring(0, 100),
         queryLength: query.length,
     });
@@ -53,7 +53,7 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
         stopWhen: stepCountIs(10),
     });
 
-    agentLogger.debug(`📄 Response received`, {
+    agentLogger.debug("📄 Response received", {
         responseLength: response.text.length,
         responsePreview: response.text.substring(0, 200),
     });
@@ -68,7 +68,7 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
         }[];
     };
 
-    agentLogger.info(`✅ File search agent completed`, {
+    agentLogger.info("✅ File search agent completed", {
         documentsFound: parsedResponse?.documents?.length ?? 0,
         usage: {
             inputTokens: response.usage.inputTokens,

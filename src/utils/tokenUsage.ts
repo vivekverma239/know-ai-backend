@@ -1,4 +1,4 @@
-import { type CallbackTokenUsage, type TokenUsage } from "@/@types/tokenUsage";
+import type { CallbackTokenUsage, TokenUsage } from "@/@types/tokenUsage";
 
 export const mergeTokenUsage = (
   usage1: TokenUsage,
