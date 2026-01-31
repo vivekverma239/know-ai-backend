@@ -1,10 +1,10 @@
-import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
-import { and, eq, gte, lte, sql, desc } from "drizzle-orm";
 import { getDb } from "@/db";
 import { tokenUsageLog } from "@/db/schema";
-import { logger, logError } from "@/utils/logger";
+import { logError, logger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
+import { Type } from "@sinclair/typebox";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import type { FastifyInstance } from "fastify";
 
 /**
  * Analytics routes for token usage and cost tracking
@@ -37,7 +37,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
                 requestCount: Type.Number(),
                 promptTokens: Type.Number(),
                 completionTokens: Type.Number(),
-              })
+              }),
             ),
             totals: Type.Object({
               totalTokens: Type.Number(),
@@ -104,7 +104,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
             totalCost: acc.totalCost + row.totalCost,
             requestCount: acc.requestCount + row.requestCount,
           }),
-          { totalTokens: 0, totalCost: 0, requestCount: 0 }
+          { totalTokens: 0, totalCost: 0, requestCount: 0 },
         );
 
         logger.info("Token usage summary retrieved", {
@@ -129,7 +129,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           requestId: requestId ?? "unknown",
         });
       }
-    }
+    },
   );
 
   /**
@@ -156,7 +156,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
                 totalTokens: Type.Number(),
                 totalCost: Type.Number(),
                 requestCount: Type.Number(),
-              })
+              }),
             ),
             requestId: Type.String(),
           }),
@@ -171,7 +171,12 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
       const requestId = getRequestId();
 
       try {
-        const { startDate, endDate, orgId, limit = 10 } = request.query as {
+        const {
+          startDate,
+          endDate,
+          orgId,
+          limit = 10,
+        } = request.query as {
           startDate?: string;
           endDate?: string;
           orgId?: string;
@@ -225,7 +230,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           requestId: requestId ?? "unknown",
         });
       }
-    }
+    },
   );
 
   /**
@@ -253,7 +258,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
                 totalCost: Type.Number(),
                 callCount: Type.Number(),
                 avgTokensPerCall: Type.Number(),
-              })
+              }),
             ),
             requestId: Type.String(),
           }),
@@ -268,7 +273,12 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
       const requestId = getRequestId();
 
       try {
-        const { startDate, endDate, userId, limit = 10 } = request.query as {
+        const {
+          startDate,
+          endDate,
+          userId,
+          limit = 10,
+        } = request.query as {
           startDate?: string;
           endDate?: string;
           userId?: string;
@@ -323,7 +333,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           requestId: requestId ?? "unknown",
         });
       }
-    }
+    },
   );
 };
 

@@ -1,23 +1,33 @@
-import {
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-  type _Object,
-  HeadObjectCommand,
-  CopyObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl as getSignedUrlS3 } from "@aws-sdk/s3-request-presigner";
-import { S3Client } from "@aws-sdk/client-s3";
 import { logger } from "@/utils/logger";
+import {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  type _Object,
+} from "@aws-sdk/client-s3";
+import { S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl as getSignedUrlS3 } from "@aws-sdk/s3-request-presigner";
 
+if (
+  !process.env.SUPABASE_STORAGE_REGION ||
+  !process.env.SUPABASE_STORAGE_URL ||
+  !process.env.SUPABASE_STORAGE_ACCESS_KEY_ID ||
+  !process.env.SUPABASE_STORAGE_SECRET_ACCESS_KEY
+) {
+  throw new Error(
+    "SUPABASE_STORAGE_REGION, SUPABASE_STORAGE_URL, SUPABASE_STORAGE_ACCESS_KEY_ID, SUPABASE_STORAGE_SECRET_ACCESS_KEY are not set",
+  );
+}
 export const supabaseClient = new S3Client({
   forcePathStyle: true,
-  region: process.env.SUPABASE_STORAGE_REGION!,
-  endpoint: process.env.SUPABASE_STORAGE_URL!,
+  region: process.env.SUPABASE_STORAGE_REGION,
+  endpoint: process.env.SUPABASE_STORAGE_URL,
   credentials: {
-    accessKeyId: process.env.SUPABASE_STORAGE_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.SUPABASE_STORAGE_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.SUPABASE_STORAGE_ACCESS_KEY_ID,
+    secretAccessKey: process.env.SUPABASE_STORAGE_SECRET_ACCESS_KEY,
   },
 });
 
@@ -26,7 +36,10 @@ export class StorageService {
   private readonly client: S3Client;
 
   constructor() {
-    this.bucket = process.env.BUCKET_NAME!;
+    this.bucket = process.env.BUCKET_NAME ?? "";
+    if (!this.bucket) {
+      throw new Error("BUCKET_NAME is not set");
+    }
     this.client = supabaseClient;
   }
 
@@ -41,8 +54,7 @@ export class StorageService {
     const { data, contentType, path } = params;
     const key = path;
 
-    const buffer =
-      typeof data === "string" ? Buffer.from(data, "base64") : data;
+    const buffer = typeof data === "string" ? Buffer.from(data, "base64") : data;
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,

@@ -216,19 +216,18 @@ When these tools are available:
 `;
 
 export const getFinAgentPrompt = (options?: { webSearchEnabled?: boolean }) => {
-    const webSearchEnabled = options?.webSearchEnabled ?? false;
+  const webSearchEnabled = options?.webSearchEnabled ?? false;
 
-    const prompt =
-        baseFinAgentPrompt + (webSearchEnabled ? webToolsFinAgentPrompt : "");
+  const prompt = baseFinAgentPrompt + (webSearchEnabled ? webToolsFinAgentPrompt : "");
 
-    return `
+  return `
     ${prompt}
     
     Today's Date: ${new Date().toISOString().split("T")[0]}`;
 };
 
 export const getFileSearchAgentPrompt = () => {
-    return `
+  return `
     You are an expert file search assistant, your task is to find the highly relevant documents using the file search tool
     to answer the query. You should use the file search tool multiple times to find the most relevant documents. If you
     cannot find the relevant documents, you should return an empty array.

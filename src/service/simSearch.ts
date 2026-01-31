@@ -1,9 +1,9 @@
 import { getEmbeddings } from "@/ai-backend/embeddings";
 import {
+  getSimilarChapters,
   getSimilarChunks,
   getSimilarClusters,
   getSimilarDocuments,
-  getSimilarChapters,
 } from "@/db/queries/simChunks";
 import { observe } from "@lmnr-ai/lmnr";
 /**
@@ -126,16 +126,7 @@ export const similaritySearchChunksWithObserver = async ({
       {
         name: "similaritySearchChunks",
       },
-      (
-        query,
-        documentIds,
-        chapterIds,
-        limit,
-        includeChunkId,
-        page,
-        userId,
-        orgId
-      ) =>
+      (query, documentIds, chapterIds, limit, includeChunkId, page, userId, orgId) =>
         similaritySearchChunks({
           query,
           documentIds,
@@ -153,7 +144,7 @@ export const similaritySearchChunksWithObserver = async ({
       includeChunkId,
       page,
       userId,
-      orgId
+      orgId,
     );
   return await fn();
 };
@@ -230,10 +221,7 @@ export const similaritySearchChapters = async ({
   });
 };
 
-export const similaritySearchDocumentsWithObserver = async (
-  query: string,
-  limit = 5
-) => {
+export const similaritySearchDocumentsWithObserver = async (query: string, limit = 5) => {
   const fn = async () =>
     observe(
       {
@@ -241,7 +229,7 @@ export const similaritySearchDocumentsWithObserver = async (
       },
       (query, limit) => similaritySearchDocuments({ query, limit }),
       query,
-      limit
+      limit,
     );
   return await fn();
 };

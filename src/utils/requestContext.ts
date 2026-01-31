@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { v4 as uuidv4 } from "uuid";
 import type { FastifyRequest } from "fastify";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Request context containing correlation ID and metadata for distributed tracing
@@ -58,7 +58,7 @@ export function initRequestContext(request: FastifyRequest): RequestContext {
  */
 export async function withRequestContext<T>(
   context: RequestContext,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   return requestContextStorage.run(context, fn);
 }
@@ -117,9 +117,7 @@ export function getAllRequestMetadata(): Record<string, unknown> {
 function extractUserId(request: FastifyRequest): string | undefined {
   // Check common header names
   const userId =
-    (request.headers["x-user-id"] as string) ||
-    (request.headers["user-id"] as string) ||
-    undefined;
+    (request.headers["x-user-id"] as string) || (request.headers["user-id"] as string) || undefined;
 
   return userId;
 }
@@ -141,9 +139,7 @@ function extractSessionId(request: FastifyRequest): string | undefined {
  */
 function extractOrgId(request: FastifyRequest): string | undefined {
   const orgId =
-    (request.headers["x-org-id"] as string) ||
-    (request.headers["org-id"] as string) ||
-    undefined;
+    (request.headers["x-org-id"] as string) || (request.headers["org-id"] as string) || undefined;
 
   return orgId;
 }

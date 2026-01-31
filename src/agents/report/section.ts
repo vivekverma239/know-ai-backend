@@ -1,180 +1,170 @@
-import { z } from "zod";
-import { tool, type LanguageModelUsage } from "ai";
 import { MODELS } from "@/@types/llm";
-import { err, ok } from "neverthrow";
-import { eq } from "drizzle-orm";
+import { generateTextWrapper } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { userFile, userFileToCMeta } from "@/db/schema";
-import {
-    getAnswerFromDocUsingParsedPDF,
-} from "../document/docAnswer";
+import { similaritySearchChunks, similaritySearchDocuments } from "@/service/simSearch";
+import { createContextLogger, logger } from "@/utils/logger";
+import { type LanguageModelUsage, tool } from "ai";
+import { eq } from "drizzle-orm";
+import { err, ok } from "neverthrow";
+import { z } from "zod";
+import { getAnswerFromDocUsingParsedPDF } from "../document/docAnswer";
 import { getPageContentFn } from "../utils";
-import {
-    similaritySearchChunks,
-    similaritySearchDocuments,
-} from "@/service/simSearch";
-import { logger, createContextLogger } from "@/utils/logger";
-import { generateTextWrapper } from "@/ai-backend/llm";
 
 const getFileToc = (fileId: string) => {
-    return getDb().query.userFileToCMeta.findFirst({
-        where: eq(userFileToCMeta.fileId, fileId),
-    });
+  return getDb().query.userFileToCMeta.findFirst({
+    where: eq(userFileToCMeta.fileId, fileId),
+  });
 };
 
 export const getFileAnswerTool = (
-    addUsage?: (addUsage: { usage: LanguageModelUsage; model: string }) => void,
-    model = MODELS.GROK_CODE_FAST_1,
+  addUsage?: (addUsage: { usage: LanguageModelUsage; model: string }) => void,
+  model = MODELS.GROK_CODE_FAST_1,
 ) => {
-    return tool({
-        description:
-            "Extract specific information from a particular file by asking targeted questions about its content. Use this after fileSearch to get detailed answers from the most relevant documents.",
-        inputSchema: z.object({
-            query: z
-                .string()
-                .describe("Specific question or query about the file content"),
-            fileId: z.string().describe("ID of the file to search within"),
-        }),
-        execute: async ({ query, fileId }) => {
-            const toolLogger = createContextLogger({
-                agent: "reportSection",
-                phase: "fileAnswerTool",
-            });
+  return tool({
+    description:
+      "Extract specific information from a particular file by asking targeted questions about its content. Use this after fileSearch to get detailed answers from the most relevant documents.",
+    inputSchema: z.object({
+      query: z.string().describe("Specific question or query about the file content"),
+      fileId: z.string().describe("ID of the file to search within"),
+    }),
+    execute: async ({ query, fileId }) => {
+      const toolLogger = createContextLogger({
+        agent: "reportSection",
+        phase: "fileAnswerTool",
+      });
 
-            try {
-                toolLogger.info("📖 File answer query", {
-                    fileId,
-                    query: query.substring(0, 100),
-                });
+      try {
+        toolLogger.info("📖 File answer query", {
+          fileId,
+          query: query.substring(0, 100),
+        });
 
-                const fileIdWithoutFile = fileId.replace("file_", "");
-                const toc = await getFileToc(fileIdWithoutFile);
-                const file = await getDb().query.userFile.findFirst({
-                    where: eq(userFile.id, fileIdWithoutFile),
-                });
-                if (!toc) {
-                    toolLogger.warn("⚠️  Table of Contents not found", { fileId });
-                    return "Error: Table of Contents not found";
-                }
-                if (!file) {
-                    logger.error(`File not found: ${fileId}`);
-                    return "Error: File not found";
-                }
-                const getPageContent = getPageContentFn(
-                    fileIdWithoutFile,
-                    file.userId,
-                );
-                const similaritySearchChunksFn = async (query: string) => {
-                    const chunks = await similaritySearchChunks({
-                        query,
-                        documentIds: [fileIdWithoutFile],
-                        limit: 5,
-                        userId: file.userId,
-                        orgId: "", // OrgId might be needed
-                    });
-                    return chunks.map((chunk) => ({
-                        pageNumber: chunk.pageNumber ?? 0,
-                        content: chunk.content,
-                    }));
-                };
-                const answer = await getAnswerFromDocUsingParsedPDF({
-                    query,
-                    documentTitle: toc?.metadata?.title ?? "",
-                    documentSummary: toc?.metadata?.summary ?? "",
-                    toc: (toc?.toc)?.sections ?? [],
-                    getPageContentFn: getPageContent,
-                    similaritySearchChunksFn: similaritySearchChunksFn,
-                    addUsage: addUsage,
-                    model: model,
-                });
+        const fileIdWithoutFile = fileId.replace("file_", "");
+        const toc = await getFileToc(fileIdWithoutFile);
+        const file = await getDb().query.userFile.findFirst({
+          where: eq(userFile.id, fileIdWithoutFile),
+        });
+        if (!toc) {
+          toolLogger.warn("⚠️  Table of Contents not found", { fileId });
+          return "Error: Table of Contents not found";
+        }
+        if (!file) {
+          logger.error(`File not found: ${fileId}`);
+          return "Error: File not found";
+        }
+        const getPageContent = getPageContentFn(fileIdWithoutFile, file.userId);
+        const similaritySearchChunksFn = async (query: string) => {
+          const chunks = await similaritySearchChunks({
+            query,
+            documentIds: [fileIdWithoutFile],
+            limit: 5,
+            userId: file.userId,
+            orgId: "", // OrgId might be needed
+          });
+          return chunks.map((chunk) => ({
+            pageNumber: chunk.pageNumber ?? 0,
+            content: chunk.content,
+          }));
+        };
+        const answer = await getAnswerFromDocUsingParsedPDF({
+          query,
+          documentTitle: toc?.metadata?.title ?? "",
+          documentSummary: toc?.metadata?.summary ?? "",
+          toc: toc?.toc?.sections ?? [],
+          getPageContentFn: getPageContent,
+          similaritySearchChunksFn: similaritySearchChunksFn,
+          addUsage: addUsage,
+          model: model,
+        });
 
-                if (answer.isErr()) {
-                    return `Error: ${answer.error.message}`;
-                }
-                addUsage?.({
-                    usage: answer.value.totalUsage,
-                    model: model,
-                });
+        if (answer.isErr()) {
+          return `Error: ${answer.error.message}`;
+        }
+        addUsage?.({
+          usage: answer.value.totalUsage,
+          model: model,
+        });
 
-                return answer.value.text;
-            } catch (error) {
-                toolLogger.error("❌ Error in file answer", {
-                    error: error instanceof Error ? error.message : String(error),
-                    fileId,
-                    query: query.substring(0, 100),
-                });
-                return "Error in file answer";
-            }
-        },
-    });
+        return answer.value.text;
+      } catch (error) {
+        toolLogger.error("❌ Error in file answer", {
+          error: error instanceof Error ? error.message : String(error),
+          fileId,
+          query: query.substring(0, 100),
+        });
+        return "Error in file answer";
+      }
+    },
+  });
 };
 
 export const getFileSearchTool = (userId: string, orgId: string) => {
-    return tool({
-        description:
-            "Search through available documents to find files that might contain information relevant to your research topic. Use this first to identify potentially useful documents.",
-        inputSchema: z.object({
-            query: z
-                .string()
-                .describe(
-                    "Search terms related to the section topic or specific information you're looking for",
-                ),
-        }),
-        execute: async ({ query }) => {
-            const toolLogger = createContextLogger({
-                agent: "reportSection",
-                phase: "fileSearchTool",
-            });
+  return tool({
+    description:
+      "Search through available documents to find files that might contain information relevant to your research topic. Use this first to identify potentially useful documents.",
+    inputSchema: z.object({
+      query: z
+        .string()
+        .describe(
+          "Search terms related to the section topic or specific information you're looking for",
+        ),
+    }),
+    execute: async ({ query }) => {
+      const toolLogger = createContextLogger({
+        agent: "reportSection",
+        phase: "fileSearchTool",
+      });
 
-            try {
-                toolLogger.info("🔍 File search query", { query });
-                const files = await similaritySearchDocuments({ query, userId, orgId });
-                toolLogger.debug("📄 Files found", {
-                    count: files.length,
-                    fileIds: files.map((f) => `file_${f.id}`),
-                });
-                return files.map((file) => ({
-                    id: `file_${file.id}`,
-                    title: file.title,
-                    summary: file.summary,
-                }));
-            } catch (error) {
-                toolLogger.error("❌ Error in file search", {
-                    error: error instanceof Error ? error.message : String(error),
-                    query,
-                });
-                return "Error in file search";
-            }
-        },
-    });
+      try {
+        toolLogger.info("🔍 File search query", { query });
+        const files = await similaritySearchDocuments({ query, userId, orgId });
+        toolLogger.debug("📄 Files found", {
+          count: files.length,
+          fileIds: files.map((f) => `file_${f.id}`),
+        });
+        return files.map((file) => ({
+          id: `file_${file.id}`,
+          title: file.title,
+          summary: file.summary,
+        }));
+      } catch (error) {
+        toolLogger.error("❌ Error in file search", {
+          error: error instanceof Error ? error.message : String(error),
+          query,
+        });
+        return "Error in file search";
+      }
+    },
+  });
 };
 
 export const prepareSectionSummary = async (
-    section: {
-        title: string;
-        sectionOutline: string;
-    },
-    report: {
-        title: string;
-        sections: {
-            title: string;
-        }[];
-    },
-    userId: string,
-    orgId: string
+  section: {
+    title: string;
+    sectionOutline: string;
+  },
+  report: {
+    title: string;
+    sections: {
+      title: string;
+    }[];
+  },
+  userId: string,
+  orgId: string,
 ) => {
-    const agentLogger = createContextLogger({
-        agent: "reportSection",
-        phase: "prepareSectionSummary",
-    });
+  const agentLogger = createContextLogger({
+    agent: "reportSection",
+    phase: "prepareSectionSummary",
+  });
 
-    agentLogger.info("📝 Preparing section summary", {
-        sectionTitle: section.title,
-        reportTitle: report.title,
-        sectionCount: report.sections.length,
-    });
+  agentLogger.info("📝 Preparing section summary", {
+    sectionTitle: section.title,
+    reportTitle: report.title,
+    sectionCount: report.sections.length,
+  });
 
-    const prompt = `
+  const prompt = `
 You are an expert research assistant tasked with preparing a report section. Your role is to analyze the provided section outline and generate detailed content by researching relevant documents.
 You should only incorporate information that makes sense and is relevant to the section topic, not overall report
 
@@ -235,46 +225,46 @@ This segment reported €3.4 billion in sales and a 17.3% operating margin in FY
 
 Remember: Your goal is to create a comprehensive, well-researched report section that provides valuable insights based solely on the available documents.
     `;
-    const fileSearchTool = getFileSearchTool(userId, orgId);
-    const fileAnswerTool = getFileAnswerTool();
-    const answer = await generateTextWrapper({
-        model: MODELS.GROK_CODE_FAST_1,
-        messages: [
-            { role: "system", content: prompt },
-            {
-                role: "user",
-                content: `Section Title: ${section.title} Section Content: ${section.sectionOutline}`,
-            },
-        ],
-        reasoningLevel: "none",
-        tools: { fileSearch: fileSearchTool, fileAnswer: fileAnswerTool },
-        systemPrompt: prompt,
-    });
+  const fileSearchTool = getFileSearchTool(userId, orgId);
+  const fileAnswerTool = getFileAnswerTool();
+  const answer = await generateTextWrapper({
+    model: MODELS.GROK_CODE_FAST_1,
+    messages: [
+      { role: "system", content: prompt },
+      {
+        role: "user",
+        content: `Section Title: ${section.title} Section Content: ${section.sectionOutline}`,
+      },
+    ],
+    reasoningLevel: "none",
+    tools: { fileSearch: fileSearchTool, fileAnswer: fileAnswerTool },
+    systemPrompt: prompt,
+  });
 
-    if (answer.isErr()) {
-        agentLogger.error("❌ Error preparing section summary", {
-            error: answer.error,
-            sectionTitle: section.title,
-        });
-        return err(answer.error);
-    }
-
-    agentLogger.info("✅ Section summary prepared", {
-        answerLength: answer.value.text.length,
-        answerPreview: answer.value.text.substring(0, 200),
-        steps: answer.value.steps.length,
+  if (answer.isErr()) {
+    agentLogger.error("❌ Error preparing section summary", {
+      error: answer.error,
+      sectionTitle: section.title,
     });
+    return err(answer.error);
+  }
 
-    return ok({
-        answer: answer.value.text,
-        steps: answer.value.steps.map((step) => ({
-            toolCalls: step.toolCalls,
-            toolResults: step.toolResults,
-            content: step.text,
-            reasoning: step.reasoning,
-            finishReason: step.finishReason,
-            usage: step.usage,
-            text: step.text,
-        })),
-    });
+  agentLogger.info("✅ Section summary prepared", {
+    answerLength: answer.value.text.length,
+    answerPreview: answer.value.text.substring(0, 200),
+    steps: answer.value.steps.length,
+  });
+
+  return ok({
+    answer: answer.value.text,
+    steps: answer.value.steps.map((step) => ({
+      toolCalls: step.toolCalls,
+      toolResults: step.toolResults,
+      content: step.text,
+      reasoning: step.reasoning,
+      finishReason: step.finishReason,
+      usage: step.usage,
+      text: step.text,
+    })),
+  });
 };

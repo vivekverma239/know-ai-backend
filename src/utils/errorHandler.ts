@@ -1,6 +1,6 @@
-import type { FastifyInstance, FastifyError, FastifyRequest, FastifyReply } from "fastify";
-import { logger, logError } from "@/utils/logger";
-import { getRequestId, getRequestContext } from "@/utils/requestContext";
+import { logError, logger } from "@/utils/logger";
+import { getRequestContext, getRequestId } from "@/utils/requestContext";
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 /**
  * Base application error class
@@ -14,7 +14,7 @@ export class AppError extends Error {
     message: string,
     statusCode = 500,
     isOperational = true,
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -49,11 +49,7 @@ export class ValidationError extends AppError {
  * External API call errors
  */
 export class ExternalAPIError extends AppError {
-  constructor(
-    message: string,
-    statusCode = 502,
-    context: Record<string, unknown> = {}
-  ) {
+  constructor(message: string, statusCode = 502, context: Record<string, unknown> = {}) {
     super(message, statusCode, true, { ...context, errorType: "external_api" });
   }
 }
@@ -148,7 +144,7 @@ export function sanitizeErrorMessage(error: Error | AppError, isDevelopment: boo
 export function createErrorResponse(
   error: Error | AppError,
   requestId?: string,
-  isDevelopment = false
+  isDevelopment = false,
 ): Record<string, unknown> {
   type ErrorResponse = {
     error: {
@@ -171,9 +167,7 @@ export function createErrorResponse(
   // Add error type if it's an AppError
   if (error instanceof AppError) {
     const errorType =
-      typeof error.context.errorType === "string"
-        ? error.context.errorType
-        : "application_error";
+      typeof error.context.errorType === "string" ? error.context.errorType : "application_error";
     response.error = {
       ...response.error,
       type: errorType,
@@ -201,7 +195,11 @@ export function createErrorHandler(fastify: FastifyInstance): void {
   const isDevelopment = process.env.NODE_ENV !== "production";
 
   fastify.setErrorHandler(
-    async (error: FastifyError | Error | AppError, request: FastifyRequest, reply: FastifyReply) => {
+    async (
+      error: FastifyError | Error | AppError,
+      request: FastifyRequest,
+      reply: FastifyReply,
+    ) => {
       const requestId = getRequestId();
       const requestContext = getRequestContext();
       const statusCode = getStatusCode(error);
@@ -231,7 +229,7 @@ export function createErrorHandler(fastify: FastifyInstance): void {
 
       // Send response
       return reply.status(statusCode).send(errorResponse);
-    }
+    },
   );
 
   // Also handle promise rejections
@@ -261,10 +259,10 @@ export function createErrorHandler(fastify: FastifyInstance): void {
  * Use this to wrap async route handlers to ensure errors are caught
  */
 export function asyncHandler<T>(
-  handler: (request: FastifyRequest, reply: FastifyReply) => Promise<T>
+  handler: (request: FastifyRequest, reply: FastifyReply) => Promise<T>,
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<T> => {
-      return await handler(request, reply);
+    return await handler(request, reply);
   };
 }
 
@@ -275,7 +273,7 @@ export function asyncHandler<T>(
 export async function tryWithLogging<T>(
   operation: string,
   fn: () => Promise<T>,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): Promise<T> {
   try {
     return await fn();

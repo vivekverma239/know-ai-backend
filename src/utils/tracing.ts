@@ -1,7 +1,13 @@
-import { trace, context, type Span as OtelSpan, SpanStatusCode, type Tracer } from "@opentelemetry/api";
-import { logger, logError } from "@/utils/logger";
-import { getRequestId, getRequestContext } from "@/utils/requestContext";
 import type { TokenUsage } from "@/utils/asyncHook";
+import { logError, logger } from "@/utils/logger";
+import { getRequestContext, getRequestId } from "@/utils/requestContext";
+import {
+  type Span as OtelSpan,
+  SpanStatusCode,
+  type Tracer,
+  context,
+  trace,
+} from "@opentelemetry/api";
 
 /**
  * Span represents a single traced operation
@@ -137,11 +143,11 @@ export class TraceManager {
 
     // Set attributes on OpenTelemetry span
     if (span._otelSpan) {
-      Object.entries(metadata).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(metadata)) {
         if (value !== undefined && value !== null) {
           span._otelSpan?.setAttribute(key, String(value));
         }
-      });
+      }
 
       // Set status
       if (span.status === "error") {
@@ -170,11 +176,12 @@ export class TraceManager {
 
     // Log span completion
     const logLevel = span.status === "error" ? "error" : span.duration > 5000 ? "warn" : "debug";
-    const logMessage = span.status === "error"
-      ? "Span failed"
-      : span.duration > 5000
-        ? "Slow span completed"
-        : "Span completed";
+    const logMessage =
+      span.status === "error"
+        ? "Span failed"
+        : span.duration > 5000
+          ? "Slow span completed"
+          : "Span completed";
 
     logger[logLevel](logMessage, {
       spanId: span.id,
@@ -279,7 +286,7 @@ export class TraceManager {
   async withSpan<T>(
     name: string,
     fn: (span: Span) => Promise<T>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     const span = this.startSpan(name, metadata);
 
@@ -308,7 +315,7 @@ export class TraceManager {
   async withTrace<T>(
     traceId: string,
     fn: () => Promise<T>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     // OpenTelemetry handles trace context automatically
     // We just need to start a root span
@@ -330,21 +337,16 @@ export const traceManager = TraceManager.getInstance();
  * }
  */
 export function Traced(operationName?: string) {
-  return (
-    target: object,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) => {
+  return (target: object, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
     const targetWithConstructor = target as { constructor: { name: string } };
     const name = operationName || `${targetWithConstructor.constructor.name}.${propertyKey}`;
 
     descriptor.value = async function (...args: unknown[]) {
-      return traceManager.withSpan(
-        name,
-        async () => originalMethod.apply(this, args),
-        { method: propertyKey, class: targetWithConstructor.constructor.name }
-      );
+      return traceManager.withSpan(name, async () => originalMethod.apply(this, args), {
+        method: propertyKey,
+        class: targetWithConstructor.constructor.name,
+      });
     };
 
     return descriptor;
@@ -357,7 +359,7 @@ export function Traced(operationName?: string) {
 export function traced<TArgs extends unknown[], TResult>(
   name: string,
   fn: (...args: TArgs) => Promise<TResult>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
     return traceManager.withSpan<TResult>(name, async () => fn(...args), metadata);
@@ -382,9 +384,9 @@ export function getTraceSummary(): {
     errors: spans.filter((span) => span.status === "error").length,
   };
 
-  spans.forEach((span) => {
+  for (const span of spans) {
     summary.spansByName[span.name] = (summary.spansByName[span.name] || 0) + 1;
-  });
+  }
 
   return summary;
 }

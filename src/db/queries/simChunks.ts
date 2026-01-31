@@ -1,17 +1,17 @@
-import { getDb } from "..";
+import type { Chunk } from "@/@types";
 import {
+  and,
   cosineDistance,
   desc,
+  eq,
+  getTableColumns,
   gte,
   inArray,
-  and,
-  or,
-  eq,
-  sql,
   notInArray,
-  getTableColumns,
+  or,
+  sql,
 } from "drizzle-orm";
-import type { Chunk } from "@/@types";
+import { getDb } from "..";
 import { chunks, userFile, userFileChapter, userFileCluster } from "../schema";
 
 export type SimilarChunk = Omit<
@@ -61,22 +61,13 @@ export const getSimilarChunks = async ({
   if (userId && orgId) {
     andConditions.push(
       or(
-        and(
-          eq(chunksWithUserInfo.userId, userId),
-          eq(chunksWithUserInfo.orgId, orgId)
-        ), // User's own files
-        and(
-          eq(chunksWithUserInfo.isAdminFile, true),
-          eq(chunksWithUserInfo.orgId, orgId)
-        ) // Admin files in same org
-      )!
+        and(eq(chunksWithUserInfo.userId, userId), eq(chunksWithUserInfo.orgId, orgId)), // User's own files
+        and(eq(chunksWithUserInfo.isAdminFile, true), eq(chunksWithUserInfo.orgId, orgId)), // Admin files in same org
+      ),
     );
   }
 
-  const similarity = sql<number>`1 - (${cosineDistance(
-    chunksWithUserInfo.embedding,
-    embedding
-  )})`;
+  const similarity = sql<number>`1 - (${cosineDistance(chunksWithUserInfo.embedding, embedding)})`;
   if (documentIds && documentIds.length > 0) {
     andConditions.push(inArray(chunksWithUserInfo.documentId, documentIds));
   }
@@ -143,21 +134,15 @@ export const getSimilarClusters = async ({
   if (userId && orgId) {
     andConditions.push(
       or(
-        and(
-          eq(clustersWithUserInfo.userId, userId),
-          eq(clustersWithUserInfo.orgId, orgId)
-        ), // User's own files
-        and(
-          eq(clustersWithUserInfo.isAdminFile, true),
-          eq(clustersWithUserInfo.orgId, orgId)
-        ) // Admin files in same org
-      )!
+        and(eq(clustersWithUserInfo.userId, userId), eq(clustersWithUserInfo.orgId, orgId)), // User's own files
+        and(eq(clustersWithUserInfo.isAdminFile, true), eq(clustersWithUserInfo.orgId, orgId)), // Admin files in same org
+      ),
     );
   }
 
   const similarity = sql<number>`1 - (${cosineDistance(
     clustersWithUserInfo.embedding,
-    embedding
+    embedding,
   )})`;
   andConditions.push(gte(similarity, 0.5));
   if (documentIds) {
@@ -205,7 +190,7 @@ export const getSimilarDocuments = async ({
     .as("documentsWithUserInfo");
   const similarity = sql<number>`1 - (${cosineDistance(
     documentsWithUserInfo.embedding,
-    embedding
+    embedding,
   )})`;
 
   andConditions.push(gte(similarity, 0.5));
@@ -214,15 +199,9 @@ export const getSimilarDocuments = async ({
   if (userId && orgId) {
     andConditions.push(
       or(
-        and(
-          eq(documentsWithUserInfo.userId, userId),
-          eq(documentsWithUserInfo.orgId, orgId)
-        ), // User's own files
-        and(
-          eq(documentsWithUserInfo.isAdminFile, true),
-          eq(documentsWithUserInfo.orgId, orgId)
-        ) // Admin files in same org
-      )!
+        and(eq(documentsWithUserInfo.userId, userId), eq(documentsWithUserInfo.orgId, orgId)), // User's own files
+        and(eq(documentsWithUserInfo.isAdminFile, true), eq(documentsWithUserInfo.orgId, orgId)), // Admin files in same org
+      ),
     );
   }
 
@@ -271,22 +250,16 @@ export const getSimilarChapters = async ({
     .as("chaptersWithUserInfo");
   const similarity = sql<number>`1 - (${cosineDistance(
     chaptersWithUserInfo.embedding,
-    embedding
+    embedding,
   )})`;
   andConditions.push(gte(similarity, 0.5));
 
   if (userId && orgId) {
     andConditions.push(
       or(
-        and(
-          eq(chaptersWithUserInfo.userId, userId),
-          eq(chaptersWithUserInfo.orgId, orgId)
-        ), // User's own files
-        and(
-          eq(chaptersWithUserInfo.isAdminFile, true),
-          eq(chaptersWithUserInfo.orgId, orgId)
-        ) // Admin files in same org
-      )!
+        and(eq(chaptersWithUserInfo.userId, userId), eq(chaptersWithUserInfo.orgId, orgId)), // User's own files
+        and(eq(chaptersWithUserInfo.isAdminFile, true), eq(chaptersWithUserInfo.orgId, orgId)), // Admin files in same org
+      ),
     );
   }
   if (documentIds) {

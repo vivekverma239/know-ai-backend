@@ -1,27 +1,23 @@
-import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
-import {
-  createUIMessageStreamResponse,
-  createUIMessageStream,
-  streamText,
-  type UIMessage,
-  convertToModelMessages,
-} from "ai";
-import { z } from "zod";
-import { MODELS } from "@/@types/llm";
-import type { StepMessage } from "@/@types/agents";
 import type { Message as SQLMessage } from "@/@types";
+import type { StepMessage } from "@/@types/agents";
+import { MODELS } from "@/@types/llm";
 import { processDeepSearchQuery } from "@/agents/deepResearch";
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
 import { updateSession } from "@/db/mutation/session";
-import {
-  getLatestSessionId,
-  getSession,
-  syncMessages,
-} from "@/db/queries/message";
+import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { Type } from "@sinclair/typebox";
+import {
+  type UIMessage,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+} from "ai";
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 
 const SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool which can provide you with \nadditional information about any topic. Feel free to use it to answer\nany of the user questions.\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [1](/doc/{documentId}/page/{pageNumber})\nwhere documentId is the id of the document and pageNumber is the page number of the document.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
 
@@ -89,16 +85,16 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       const saveMessage = async (msgs: CoreMessageExt[]) => {
         const backendMessages: SQLMessage[] = msgs.map(
           (m: CoreMessageExt) =>
-          ({
-            id: m.id,
-            role: m.role,
-            metadata: m.metadata,
-            createdAt: new Date(),
-            updatedAt: null,
-            sessionId: sessionId,
-            parts: [],
-            userId: userId,
-          } as SQLMessage)
+            ({
+              id: m.id,
+              role: m.role,
+              metadata: m.metadata,
+              createdAt: new Date(),
+              updatedAt: null,
+              sessionId: sessionId,
+              parts: [],
+              userId: userId,
+            }) as SQLMessage,
         );
         await syncMessages(backendMessages);
         if (backendMessages.length === 2) {
@@ -107,11 +103,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
             messages.map((m: CoreMessageExt) => ({
               role: m.role as "user" | "assistant",
               content: m.parts
-                .map((p: CoreMessageExt["parts"][number]) =>
-                  p.type === "text" ? p.text : ""
-                )
+                .map((p: CoreMessageExt["parts"][number]) => (p.type === "text" ? p.text : ""))
                 .join("\n"),
-            }))
+            })),
           );
           await updateSession(sessionId, { title });
         }
@@ -134,7 +128,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                       query: z
                         .string()
                         .describe(
-                          "The query to research on, should be fully formulated question with all relevant context"
+                          "The query to research on, should be fully formulated question with all relevant context",
                         ),
                     }),
                     execute: async ({ query }: { query: string }) => {
@@ -143,14 +137,12 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                         userId,
                         orgId,
                         callback: (step) => {
-                          const index = steps.findIndex(
-                            (s) => s.id === step.id
-                          );
+                          const index = steps.findIndex((s) => s.id === step.id);
                           if (index !== -1) steps[index] = step;
                           else steps.push(step);
                           writer.write(
                             // @ts-expect-error - Ignore type error
-                            step
+                            step,
                           );
                         },
                       });
@@ -171,11 +163,11 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                   onFinish: async ({ messages, responseMessage }) => {
                     await saveMessage(messages as CoreMessageExt[]);
                   },
-                })
+                }),
               );
             },
             onError: (error) => String(error),
-          })
+          }),
         );
         // createDataStreamResponse returns a Response-like. We stream it as raw payload
         // Fastify: reply.send will handle stream. Here we return result directly.
@@ -188,13 +180,12 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           system: SYSTEM_PROMPT,
           tools: {
             knowledgeBaseTool: {
-              description:
-                "Use this tool to answer questions about the user's documents.",
+              description: "Use this tool to answer questions about the user's documents.",
               inputSchema: z.object({
                 query: z
                   .string()
                   .describe(
-                    "The query to search the knowledge base for, should be fully formulated question with all relevant context"
+                    "The query to search the knowledge base for, should be fully formulated question with all relevant context",
                   ),
               }),
               execute: async ({ query }: { query: string }) =>
@@ -222,7 +213,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
             ...convertToModelMessages(messages),
           ],
           experimental_telemetry: { isEnabled: true },
-        })
+        }),
       );
 
       return reply.send(
@@ -231,9 +222,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           onFinish: async ({ messages, responseMessage }) => {
             await saveMessage(messages as CoreMessageExt[]);
           },
-        })
+        }),
       );
-    }
+    },
   );
 };
 

@@ -1,8 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { logger, logError } from "@/utils/logger";
-import { v4 as uuidv4 } from "uuid";
-import { getRequestId, getRequestContext } from "@/utils/requestContext";
+import { logError, logger } from "@/utils/logger";
+import { getRequestContext, getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost } from "@/utils/tokenlens";
+import { v4 as uuidv4 } from "uuid";
 
 // Types for token tracking
 export interface TokenUsage {
@@ -70,7 +70,7 @@ class TokenUsageAggregator {
         timestamp: new Date(),
         operationId,
         operationName: "",
-      }
+      },
     );
   }
 
@@ -87,7 +87,7 @@ class TokenUsageAggregator {
 export function withTokenTracking<T>(
   operationName: string,
   fn: () => Promise<T>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<T> {
   const operationId = uuidv4();
   const context: TokenTrackingContext = {
@@ -107,7 +107,11 @@ export function withTokenTracking<T>(
 /**
  * Calculate cost estimate for token usage using tokenlens
  */
-async function calculateCost(model: string, promptTokens: number, completionTokens: number): Promise<number> {
+async function calculateCost(
+  model: string,
+  promptTokens: number,
+  completionTokens: number,
+): Promise<number> {
   try {
     return await calculateUsageCost(model, promptTokens, completionTokens);
   } catch (error) {
@@ -134,23 +138,29 @@ async function persistTokenUsage(usage: TokenUsage): Promise<void> {
     const requestContext = getRequestContext();
 
     // Calculate cost using tokenlens
-    const costEstimate = await calculateCost(usage.model, usage.promptTokens, usage.completionTokens);
+    const costEstimate = await calculateCost(
+      usage.model,
+      usage.promptTokens,
+      usage.completionTokens,
+    );
 
-    await getDb().insert(tokenUsageLog).values({
-      requestId: requestId || "unknown",
-      operationId: usage.operationId,
-      operationName: usage.operationName,
-      userId: requestContext?.userId,
-      sessionId: requestContext?.sessionId,
-      orgId: requestContext?.orgId,
-      model: usage.model,
-      promptTokens: usage.promptTokens,
-      completionTokens: usage.completionTokens,
-      totalTokens: usage.totalTokens,
-      costEstimate: costEstimate.toFixed(6),
-      timestamp: usage.timestamp,
-      metadata: {},
-    });
+    await getDb()
+      .insert(tokenUsageLog)
+      .values({
+        requestId: requestId || "unknown",
+        operationId: usage.operationId,
+        operationName: usage.operationName,
+        userId: requestContext?.userId,
+        sessionId: requestContext?.sessionId,
+        orgId: requestContext?.orgId,
+        model: usage.model,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
+        costEstimate: costEstimate.toFixed(6),
+        timestamp: usage.timestamp,
+        metadata: {},
+      });
 
     logger.debug("Token usage persisted to database with tokenlens cost", {
       operationId: usage.operationId,
@@ -169,7 +179,7 @@ async function persistTokenUsage(usage: TokenUsage): Promise<void> {
 
 // Function to record token usage for a specific LLM call
 export function recordTokenUsage(
-  usage: Omit<TokenUsage, "operationId" | "operationName" | "timestamp">
+  usage: Omit<TokenUsage, "operationId" | "operationName" | "timestamp">,
 ): void {
   const context = tokenTrackingStorage.getStore();
   if (!context) {
@@ -247,7 +257,7 @@ export function getCurrentTotalTokenUsage(): TokenUsage | null {
       timestamp: new Date(),
       operationId: context.operationId,
       operationName: context.operationName,
-    }
+    },
   );
 }
 
@@ -257,9 +267,7 @@ export function getTokenUsageByOperationId(operationId: string): TokenUsage[] {
 }
 
 // Function to get total token usage by operation ID
-export function getTotalTokenUsageByOperationId(
-  operationId: string
-): TokenUsage {
+export function getTotalTokenUsageByOperationId(operationId: string): TokenUsage {
   return TokenUsageAggregator.getInstance().getTotalUsage(operationId);
 }
 
@@ -300,9 +308,11 @@ interface AIResponseWithUsage {
 }
 
 // Higher-order function to wrap AI SDK calls with token tracking
-export function withTokenTrackingForAI<
-  T extends (...args: unknown[]) => Promise<unknown>
->(operationName: string, aiFunction: T, metadata?: Record<string, unknown>): T {
+export function withTokenTrackingForAI<T extends (...args: unknown[]) => Promise<unknown>>(
+  operationName: string,
+  aiFunction: T,
+  metadata?: Record<string, unknown>,
+): T {
   return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     return withTokenTracking(
       operationName,
@@ -311,9 +321,7 @@ export function withTokenTrackingForAI<
 
         // Try to extract token usage from AI SDK response
         if (result && typeof result === "object") {
-          const usage = extractTokenUsageFromAIResponse(
-            result as AIResponseWithUsage
-          );
+          const usage = extractTokenUsageFromAIResponse(result as AIResponseWithUsage);
           if (usage) {
             recordTokenUsage(usage);
           }
@@ -321,14 +329,14 @@ export function withTokenTrackingForAI<
 
         return result as ReturnType<T>;
       },
-      metadata
+      metadata,
     );
   }) as T;
 }
 
 // Function to extract token usage from AI SDK response
 function extractTokenUsageFromAIResponse(
-  response: AIResponseWithUsage
+  response: AIResponseWithUsage,
 ): Omit<TokenUsage, "operationId" | "operationName" | "timestamp"> | null {
   const getPromptTokens = (usage?: {
     inputTokens?: number;
@@ -354,7 +362,9 @@ function extractTokenUsageFromAIResponse(
 
   // Check for Braintrust telemetry data
   if (response?.telemetry?.usage) {
-    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.telemetry.usage);
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(
+      response.telemetry.usage,
+    );
     return {
       promptTokens,
       completionTokens,
@@ -422,7 +432,7 @@ export function withCustomTokenTracking<T>(
   operationId: string,
   operationName: string,
   fn: () => Promise<T>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<T> {
   const context: TokenTrackingContext = {
     operationId,

@@ -1,14 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
-import {
-  getSessionWithMessages,
-  createSession,
-  listSessions,
-} from "../db/queries/message";
-import {
-  SessionWithMessagesResponse,
-  ListSessionsResponse,
-} from "../schemas/chat.schema";
+import { createSession, getSessionWithMessages, listSessions } from "../db/queries/message";
+import { ListSessionsResponse, SessionWithMessagesResponse } from "../schemas/chat.schema";
 
 const chatRoutes = async (fastify: FastifyInstance) => {
   // Get a chat session with its messages
@@ -102,10 +95,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       const sessions = await listSessions(userId, limit, cursor);
       return reply.send({
         sessions,
-        nextCursor:
-          sessions.length === limit
-            ? sessions[sessions.length - 1]?.id
-            : undefined,
+        nextCursor: sessions.length === limit ? sessions[sessions.length - 1]?.id : undefined,
       });
     },
   });

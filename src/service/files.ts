@@ -1,19 +1,19 @@
+import { MODELS } from "@/@types/llm";
+import { getLLM } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { userFile } from "@/db/schema";
-import { v4 as uuidv4 } from "uuid";
-import { StorageService } from "./storage";
-import { getLLM } from "@/ai-backend/llm";
-import { MODELS } from "@/@types/llm";
 import { generateObject } from "ai";
-import { z } from "zod";
 import { and, eq, inArray } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { parsePDF } from "./file/triggerParsing";
+import { StorageService } from "./storage";
 
 const db = getDb();
 
 const generateSummaryAndMetadata = async (content: string) => {
-    const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
-    const prompt = `
+  const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
+  const prompt = `
   You are a helpful assistant. Given a web article content, generate a summary and metadata about the article.
   
   Output a JSON object with the following structure:
@@ -44,121 +44,118 @@ const generateSummaryAndMetadata = async (content: string) => {
   
   Content: ${content}
   `;
-    const result = await generateObject({
-        model: llm,
-        schema: z.object({
-            title: z.string(),
-            shortSummary: z.string(),
-            summary: z.string(),
-            year: z.number(),
-            documentType: z.string(),
-            referencePeriod: z.string().optional(),
-            referencePeriodEnd: z.string().optional(),
-        }),
-        prompt: prompt,
-    });
+  const result = await generateObject({
+    model: llm,
+    schema: z.object({
+      title: z.string(),
+      shortSummary: z.string(),
+      summary: z.string(),
+      year: z.number(),
+      documentType: z.string(),
+      referencePeriod: z.string().optional(),
+      referencePeriodEnd: z.string().optional(),
+    }),
+    prompt: prompt,
+  });
 
-    // Parse the JSON response
-    const metadata = result.object;
+  // Parse the JSON response
+  const metadata = result.object;
 
-    return { metadata };
+  return { metadata };
 };
 
 export const bulkAddFiles = async ({
-    pdfs,
-    webArticles,
-    userId,
-    orgId,
+  pdfs,
+  webArticles,
+  userId,
+  orgId,
 }: {
-    pdfs: { id: string; title: string; storagePath: string }[];
-    webArticles: {
-        id: string;
-        url: string;
-        storagePath: string;
-        title: string;
-    }[];
-    userId: string;
-    orgId: string;
+  pdfs: { id: string; title: string; storagePath: string }[];
+  webArticles: {
+    id: string;
+    url: string;
+    storagePath: string;
+    title: string;
+  }[];
+  userId: string;
+  orgId: string;
 }) => {
-    // Create files
-    const files = await db
-        .insert(userFile)
-        .values(
-            pdfs.map((pdf) => ({
-                id: pdf.id,
-                name: pdf.title,
-                userId: userId,
-                orgId: orgId,
-            })),
-        )
-        .returning();
+  // Create files
+  const files = await db
+    .insert(userFile)
+    .values(
+      pdfs.map((pdf) => ({
+        id: pdf.id,
+        name: pdf.title,
+        userId: userId,
+        orgId: orgId,
+      })),
+    )
+    .returning();
 
-    // Copy over the PDFs to the files
-    let index = 0;
-    for (const pdf of pdfs) {
-        const storageService = new StorageService();
-        const pdfBuffer = await storageService.downloadFile(pdf.storagePath);
-        await storageService.uploadFile({
-            data: pdfBuffer,
-            path: `files/${userId}/${files[index]?.id}/${files[index]?.id}.pdf`,
-        });
-        index++;
-    }
-
-    // Parse files
-    await Promise.all(
-        files.map(async (file) => {
-            await parsePDF(file.id);
-        }),
-    );
-
-    // Generate metadata for web articles parallelly
-    const metadataPromises = webArticles.map(async (webArticle) => {
-        const storageService = new StorageService();
-        // Assuming storagePath logic for web articles is correct or adapted
-        const buffer = await storageService.downloadFile(webArticle.storagePath);
-        const markdown = buffer.toString("utf-8");
-        const { metadata } = await generateSummaryAndMetadata(markdown);
-        return {
-            id: webArticle.id,
-            name: metadata.title,
-            userId: userId,
-            orgId: orgId,
-            type: "web_article" as const,
-            webArticleMetadata: {
-                url: webArticle.url,
-                title: metadata.title,
-                content: markdown,
-            },
-            metadata: metadata,
-            status: "processed" as const,
-        };
+  // Copy over the PDFs to the files
+  let index = 0;
+  for (const pdf of pdfs) {
+    const storageService = new StorageService();
+    const pdfBuffer = await storageService.downloadFile(pdf.storagePath);
+    await storageService.uploadFile({
+      data: pdfBuffer,
+      path: `files/${userId}/${files[index]?.id}/${files[index]?.id}.pdf`,
     });
-    const metadataResults = await Promise.all(metadataPromises);
-    const webArticlesFiles = await db
-        .insert(userFile)
-        .values(metadataResults)
-        .returning();
+    index++;
+  }
 
+  // Parse files
+  await Promise.all(
+    files.map(async (file) => {
+      await parsePDF(file.id);
+    }),
+  );
+
+  // Generate metadata for web articles parallelly
+  const metadataPromises = webArticles.map(async (webArticle) => {
+    const storageService = new StorageService();
+    // Assuming storagePath logic for web articles is correct or adapted
+    const buffer = await storageService.downloadFile(webArticle.storagePath);
+    const markdown = buffer.toString("utf-8");
+    const { metadata } = await generateSummaryAndMetadata(markdown);
     return {
-        pdfs: files.map((file) => ({
-            id: file.id,
-            name: file.name,
-        })),
-        webArticles: webArticlesFiles.map((file) => ({
-            id: file.id,
-            name: file.name,
-            url: file.webArticleMetadata?.url,
-        })),
+      id: webArticle.id,
+      name: metadata.title,
+      userId: userId,
+      orgId: orgId,
+      type: "web_article" as const,
+      webArticleMetadata: {
+        url: webArticle.url,
+        title: metadata.title,
+        content: markdown,
+      },
+      metadata: metadata,
+      status: "processed" as const,
     };
+  });
+  const metadataResults = await Promise.all(metadataPromises);
+  const webArticlesFiles = await db.insert(userFile).values(metadataResults).returning();
+
+  return {
+    pdfs: files.map((file) => ({
+      id: file.id,
+      name: file.name,
+    })),
+    webArticles: webArticlesFiles.map((file) => ({
+      id: file.id,
+      name: file.name,
+      url: file.webArticleMetadata?.url,
+    })),
+  };
 };
 
 export const getFileStatuses = async (fileIds: string[], userId: string) => {
-    const files = await db.query.userFile.findMany({
-        where: and(inArray(userFile.id, fileIds), eq(userFile.userId, userId)),
-    });
-    return files.map((file) => ({
-        id: file.id,
-        status: file.status,
-    }));
+  const files = await db.query.userFile.findMany({
+    where: and(inArray(userFile.id, fileIds), eq(userFile.userId, userId)),
+  });
+  return files.map((file) => ({
+    id: file.id,
+    status: file.status,
+  }));
 };

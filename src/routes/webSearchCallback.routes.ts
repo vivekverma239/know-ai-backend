@@ -1,11 +1,11 @@
-import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
-import { Receiver } from "@upstash/qstash";
-import { getDb } from "@/db";
-import { eq } from "drizzle-orm";
-import { webSearchTask } from "@/db/schema";
 import { webAgent } from "@/agents/webAgent";
+import { getDb } from "@/db";
+import { webSearchTask } from "@/db/schema";
 import { logger } from "@/utils/logger";
+import { Type } from "@sinclair/typebox";
+import { Receiver } from "@upstash/qstash";
+import { eq } from "drizzle-orm";
+import type { FastifyInstance } from "fastify";
 
 const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
   const receiver = new Receiver({
@@ -110,10 +110,7 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
 
         try {
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () => reject(new Error("Web agent execution timeout")),
-              5 * 60 * 1000
-            );
+            setTimeout(() => reject(new Error("Web agent execution timeout")), 5 * 60 * 1000);
           });
           const result = (await Promise.race([
             webAgent(task.query, {
@@ -157,7 +154,7 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
         });
         return reply.code(500).send({ success: false });
       }
-    }
+    },
   );
 };
 

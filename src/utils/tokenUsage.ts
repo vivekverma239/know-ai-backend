@@ -1,9 +1,6 @@
 import type { CallbackTokenUsage, TokenUsage } from "@/@types/tokenUsage";
 
-export const mergeTokenUsage = (
-  usage1: TokenUsage,
-  usage2: TokenUsage
-): TokenUsage => {
+export const mergeTokenUsage = (usage1: TokenUsage, usage2: TokenUsage): TokenUsage => {
   const mergedUsage: TokenUsage = { ...usage1 };
 
   // Merge each key from usage2 into the result
@@ -16,22 +13,16 @@ export const mergeTokenUsage = (
       const mergedInputTokenDetails: Record<string, number> = {
         ...usage1Single.inputTokenDetails,
       };
-      for (const [detailKey, value] of Object.entries(
-        usage2Single.inputTokenDetails
-      )) {
-        mergedInputTokenDetails[detailKey] =
-          (mergedInputTokenDetails[detailKey] ?? 0) + value;
+      for (const [detailKey, value] of Object.entries(usage2Single.inputTokenDetails)) {
+        mergedInputTokenDetails[detailKey] = (mergedInputTokenDetails[detailKey] ?? 0) + value;
       }
 
       // Merge output token details
       const mergedOutputTokenDetails: Record<string, number> = {
         ...usage1Single.outputTokenDetails,
       };
-      for (const [detailKey, value] of Object.entries(
-        usage2Single.outputTokenDetails
-      )) {
-        mergedOutputTokenDetails[detailKey] =
-          (mergedOutputTokenDetails[detailKey] ?? 0) + value;
+      for (const [detailKey, value] of Object.entries(usage2Single.outputTokenDetails)) {
+        mergedOutputTokenDetails[detailKey] = (mergedOutputTokenDetails[detailKey] ?? 0) + value;
       }
 
       mergedUsage[key] = {
@@ -50,9 +41,7 @@ export const mergeTokenUsage = (
   return mergedUsage;
 };
 
-export const mapCallbackTokenUsage = (
-  usage: CallbackTokenUsage
-): TokenUsage => {
+export const mapCallbackTokenUsage = (usage: CallbackTokenUsage): TokenUsage => {
   return Object.fromEntries(
     Object.entries(usage).map(([key, value]) => [
       key,
@@ -63,6 +52,6 @@ export const mapCallbackTokenUsage = (
         inputTokenDetails: value.input_token_details,
         outputTokenDetails: value.output_token_details,
       },
-    ])
+    ]),
   );
 };

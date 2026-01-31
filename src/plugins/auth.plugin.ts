@@ -1,8 +1,4 @@
-import type {
-  FastifyRequest,
-  FastifyReply,
-  FastifyInstance,
-} from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 // We'll use type assertion instead of extending FastifyRequest
 // since Fastify's type system is complex and doesn't easily support custom request types

@@ -1,12 +1,12 @@
-import { getStorage } from "../googleStorage";
+import { parseToCMeta } from "@/agents/document/parseToCMeta";
 import { eq } from "drizzle-orm";
 import { getDb } from "../../db";
 import { userFile, userFileToCMeta } from "../../db/schema";
-import { logger, logError } from "../../utils/logger";
-import { traceManager } from "../../utils/tracing";
 import { httpClient } from "../../utils/httpClient";
+import { logError, logger } from "../../utils/logger";
+import { traceManager } from "../../utils/tracing";
+import { getStorage } from "../googleStorage";
 import { StorageService } from "../storage";
-import { parseToCMeta } from "@/agents/document/parseToCMeta";
 
 export const parsePDF = async (fileId: string): Promise<void> => {
   return traceManager.withSpan(
@@ -31,8 +31,11 @@ export const parsePDF = async (fileId: string): Promise<void> => {
         logger.info("Calling parsing backend", {
           backendUrl,
           fileId,
-          elements: ["pdf_parse", "metadata", "outline", "heirarchial_index"]
+          elements: ["pdf_parse", "metadata", "outline", "heirarchial_index"],
         });
+        if (!process.env.BACKEND_TOKEN) {
+          throw new Error("BACKEND_TOKEN is not set");
+        }
 
         const response = await httpClient.post(
           backendUrl,
@@ -46,9 +49,9 @@ export const parsePDF = async (fileId: string): Promise<void> => {
           {
             headers: {
               "Content-Type": "application/json",
-              "X-APP-TOKEN": process.env.BACKEND_TOKEN!,
+              "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -64,7 +67,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
 
         logger.info("PDF parsing triggered successfully", {
           fileId,
-          spanId: span.id
+          spanId: span.id,
         });
       } catch (error) {
         logError(error, {
@@ -75,7 +78,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
         throw error;
       }
     },
-    { fileId, operation: "parsePDF" }
+    { fileId, operation: "parsePDF" },
   );
 };
 
@@ -101,8 +104,12 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
         const backendUrl = `${process.env.BACKEND_URL}/parse-metadata/background`;
         logger.info("Calling metadata parsing backend", {
           backendUrl,
-          fileId
+          fileId,
         });
+
+        if (!process.env.BACKEND_TOKEN) {
+          throw new Error("BACKEND_TOKEN is not set");
+        }
 
         const response = await httpClient.post(
           backendUrl,
@@ -114,9 +121,9 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
           {
             headers: {
               "Content-Type": "application/json",
-              "X-APP-TOKEN": process.env.BACKEND_TOKEN!,
+              "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -132,7 +139,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
 
         logger.info("PDF metadata parsing triggered successfully", {
           fileId,
-          spanId: span.id
+          spanId: span.id,
         });
       } catch (error) {
         logError(error, {
@@ -143,7 +150,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
         throw error;
       }
     },
-    { fileId, operation: "parsePDFMetadata" }
+    { fileId, operation: "parsePDFMetadata" },
   );
 };
 
@@ -169,8 +176,12 @@ export const parsePDFChapters = async (fileId: string): Promise<void> => {
         const backendUrl = `${process.env.BACKEND_URL}/parse-outline/background`;
         logger.info("Calling outline parsing backend", {
           backendUrl,
-          fileId
+          fileId,
         });
+
+        if (!process.env.BACKEND_TOKEN) {
+          throw new Error("BACKEND_TOKEN is not set");
+        }
 
         const response = await httpClient.post(
           backendUrl,
@@ -182,9 +193,9 @@ export const parsePDFChapters = async (fileId: string): Promise<void> => {
           {
             headers: {
               "Content-Type": "application/json",
-              "X-APP-TOKEN": process.env.BACKEND_TOKEN!,
+              "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -200,7 +211,7 @@ export const parsePDFChapters = async (fileId: string): Promise<void> => {
 
         logger.info("PDF chapters parsing triggered successfully", {
           fileId,
-          spanId: span.id
+          spanId: span.id,
         });
       } catch (error) {
         logError(error, {
@@ -211,7 +222,7 @@ export const parsePDFChapters = async (fileId: string): Promise<void> => {
         throw error;
       }
     },
-    { fileId, operation: "parsePDFChapters" }
+    { fileId, operation: "parsePDFChapters" },
   );
 };
 
@@ -220,7 +231,10 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
     "file:parsePDFHeirarchialIndex",
     async (span) => {
       try {
-        logger.info("Starting PDF hierarchical index parsing", { fileId, operation: "parsePDFHeirarchialIndex" });
+        logger.info("Starting PDF hierarchical index parsing", {
+          fileId,
+          operation: "parsePDFHeirarchialIndex",
+        });
 
         const file = await getDb().query.userFile.findFirst({
           where: eq(userFile.id, fileId),
@@ -237,8 +251,12 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
         const backendUrl = `${process.env.BACKEND_URL}/parse-heirarchial-index/background`;
         logger.info("Calling hierarchical index parsing backend", {
           backendUrl,
-          fileId
+          fileId,
         });
+
+        if (!process.env.BACKEND_TOKEN) {
+          throw new Error("BACKEND_TOKEN is not set");
+        }
 
         const response = await httpClient.post(
           backendUrl,
@@ -250,9 +268,9 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
           {
             headers: {
               "Content-Type": "application/json",
-              "X-APP-TOKEN": process.env.BACKEND_TOKEN!,
+              "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -268,7 +286,7 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
 
         logger.info("PDF hierarchical index parsing triggered successfully", {
           fileId,
-          spanId: span.id
+          spanId: span.id,
         });
       } catch (error) {
         logError(error, {
@@ -279,10 +297,9 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
         throw error;
       }
     },
-    { fileId, operation: "parsePDFHeirarchialIndex" }
+    { fileId, operation: "parsePDFHeirarchialIndex" },
   );
 };
-
 
 export const parseToCMetaService = async (fileId: string): Promise<void> => {
   const file = await getDb().query.userFile.findFirst({

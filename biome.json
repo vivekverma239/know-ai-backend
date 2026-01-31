@@ -1,7 +1,7 @@
 {
   "files": {
-    "include": ["src/**/*.ts", "test/**/*.ts"],
-    "ignore": ["dist", "node_modules", "data", "build", "coverage"]
+    "include": ["src/**/*.ts"],
+    "ignore": ["dist", "node_modules", "data", "build", "coverage", "test"]
   },
   "formatter": {
     "indentStyle": "space",

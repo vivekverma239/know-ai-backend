@@ -1,17 +1,17 @@
-import { z } from "zod";
-import { PDFDocument } from "pdf-lib";
+import fs from "node:fs";
+import { MODELS } from "@/@types/llm";
+import { getLLM } from "@/ai-backend/llm";
 import {
-  generateObject,
-  generateText,
   type FilePart,
   type ImagePart,
   type ModelMessage,
   type TextPart,
+  generateObject,
+  generateText,
 } from "ai";
-import { getLLM } from "@/ai-backend/llm";
-import { MODELS } from "@/@types/llm";
-import fs from "node:fs";
 import plimit from "p-limit";
+import { PDFDocument } from "pdf-lib";
+import { z } from "zod";
 
 interface SplitPDFOptions {
   pagesPerSplit?: number;
@@ -32,7 +32,7 @@ interface SplitResult {
  */
 export const splitPDF = async (
   doc: Buffer,
-  options: SplitPDFOptions = {}
+  options: SplitPDFOptions = {},
 ): Promise<SplitResult> => {
   const { pagesPerSplit = 10 } = options;
 
@@ -57,10 +57,12 @@ export const splitPDF = async (
       // Copy pages from source to new PDF
       const pages = await newPDF.copyPages(
         sourcePDF,
-        Array.from({ length: endPage - startPage }, (_, idx) => startPage + idx)
+        Array.from({ length: endPage - startPage }, (_, idx) => startPage + idx),
       );
 
-      pages.forEach((page) => newPDF.addPage(page));
+      for (const page of pages) {
+        newPDF.addPage(page);
+      }
 
       // Save the new PDF as Buffer
       const pdfBytes = await newPDF.save();
@@ -74,9 +76,7 @@ export const splitPDF = async (
     };
   } catch (error) {
     throw new Error(
-      `Failed to split PDF: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      `Failed to split PDF: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -136,9 +136,9 @@ const schema = z.object({
           summary: z.string(),
           startPage: z.number(),
           endPage: z.number(),
-        })
+        }),
       ),
-    })
+    }),
   ),
 });
 
@@ -155,19 +155,19 @@ export const parseTOC = async (doc: Buffer) => {
     const subPDF = subPDFs[i];
     const prevSubPDF = subPDFs[i - 1];
     // Save the subPDF to a file
-    fs.writeFileSync(`subPDF-${i}.pdf`, subPDF!);
+    fs.writeFileSync(`subPDF-${i}.pdf`, subPDF);
 
     const userContent: (TextPart | ImagePart | FilePart)[] = [
       {
         type: "text",
         text: `Page range: ${i * 10 + 1} - ${Math.min(
           (i + 1) * 10,
-          totalPages
+          totalPages,
         )}. Extract the table of contents from this file:`,
       },
       {
         type: "file",
-        data: subPDF!,
+        data: subPDF,
         mediaType: "application/pdf",
       },
       {
@@ -218,12 +218,8 @@ export const parseTOC = async (doc: Buffer) => {
 
   const end = performance.now();
 
-
   // Save combinedTOC to a file
-  fs.writeFileSync(
-    "combinedTOC.json",
-    JSON.stringify(combinedTOC.object, null, 2)
-  );
+  fs.writeFileSync("combinedTOC.json", JSON.stringify(combinedTOC.object, null, 2));
   return { toc: { sections: combinedTOC.object.sections } };
 };
 

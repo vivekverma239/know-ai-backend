@@ -1,19 +1,19 @@
-import { getLLM } from "@/ai-backend/llm";
-import { generateText, stepCountIs } from "ai";
 import { MODELS } from "@/@types/llm";
+import { getLLM } from "@/ai-backend/llm";
+import { createContextLogger } from "@/utils/logger";
 import { parseJson } from "@/utils/parseJson";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { createContextLogger } from "@/utils/logger";
-import { getWebSearchTool, getFirecrawlScrapeTool, getWebsiteContentTool } from "./tools/websearch";
+import { generateText, stepCountIs } from "ai";
 import type { ToolContext } from "./tools/toolContext";
+import { getFirecrawlScrapeTool, getWebSearchTool, getWebsiteContentTool } from "./tools/websearch";
 
 export type SourcesType = {
-    sources: {
-        url: string;
-        title: string;
-        type: "pdf" | "website";
-        description: string;
-    }[];
+  sources: {
+    url: string;
+    title: string;
+    type: "pdf" | "website";
+    description: string;
+  }[];
 };
 const SYSTEM_PROMPT = `
 You are an expert web research analyst specializing in finding and curating high-quality documents and resources. 
@@ -113,104 +113,103 @@ Return your findings in the following JSON structure, along with any helpful exp
 `;
 
 export const webAgent = async (query: string, context: ToolContext) => {
-    const agentLogger = createContextLogger({
-        agent: "webAgent",
-        phase: "search",
-    });
+  const agentLogger = createContextLogger({
+    agent: "webAgent",
+    phase: "search",
+  });
 
-    // Use a capable model
-    const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
+  // Use a capable model
+  const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
 
-    agentLogger.info("🔍 Starting web search", {
-        query: query.substring(0, 100),
-        model: modelToUse,
-    });
+  agentLogger.info("🔍 Starting web search", {
+    query: query.substring(0, 100),
+    model: modelToUse,
+  });
 
-    const llm = getLLM(modelToUse);
-    const response = await generateText({
-        model: llm,
-        messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: query },
-        ],
-        tools: {
-            webSearchTool: getWebSearchTool({ context }),
-            // webPageScrapeTool: getWebsiteContentTool({ context }),
-            webPageScrapeTool: getFirecrawlScrapeTool({ context }),
-
-        },
-        onStepFinish: (step) => {
-            agentLogger.debug("🤔 Step finished", {
-                reasoning: step.reasoning,
-                hasToolCalls: !!step.toolCalls,
-                toolCallCount: step.toolCalls?.length ?? 0,
-            });
-            if (step.toolCalls) {
-                agentLogger.debug("🔧 Tool calls", {
-                    toolCallCount: step.toolCalls.length,
-                    toolNames: step.toolCalls.map((tc) => tc.toolName),
-                });
-            }
-        },
-        providerOptions: {
-            google: {
-                thinkingConfig: {
-                    thinkingBudget: 2048,
-                },
-            } satisfies GoogleGenerativeAIProviderOptions,
-        },
-        stopWhen: stepCountIs(30),
-        temperature: 1,
-    });
-
-    agentLogger.debug("💰 Token usage", {
-        usage: response.usage,
-    });
-
-    // Try loading json from the response
-    let sources: SourcesType | null = null;
-    try {
-        sources = parseJson(response.text) as SourcesType | null;
-    } catch (error) {
-        agentLogger.error("Failed to parse JSON response from web search", {
-            error: error instanceof Error ? error.message : String(error),
-            responsePreview: response.text.substring(0, 200),
-            operation: "webAgent:parseJson",
+  const llm = getLLM(modelToUse);
+  const response = await generateText({
+    model: llm,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: query },
+    ],
+    tools: {
+      webSearchTool: getWebSearchTool({ context }),
+      // webPageScrapeTool: getWebsiteContentTool({ context }),
+      webPageScrapeTool: getFirecrawlScrapeTool({ context }),
+    },
+    onStepFinish: (step) => {
+      agentLogger.debug("🤔 Step finished", {
+        reasoning: step.reasoning,
+        hasToolCalls: !!step.toolCalls,
+        toolCallCount: step.toolCalls?.length ?? 0,
+      });
+      if (step.toolCalls) {
+        agentLogger.debug("🔧 Tool calls", {
+          toolCallCount: step.toolCalls.length,
+          toolNames: step.toolCalls.map((tc) => tc.toolName),
         });
-        // sources remains null, will try alternative parsing below
-    }
+      }
+    },
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    stopWhen: stepCountIs(30),
+    temperature: 1,
+  });
 
-    if (!sources) {
-        const res = (parseJson(response.text) as SourcesType) ?? null;
-        if (res) {
-            sources = res;
-        }
-    }
+  agentLogger.debug("💰 Token usage", {
+    usage: response.usage,
+  });
 
-    if (!sources) {
-        return {
-            sources: [],
-            helpfulText: response.text,
-        };
-    }
-
-    // Replace json with markdown code block
-    const helpfulText = response.text.replace(/```json\s*([\s\S]*?)\s*```/, "");
-
-    agentLogger.info("✅ Web search completed", {
-        query: query.substring(0, 100),
-        sourceCount: sources?.sources?.length ?? 0,
-        sources: sources?.sources?.map((s) => ({
-            url: s.url,
-            title: s.title,
-            type: s.type,
-        })),
+  // Try loading json from the response
+  let sources: SourcesType | null = null;
+  try {
+    sources = parseJson(response.text) as SourcesType | null;
+  } catch (error) {
+    agentLogger.error("Failed to parse JSON response from web search", {
+      error: error instanceof Error ? error.message : String(error),
+      responsePreview: response.text.substring(0, 200),
+      operation: "webAgent:parseJson",
     });
+    // sources remains null, will try alternative parsing below
+  }
 
+  if (!sources) {
+    const res = (parseJson(response.text) as SourcesType) ?? null;
+    if (res) {
+      sources = res;
+    }
+  }
+
+  if (!sources) {
     return {
-        sources: sources?.sources,
-        helpfulText: helpfulText,
+      sources: [],
+      helpfulText: response.text,
     };
+  }
+
+  // Replace json with markdown code block
+  const helpfulText = response.text.replace(/```json\s*([\s\S]*?)\s*```/, "");
+
+  agentLogger.info("✅ Web search completed", {
+    query: query.substring(0, 100),
+    sourceCount: sources?.sources?.length ?? 0,
+    sources: sources?.sources?.map((s) => ({
+      url: s.url,
+      title: s.title,
+      type: s.type,
+    })),
+  });
+
+  return {
+    sources: sources?.sources,
+    helpfulText: helpfulText,
+  };
 };
 
 const SYSTEM_PROMPT_COMPLEX = `
@@ -239,73 +238,72 @@ Guidelines:
 `;
 
 export const webAgentComplex = async (query: string, context: ToolContext) => {
-    const agentLogger = createContextLogger({
-        agent: "webAgent",
-        phase: "complexSearch",
-    });
+  const agentLogger = createContextLogger({
+    agent: "webAgent",
+    phase: "complexSearch",
+  });
 
-    const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
+  const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
 
-    agentLogger.info("🔬 Starting complex web search", {
-        query: query.substring(0, 100),
-        model: modelToUse,
-    });
+  agentLogger.info("🔬 Starting complex web search", {
+    query: query.substring(0, 100),
+    model: modelToUse,
+  });
 
-    const llm = getLLM(modelToUse);
-    const response = await generateText({
-        model: llm,
-        messages: [
-            { role: "system", content: SYSTEM_PROMPT_COMPLEX },
-            { role: "user", content: query },
-        ],
-        temperature: 1,
-    });
+  const llm = getLLM(modelToUse);
+  const response = await generateText({
+    model: llm,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT_COMPLEX },
+      { role: "user", content: query },
+    ],
+    temperature: 1,
+  });
 
-    let subtasks: { subtasks: string[] } | null = null;
-    try {
-        subtasks = JSON.parse(response.text) as { subtasks: string[] };
-    } catch (error) { }
+  let subtasks: { subtasks: string[] } | null = null;
+  try {
+    subtasks = JSON.parse(response.text) as { subtasks: string[] };
+  } catch (error) {}
 
-    if (!subtasks) {
-        const res = parseJson(response.text) as { subtasks: string[] };
-        if (res) {
-            subtasks = res;
-        }
+  if (!subtasks) {
+    const res = parseJson(response.text) as { subtasks: string[] };
+    if (res) {
+      subtasks = res;
     }
+  }
 
-    agentLogger.debug("🤔 Reasoning", {
-        reasoning: response.reasoning,
+  agentLogger.debug("🤔 Reasoning", {
+    reasoning: response.reasoning,
+  });
+
+  if (!subtasks) {
+    agentLogger.warn("⚠️  No subtasks identified", {
+      query: query.substring(0, 100),
+      responsePreview: response.text.substring(0, 200),
     });
-
-    if (!subtasks) {
-        agentLogger.warn("⚠️  No subtasks identified", {
-            query: query.substring(0, 100),
-            responsePreview: response.text.substring(0, 200),
-        });
-        return {
-            resources: [],
-            subtasks: [],
-        };
-    }
-
-    agentLogger.info("📋 Subtasks identified", {
-        subtaskCount: subtasks.subtasks.length,
-        subtasks: subtasks.subtasks,
-    });
-
-    const allResources = (
-        await Promise.all(subtasks.subtasks.map((subtask) => webAgent(subtask, context)))
-    )
-        .flatMap((resource) => resource.sources);
-
-    agentLogger.info("✅ Complex web search completed", {
-        query: query.substring(0, 100),
-        subtaskCount: subtasks.subtasks.length,
-        totalResources: allResources.length,
-    });
-
     return {
-        resources: allResources,
-        subtasks,
+      resources: [],
+      subtasks: [],
     };
+  }
+
+  agentLogger.info("📋 Subtasks identified", {
+    subtaskCount: subtasks.subtasks.length,
+    subtasks: subtasks.subtasks,
+  });
+
+  const allResources = (
+    await Promise.all(subtasks.subtasks.map((subtask) => webAgent(subtask, context)))
+  ).flatMap((resource) => resource.sources);
+
+  agentLogger.info("✅ Complex web search completed", {
+    query: query.substring(0, 100),
+    subtaskCount: subtasks.subtasks.length,
+    totalResources: allResources.length,
+  });
+
+  return {
+    resources: allResources,
+    subtasks,
+  };
 };

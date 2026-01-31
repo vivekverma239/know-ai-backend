@@ -28,7 +28,7 @@ export const FilePagesResponse = Type.Object({
       fileId: Type.String(),
       pageNumber: Type.Number(),
       content: Type.String(),
-    })
+    }),
   ),
   total: Type.Number(),
 });
@@ -43,7 +43,7 @@ export const FileSectionsResponse = Type.Object({
       endPage: Type.Number(),
       title: Type.String(),
       summary: Type.String(),
-    })
+    }),
   ),
   total: Type.Number(),
 });
@@ -58,7 +58,7 @@ export const HierarchicalIndexItems = Type.Object({
       level: Type.Number(),
       startPage: Type.Number(),
       endPage: Type.Number(),
-    })
+    }),
   ),
 });
 

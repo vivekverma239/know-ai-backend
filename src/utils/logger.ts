@@ -1,6 +1,6 @@
-import pino from "pino";
 import { AsyncLocalStorage } from "node:async_hooks";
 import process from "node:process";
+import pino from "pino";
 
 // Create async storage for context
 const asyncStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -88,7 +88,7 @@ export function clearLogContext(): void {
 // Middleware to automatically add request context
 export async function withLogContext<T>(
   context: Record<string, unknown>,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   const store = new Map(Object.entries(context));
   return asyncStorage.run(store, fn);
@@ -142,7 +142,7 @@ export function logError(error: Error | unknown, context?: Record<string, unknow
 export function logWithDuration(
   message: string,
   startTime: Date,
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown>,
 ): void {
   const duration = Date.now() - startTime.getTime();
   logger.info(message, { ...meta, duration });

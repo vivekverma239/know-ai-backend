@@ -20,7 +20,7 @@ Today is ${moment().format("YYYY-MM-DD")}.
 `;
 
 const systemPrompt2 = `the following is a question by a financial practitioner to her junior analyst, rephrase the question to make it more understandable to the junior analyst. If needed, break it down in more sub-questions and / or give hints and suggestions. Today is ${moment().format(
-  "YYYY-MM-DD"
+  "YYYY-MM-DD",
 )}. Assume you have access to all required documents, no need to search the internet, do not ask follow up questions, do not include sanity checks. Do not include tips on how to present the output. IMPORTANT: be very concise.`;
 
 export const queryExpansion = async (query: string) => {

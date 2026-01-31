@@ -1,12 +1,12 @@
 import type { Subsection } from "@/@types/fileIndex";
 import type { MessageParts } from "@/@types/message";
 import type { PageSummary } from "@/@types/metadata";
+import type { TokenUsage } from "@/@types/tokenUsage";
 import type { TokenUsage as AsyncTokenUsage } from "@/utils/asyncHook";
 import type { LanguageModelUsage } from "ai";
-import type { TokenUsage } from "@/@types/tokenUsage";
 
 import type { MODELS } from "@/@types/llm";
-import type { Toc, DocumentMetadata, ChunkPageSummary } from "@/agents/document/parseToCMeta";
+import type { ChunkPageSummary, DocumentMetadata, Toc } from "@/agents/document/parseToCMeta";
 import { relations, sql } from "drizzle-orm";
 import { index, pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 // import { type AdapterAccountType } from "next-auth/adapters";
@@ -66,10 +66,7 @@ export type Source = {
 };
 
 export const userFile = createTable("user_file", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   name: d.varchar({ length: 256 }),
   /**
    * If true, the file is an admin file. This is a file that is populated by the admin and is visible by all users.
@@ -87,10 +84,7 @@ export const userFile = createTable("user_file", (d) => ({
     retry: number;
   }>(),
   tokenUsage: d.jsonb().$type<TokenUsage>(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   type: d
     .varchar({ length: 255 })
@@ -102,16 +96,11 @@ export const userFile = createTable("user_file", (d) => ({
     title: string;
     content: string;
   }>(),
-  structuredReportId: d
-    .uuid()
-    .references(() => structuredReports.id, { onDelete: "cascade" }),
+  structuredReportId: d.uuid().references(() => structuredReports.id, { onDelete: "cascade" }),
 }));
 
 export const userFilePage = createTable("file_page", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   fileId: d
     .uuid()
     .notNull()
@@ -121,10 +110,7 @@ export const userFilePage = createTable("file_page", (d) => ({
 }));
 
 export const userFileToCMeta = createTable("user_file_to_c_meta", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   fileId: d
     .uuid()
     .notNull()
@@ -134,18 +120,12 @@ export const userFileToCMeta = createTable("user_file_to_c_meta", (d) => ({
   metadata: d.jsonb().$type<DocumentMetadata>(),
   pages: d.jsonb().$type<ChunkPageSummary[]>(),
   tokenUsage: d.jsonb().$type<AsyncTokenUsage | null>().default(null),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
 export const userFileCluster = createTable("file_cluster", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   fileId: d
     .uuid()
     .notNull()
@@ -158,18 +138,12 @@ export const userFileCluster = createTable("file_cluster", (d) => ({
   summary: d.text().notNull(),
   embedding: d.vector({ dimensions: 768 }),
   metadata: d.jsonb(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
 export const userFileChapter = createTable("file_chapter", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   userId: d.varchar({ length: 255 }).notNull(),
   orgId: d.varchar({ length: 255 }).notNull(),
   fileId: d
@@ -181,17 +155,11 @@ export const userFileChapter = createTable("file_chapter", (d) => ({
   startPage: d.integer().notNull(),
   endPage: d.integer().notNull(),
   embedding: d.vector({ dimensions: 768 }),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 }));
 
 export const userFileSection = createTable("file_section", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   userId: d.varchar({ length: 255 }).notNull(),
   orgId: d.varchar({ length: 255 }).notNull(),
   fileId: d
@@ -206,63 +174,42 @@ export const userFileSection = createTable("file_section", (d) => ({
   subsections: d.jsonb().$type<Subsection[]>(),
   embedding: d.vector({ dimensions: 768 }),
   metadata: d.jsonb(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
-export const userFileHeirarchialIndex = createTable(
-  "file_heirarchial_index",
-  (d) => ({
-    id: d
-      .uuid()
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    userId: d.varchar({ length: 255 }).notNull(),
-    orgId: d.varchar({ length: 255 }).notNull(),
-    fileId: d
-      .uuid()
-      .notNull()
-      .references(() => userFile.id),
-    title: d.text().notNull(),
-    summary: d.text().notNull(),
-    level: d.integer().notNull(),
-    startPage: d.integer().notNull(),
-    endPage: d.integer().notNull(),
-    embedding: d.vector({ dimensions: 768 }),
-    metadata: d.jsonb(),
-    children: d.jsonb(),
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-  })
-);
+export const userFileHeirarchialIndex = createTable("file_heirarchial_index", (d) => ({
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
+  userId: d.varchar({ length: 255 }).notNull(),
+  orgId: d.varchar({ length: 255 }).notNull(),
+  fileId: d
+    .uuid()
+    .notNull()
+    .references(() => userFile.id),
+  title: d.text().notNull(),
+  summary: d.text().notNull(),
+  level: d.integer().notNull(),
+  startPage: d.integer().notNull(),
+  endPage: d.integer().notNull(),
+  embedding: d.vector({ dimensions: 768 }),
+  metadata: d.jsonb(),
+  children: d.jsonb(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+}));
 
 export const textNote = createTable("text_note", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   content: d.text().notNull(),
   userId: d.varchar({ length: 255 }).notNull(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
 export const chunks = createTable(
   "chunk",
   (d) => ({
-    id: d
-      .uuid()
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
+    id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
     documentId: d.uuid().notNull(),
     chapterId: d.uuid(),
     startPage: d.integer(),
@@ -274,33 +221,20 @@ export const chunks = createTable(
   (t) => [
     index("chunk_document_id_idx").on(t.documentId),
     index("chunk_chapter_id_idx").on(t.chapterId),
-    index("chunk_document_id_start_page_end_page_idx").on(
-      t.documentId,
-      t.startPage,
-      t.endPage
-    ),
-  ]
+    index("chunk_document_id_start_page_end_page_idx").on(t.documentId, t.startPage, t.endPage),
+  ],
 );
 
 export const chatSession = createTable("chat_session", (d) => ({
-  id: d
-    .uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   title: d.varchar({ length: 255 }).notNull(),
   userId: d.varchar({ length: 255 }).notNull(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
 export const messages = createTable("message", (d) => ({
-  id: d
-    .varchar({ length: 255 })
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: d.varchar({ length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   role: d.varchar({ length: 255 }).notNull(),
   sessionId: d
     .uuid()
@@ -308,10 +242,7 @@ export const messages = createTable("message", (d) => ({
     .references(() => chatSession.id),
   parts: d.jsonb().$type<MessageParts>(),
   metadata: d.jsonb(),
-  createdAt: d
-    .timestamp({ withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 }));
 
@@ -334,31 +265,22 @@ export const webSearchTask = createTable("web_search_task", (d) => ({
   >(),
   helpfulText: d.text(),
   error: d.text(),
-  createdAt: d
-    .timestamp({ mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: d
-    .timestamp({ mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: d.timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
+  updatedAt: d.timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
   completedAt: d.timestamp({ mode: "date", withTimezone: true }),
 }));
 
-export const structuredReportTemplate = createTable(
-  "structured_report_template",
-  (d) => ({
-    id: d.uuid().primaryKey().defaultRandom(),
-    userId: d.varchar({ length: 255 }).notNull(), // Assuming direct user ID storage without relation for now, or match existing pattern
-    title: d.varchar({ length: 255 }).notNull(),
-    taskDescription: d.text().notNull(),
-    prompts: d.jsonb().$type<{
-      initialResearchPrompt: string;
-      subQuestionsIdentificationPrompt: string;
-      finalReportPrompt: string;
-    }>(),
-  })
-);
+export const structuredReportTemplate = createTable("structured_report_template", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  userId: d.varchar({ length: 255 }).notNull(), // Assuming direct user ID storage without relation for now, or match existing pattern
+  title: d.varchar({ length: 255 }).notNull(),
+  taskDescription: d.text().notNull(),
+  prompts: d.jsonb().$type<{
+    initialResearchPrompt: string;
+    subQuestionsIdentificationPrompt: string;
+    finalReportPrompt: string;
+  }>(),
+}));
 
 export type ModelConfig = {
   initialResearch?: MODELS | string;
@@ -369,7 +291,7 @@ export type ModelConfig = {
 };
 
 // Placeholder for StepOutputs until full agent port
-export type StepOutputs = Record<string, any>;
+export type StepOutputs = Record<string, unknown>;
 
 export const structuredReports = createTable("structured_report", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -412,15 +334,9 @@ export const tokenUsageLog = createTable(
     completionTokens: d.integer().notNull(),
     totalTokens: d.integer().notNull(),
     costEstimate: d.numeric({ precision: 10, scale: 6 }),
-    timestamp: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    timestamp: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
     metadata: d.jsonb().$type<Record<string, unknown>>(),
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   }),
   (table) => ({
     requestIdIdx: index("token_usage_log_request_id_idx").on(table.requestId),
@@ -429,7 +345,7 @@ export const tokenUsageLog = createTable(
     timestampIdx: index("token_usage_log_timestamp_idx").on(table.timestamp),
     sessionIdIdx: index("token_usage_log_session_id_idx").on(table.sessionId),
     modelIdx: index("token_usage_log_model_idx").on(table.model),
-  })
+  }),
 );
 
 export const UserFileChapter = userFileChapter.$inferSelect;

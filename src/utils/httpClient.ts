@@ -1,6 +1,6 @@
-import { logger, logError } from "@/utils/logger";
-import { traceManager } from "@/utils/tracing";
+import { logError, logger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
+import { traceManager } from "@/utils/tracing";
 
 /**
  * HTTP request configuration
@@ -206,11 +206,11 @@ export class TracedHttpClient {
       const sensitiveParams = ["api_key", "apikey", "token", "secret", "password", "auth"];
 
       // Remove sensitive query parameters
-      sensitiveParams.forEach((param) => {
+      for (const param of sensitiveParams) {
         if (parsed.searchParams.has(param)) {
           parsed.searchParams.set(param, "[REDACTED]");
         }
-      });
+      }
 
       return parsed.toString();
     } catch {

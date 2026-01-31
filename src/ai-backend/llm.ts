@@ -1,27 +1,27 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { createOpenAI } from "@ai-sdk/openai";
 import { MODELS } from "@/@types/llm";
-import { initLogger, wrapAISDKModel } from "braintrust";
-import { perplexity } from "@ai-sdk/perplexity";
 import { logger as appLogger } from "@/utils/logger";
-import { traceManager } from "@/utils/tracing";
 import { getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
+import { traceManager } from "@/utils/tracing";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { perplexity } from "@ai-sdk/perplexity";
+import { getTracer } from "@lmnr-ai/lmnr";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
-  streamText,
-  generateObject,
-  generateText,
-  type ModelMessage,
   type GenerateTextResult,
+  type ModelMessage,
   type StepResult,
   type ToolSet,
+  generateObject,
+  generateText,
   stepCountIs,
+  streamText,
 } from "ai";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { err, ok, type Result } from "neverthrow";
+import { initLogger, wrapAISDKModel } from "braintrust";
+import { type Result, err, ok } from "neverthrow";
 import type { z } from "zod";
-import { getTracer } from "@lmnr-ai/lmnr";
 
 const logger = initLogger({
   projectName: "LaraAI",
@@ -29,15 +29,15 @@ const logger = initLogger({
 });
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY!,
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY!,
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
 const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export const DEFAULT_SMALL_MODEL = MODELS.GEMINI_2_5_FLASH;
@@ -65,31 +65,19 @@ export function getLLM(model: MODELS) {
     case MODELS.GEMINI_2_5_PRO:
       return wrapAISDKModel(google("gemini-2.5-pro"));
     case MODELS.DEEPSEEK_LLAMA_8B:
-      return wrapAISDKModel(
-        openrouter("deepseek/deepseek-r1-distill-llama-8b")
-      );
+      return wrapAISDKModel(openrouter("deepseek/deepseek-r1-distill-llama-8b"));
     case MODELS.GLM_4_5:
       return wrapAISDKModel(openrouter("z-ai/glm-4.5"));
     case MODELS.DEEPSEEK_QWEN_2_5_SMALL:
-      return wrapAISDKModel(
-        openrouter("deepseek/deepseek-r1-distill-qwen-1.5b")
-      );
+      return wrapAISDKModel(openrouter("deepseek/deepseek-r1-distill-qwen-1.5b"));
     case MODELS.DEEPSEEK_QWEN_2_5_MEDIUM:
-      return wrapAISDKModel(
-        openrouter("deepseek/deepseek-r1-distill-qwen-14b")
-      );
+      return wrapAISDKModel(openrouter("deepseek/deepseek-r1-distill-qwen-14b"));
     case MODELS.DEEPSEEK_QWEN_2_5_LARGE:
-      return wrapAISDKModel(
-        openrouter("deepseek/deepseek-r1-distill-qwen-32b")
-      );
+      return wrapAISDKModel(openrouter("deepseek/deepseek-r1-distill-qwen-32b"));
     case MODELS.LLAMA_3_2_11B_VISION_INSTRUCT:
-      return wrapAISDKModel(
-        openrouter("meta-llama/llama-3.2-11b-vision-instruct")
-      );
+      return wrapAISDKModel(openrouter("meta-llama/llama-3.2-11b-vision-instruct"));
     case MODELS.LLAMA_3_2_90B_VISION_INSTRUCT:
-      return wrapAISDKModel(
-        openrouter("meta-llama/llama-3.2-90b-vision-instruct")
-      );
+      return wrapAISDKModel(openrouter("meta-llama/llama-3.2-90b-vision-instruct"));
     // case MODELS.O4_MINI:
     //   return openai("o4-mini");
     case MODELS.O3_MINI:
@@ -121,13 +109,9 @@ export function getLLM(model: MODELS) {
     case MODELS.MAGISTRAL_MEDIUM_2506:
       return wrapAISDKModel(openrouter("mistralai/magistral-medium-2506"));
     case MODELS.MAGISTRAL_MEDIUM_2506_THINKING:
-      return wrapAISDKModel(
-        openrouter("mistralai/magistral-medium-2506:thinking")
-      );
+      return wrapAISDKModel(openrouter("mistralai/magistral-medium-2506:thinking"));
     case MODELS.KIMI_K2:
       return wrapAISDKModel(openrouter("moonshotai/kimi-k2"));
-    case MODELS.CLAUDE_4_SONNET:
-      return wrapAISDKModel(openrouter("anthropic/claude-4.5-sonnet"));
     case MODELS.GROK_4:
       return wrapAISDKModel(openrouter("x-ai/grok-4"));
     case MODELS.GROK_3_MINI:
@@ -166,10 +150,7 @@ export const REASONING_MODELS = [
  * @param reasoningLevel - The reasoning level to use
  * @returns The provider options
  */
-export const getProviderOptions = (
-  model: MODELS,
-  reasoningLevel: "none" | "default" | "high",
-) => {
+export const getProviderOptions = (model: MODELS, reasoningLevel: "none" | "default" | "high") => {
   if (!REASONING_MODELS.includes(model)) {
     return undefined;
   }
@@ -177,22 +158,13 @@ export const getProviderOptions = (
   return {
     google: {
       thinkingConfig: {
-        thinkingBudget:
-          reasoningLevel === "high"
-            ? 1024
-            : reasoningLevel === "default"
-              ? 512
-              : 0,
+        thinkingBudget: reasoningLevel === "high" ? 1024 : reasoningLevel === "default" ? 512 : 0,
         includeThoughts: true,
       },
     } satisfies GoogleGenerativeAIProviderOptions,
     openai: {
       reasoningEffort:
-        reasoningLevel === "high"
-          ? "high"
-          : reasoningLevel === "default"
-            ? "medium"
-            : "low",
+        reasoningLevel === "high" ? "high" : reasoningLevel === "default" ? "medium" : "low",
       reasoningSummary: "detailed",
     },
     openrouter: {
@@ -240,7 +212,8 @@ export const generateTextWrapper = async ({
   if (messages[messages.length - 1]?.role === "assistant") {
     messages.push({
       role: "user",
-      content: "<system>No message from user, please send a message in continuation of the conversation and system message.</system>",
+      content:
+        "<system>No message from user, please send a message in continuation of the conversation and system message.</system>",
     });
   }
 
@@ -310,11 +283,7 @@ export const generateTextWrapper = async ({
 
       // Calculate and log cost using tokenlens
       try {
-        const cost = await calculateUsageCost(
-          model,
-          promptTokens,
-          completionTokens
-        );
+        const cost = await calculateUsageCost(model, promptTokens, completionTokens);
         appLogger.info("LLM call completed with cost", {
           model,
           functionName,
@@ -412,7 +381,7 @@ export const generateObjectWrapper = async <T>({
             if (validation.success) {
               return Promise.resolve(text);
             }
-              return Promise.resolve(null);
+            return Promise.resolve(null);
           } catch (error) {
             return Promise.resolve(null);
           }
@@ -437,11 +406,7 @@ export const generateObjectWrapper = async <T>({
 
         // Calculate and log cost using tokenlens
         try {
-          const cost = await calculateUsageCost(
-            model,
-            promptTokens,
-            completionTokens
-          );
+          const cost = await calculateUsageCost(model, promptTokens, completionTokens);
           appLogger.info("LLM generateObject completed with cost", {
             model,
             promptTokens,
@@ -529,7 +494,7 @@ export const streamTextWrapper = async ({
       const origin = requestHeaders?.get("Origin") ?? "*";
       const corsHeaders: Record<string, string> = {
         "Access-Control-Allow-Origin": origin,
-        "Vary": "Origin",
+        Vary: "Origin",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Allow-Credentials": "true",

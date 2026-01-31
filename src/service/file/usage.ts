@@ -1,7 +1,7 @@
-import { userFile } from "@/db/schema";
 import type { TokenUsage } from "@/@types/tokenUsage";
-import { mergeTokenUsage } from "@/utils/tokenUsage";
 import { getDb } from "@/db";
+import { userFile } from "@/db/schema";
+import { mergeTokenUsage } from "@/utils/tokenUsage";
 import { eq } from "drizzle-orm";
 
 export const updateUsage = async (fileId: string, usage: TokenUsage) => {
@@ -13,8 +13,5 @@ export const updateUsage = async (fileId: string, usage: TokenUsage) => {
   }
   const existingUsage = file.tokenUsage;
   const finalUsage = mergeTokenUsage(existingUsage ?? {}, usage);
-  await getDb()
-    .update(userFile)
-    .set({ tokenUsage: finalUsage })
-    .where(eq(userFile.id, fileId));
+  await getDb().update(userFile).set({ tokenUsage: finalUsage }).where(eq(userFile.id, fileId));
 };

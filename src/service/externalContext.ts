@@ -1,8 +1,9 @@
 import { getDb } from "@/db";
 import {
+  type AssetType,
+  accounts,
   calendarEvents,
   calendarEventsEntitiesRel,
-  accounts,
   documents,
   entities,
   highlightComments,
@@ -14,9 +15,8 @@ import {
   tags,
   trends,
   trendsAssets,
-  type AssetType,
 } from "@/db/external_schema";
-import { and, desc, eq, gte, ilike, inArray, lte, or, type SQL } from "drizzle-orm";
+import { type SQL, and, desc, eq, gte, ilike, inArray, lte, or } from "drizzle-orm";
 
 type DateInput = Date | string;
 
@@ -158,20 +158,20 @@ export type PaginationOptions = {
 
 const MAX_LIMIT = 200;
 
-const clampLimit = (limit?: number) =>
-  Math.min(limit ?? 50, MAX_LIMIT);
+const clampLimit = (limit?: number) => Math.min(limit ?? 50, MAX_LIMIT);
 
-const applyPagination = <T extends { limit: (value: number) => any; offset?: (value: number) => any }>(
+const applyPagination = <
+  T extends { limit: (value: number) => any; offset?: (value: number) => any },
+>(
   query: T,
   limit: number,
-  offset?: number
+  offset?: number,
 ) => {
   const limited = query.limit(limit) as T;
   return typeof offset === "number" && limited.offset ? limited.offset(offset) : limited;
 };
 
-const normalizeDate = (value?: DateInput) =>
-  value ? new Date(value) : undefined;
+const normalizeDate = (value?: DateInput) => (value ? new Date(value) : undefined);
 
 const andWhere = (...clauses: Array<SQL | undefined>) => {
   const filtered = clauses.filter(Boolean) as SQL[];
@@ -221,7 +221,7 @@ const buildHighlightIdFilter = async (filters: ExternalContextFilters) => {
       .where(inArray(highlightsTagsRel.tagId, filters.tagIds));
     highlightIds = intersectIds(
       highlightIds,
-      tagHighlightRows.map((row) => Number(row.highlightId))
+      tagHighlightRows.map((row) => Number(row.highlightId)),
     );
   }
 
@@ -232,7 +232,7 @@ const buildHighlightIdFilter = async (filters: ExternalContextFilters) => {
       .where(inArray(highlightsEntitiesRel.entityId, filters.entityIds));
     highlightIds = intersectIds(
       highlightIds,
-      entityHighlightRows.map((row) => Number(row.highlightId))
+      entityHighlightRows.map((row) => Number(row.highlightId)),
     );
   }
 
@@ -257,7 +257,7 @@ const buildHighlightItems = ({
     tags: [] as HighlightTagRelRow[],
   }));
   const highlightItemsById = new Map(
-    highlightItems.map((highlight) => [Number(highlight.id), highlight])
+    highlightItems.map((highlight) => [Number(highlight.id), highlight]),
   );
 
   for (const rel of highlightEntities) {
@@ -289,9 +289,7 @@ const buildTrendItems = ({
     ...trend,
     assets: [] as TrendAssetRow[],
   }));
-  const trendItemsById = new Map(
-    trendItems.map((trend) => [Number(trend.id), trend])
-  );
+  const trendItemsById = new Map(trendItems.map((trend) => [Number(trend.id), trend]));
   for (const assetRow of trendAssetRows) {
     const item = trendItemsById.get(Number(assetRow.trendId));
     if (item) item.assets.push(assetRow);
@@ -311,7 +309,7 @@ const buildScenarioItems = ({
     remarks: [] as ScenarioRemarkRow[],
   }));
   const scenarioItemsById = new Map(
-    scenarioItems.map((scenario) => [Number(scenario.id), scenario])
+    scenarioItems.map((scenario) => [Number(scenario.id), scenario]),
   );
   for (const remarkRow of scenarioRemarkRows) {
     const item = scenarioItemsById.get(Number(remarkRow.scenarioId));
@@ -331,9 +329,7 @@ const buildCalendarItems = ({
     ...event,
     entities: [] as CalendarEventEntityRelRow[],
   }));
-  const calendarItemsById = new Map(
-    calendarItems.map((event) => [Number(event.id), event])
-  );
+  const calendarItemsById = new Map(calendarItems.map((event) => [Number(event.id), event]));
   for (const rel of calendarEventEntities) {
     const item = calendarItemsById.get(Number(rel.calendarEventId));
     if (item) item.entities.push(rel);
@@ -358,16 +354,15 @@ const fetchHighlights = async ({
 }): Promise<HighlightRow[]> => {
   const highlightWhere = andWhere(
     filters.teamId ? eq(highlights.teamId, filters.teamId) : undefined,
-    highlightIdFilter?.length
-      ? inArray(highlights.id, highlightIdFilter)
-      : undefined,
+    highlightIdFilter?.length ? inArray(highlights.id, highlightIdFilter) : undefined,
     from ? gte(highlights.createdAt, from) : undefined,
-    to ? lte(highlights.createdAt, to) : undefined
+    to ? lte(highlights.createdAt, to) : undefined,
   );
   const highlightsQuery = getDb().select(selectHighlights).from(highlights);
-  const ordered = (highlightWhere ? highlightsQuery.where(highlightWhere) : highlightsQuery)
-    .orderBy(desc(highlights.createdAt));
-  return await applyPagination(ordered, limit, offset) as HighlightRow[];
+  const ordered = (
+    highlightWhere ? highlightsQuery.where(highlightWhere) : highlightsQuery
+  ).orderBy(desc(highlights.createdAt));
+  return (await applyPagination(ordered, limit, offset)) as HighlightRow[];
 };
 
 const fetchHighlightEntities = async ({
@@ -383,7 +378,7 @@ const fetchHighlightEntities = async ({
       : undefined,
     filters.entityIds?.length
       ? inArray(highlightsEntitiesRel.entityId, filters.entityIds)
-      : undefined
+      : undefined,
   );
   const highlightEntityQuery = getDb()
     .select({
@@ -405,12 +400,8 @@ const fetchHighlightTags = async ({
   highlightIdScope?: number[];
 }) => {
   const highlightTagWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(highlightsTagsRel.highlightId, highlightIdScope)
-      : undefined,
-    filters.tagIds?.length
-      ? inArray(highlightsTagsRel.tagId, filters.tagIds)
-      : undefined
+    highlightIdScope?.length ? inArray(highlightsTagsRel.highlightId, highlightIdScope) : undefined,
+    filters.tagIds?.length ? inArray(highlightsTagsRel.tagId, filters.tagIds) : undefined,
   );
   const highlightTagQuery = getDb()
     .select({
@@ -418,9 +409,7 @@ const fetchHighlightTags = async ({
       tagId: highlightsTagsRel.tagId,
     })
     .from(highlightsTagsRel);
-  return highlightTagWhere
-    ? highlightTagQuery.where(highlightTagWhere)
-    : highlightTagQuery;
+  return highlightTagWhere ? highlightTagQuery.where(highlightTagWhere) : highlightTagQuery;
 };
 
 const fetchEntities = async ({
@@ -431,9 +420,7 @@ const fetchEntities = async ({
   limit: number;
 }) => {
   const entitiesQuery = getDb().select(selectEntities).from(entities);
-  const entitiesWhere = entityIds.size
-    ? inArray(entities.id, Array.from(entityIds))
-    : undefined;
+  const entitiesWhere = entityIds.size ? inArray(entities.id, Array.from(entityIds)) : undefined;
   return (entitiesWhere ? entitiesQuery.where(entitiesWhere) : entitiesQuery)
     .orderBy(entities.name)
     .limit(limit);
@@ -454,9 +441,7 @@ const fetchTags = async ({
     : teamId
       ? eq(tags.teamId, teamId)
       : undefined;
-  return (tagsWhere ? tagsQuery.where(tagsWhere) : tagsQuery)
-    .orderBy(tags.name)
-    .limit(limit);
+  return (tagsWhere ? tagsQuery.where(tagsWhere) : tagsQuery).orderBy(tags.name).limit(limit);
 };
 
 const fetchTrends = async ({
@@ -475,19 +460,18 @@ const fetchTrends = async ({
   offset?: number;
 }): Promise<TrendRow[]> => {
   const trendWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(trends.highlightId, highlightIdScope)
-      : undefined,
+    highlightIdScope?.length ? inArray(trends.highlightId, highlightIdScope) : undefined,
     filters.entityIds?.length ? inArray(trends.entityId, filters.entityIds) : undefined,
     filters.teamId ? eq(trends.teamId, filters.teamId) : undefined,
     filters.userIds?.length ? inArray(trends.authorId, filters.userIds) : undefined,
     from ? gte(trends.createdAt, from) : undefined,
-    to ? lte(trends.createdAt, to) : undefined
+    to ? lte(trends.createdAt, to) : undefined,
   );
   const trendsQuery = getDb().select(selectTrends).from(trends);
-  const ordered = (trendWhere ? trendsQuery.where(trendWhere) : trendsQuery)
-    .orderBy(desc(trends.createdAt));
-  return await applyPagination(ordered, limit, offset) as TrendRow[];
+  const ordered = (trendWhere ? trendsQuery.where(trendWhere) : trendsQuery).orderBy(
+    desc(trends.createdAt),
+  );
+  return (await applyPagination(ordered, limit, offset)) as TrendRow[];
 };
 
 const fetchTrendAssets = async ({
@@ -504,17 +488,11 @@ const fetchTrendAssets = async ({
   limit: number;
 }) => {
   const trendAssetWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(trendsAssets.highlightId, highlightIdScope)
-      : undefined,
-    filters.entityIds?.length
-      ? inArray(trendsAssets.entityId, filters.entityIds)
-      : undefined,
-    filters.assetTypes?.length
-      ? inArray(trendsAssets.type, filters.assetTypes)
-      : undefined,
+    highlightIdScope?.length ? inArray(trendsAssets.highlightId, highlightIdScope) : undefined,
+    filters.entityIds?.length ? inArray(trendsAssets.entityId, filters.entityIds) : undefined,
+    filters.assetTypes?.length ? inArray(trendsAssets.type, filters.assetTypes) : undefined,
     from ? gte(trendsAssets.createdAt, from) : undefined,
-    to ? lte(trendsAssets.createdAt, to) : undefined
+    to ? lte(trendsAssets.createdAt, to) : undefined,
   );
   const trendAssetsQuery = getDb().select(selectTrendAssets).from(trendsAssets);
   return (trendAssetWhere ? trendAssetsQuery.where(trendAssetWhere) : trendAssetsQuery)
@@ -537,7 +515,7 @@ const fetchTrendAssetsByTrendIds = async ({
   const trendAssetWhere = andWhere(
     inArray(trendsAssets.trendId, trendIds),
     assetTypes?.length ? inArray(trendsAssets.type, assetTypes) : undefined,
-    entityIds?.length ? inArray(trendsAssets.entityId, entityIds) : undefined
+    entityIds?.length ? inArray(trendsAssets.entityId, entityIds) : undefined,
   );
   const trendAssetsQuery = getDb().select(selectTrendAssets).from(trendsAssets);
   return (trendAssetWhere ? trendAssetsQuery.where(trendAssetWhere) : trendAssetsQuery)
@@ -561,18 +539,17 @@ const fetchScenarios = async ({
   offset?: number;
 }): Promise<ScenarioRow[]> => {
   const scenarioWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(scenarios.highlightId, highlightIdScope)
-      : undefined,
+    highlightIdScope?.length ? inArray(scenarios.highlightId, highlightIdScope) : undefined,
     filters.teamId ? eq(scenarios.teamId, filters.teamId) : undefined,
     filters.userIds?.length ? inArray(scenarios.authorId, filters.userIds) : undefined,
     from ? gte(scenarios.createdAt, from) : undefined,
-    to ? lte(scenarios.createdAt, to) : undefined
+    to ? lte(scenarios.createdAt, to) : undefined,
   );
   const scenariosQuery = getDb().select(selectScenarios).from(scenarios);
-  const ordered = (scenarioWhere ? scenariosQuery.where(scenarioWhere) : scenariosQuery)
-    .orderBy(desc(scenarios.createdAt));
-  return await applyPagination(ordered, limit, offset) as ScenarioRow[];
+  const ordered = (scenarioWhere ? scenariosQuery.where(scenarioWhere) : scenariosQuery).orderBy(
+    desc(scenarios.createdAt),
+  );
+  return (await applyPagination(ordered, limit, offset)) as ScenarioRow[];
 };
 
 const fetchScenarioRemarks = async ({
@@ -587,22 +564,15 @@ const fetchScenarioRemarks = async ({
   limit: number;
 }) => {
   const scenarioRemarkWhere = andWhere(
-    filters.entityIds?.length
-      ? inArray(scenarioRemarks.entityId, filters.entityIds)
-      : undefined,
-    filters.assetTypes?.length
-      ? inArray(scenarioRemarks.asset, filters.assetTypes)
-      : undefined,
+    filters.entityIds?.length ? inArray(scenarioRemarks.entityId, filters.entityIds) : undefined,
+    filters.assetTypes?.length ? inArray(scenarioRemarks.asset, filters.assetTypes) : undefined,
     filters.teamId ? eq(scenarioRemarks.teamId, filters.teamId) : undefined,
     from ? gte(scenarioRemarks.createdAt, from) : undefined,
-    to ? lte(scenarioRemarks.createdAt, to) : undefined
+    to ? lte(scenarioRemarks.createdAt, to) : undefined,
   );
-  const scenarioRemarksQuery = getDb()
-    .select(selectScenarioRemarks)
-    .from(scenarioRemarks);
-  return (scenarioRemarkWhere
-    ? scenarioRemarksQuery.where(scenarioRemarkWhere)
-    : scenarioRemarksQuery
+  const scenarioRemarksQuery = getDb().select(selectScenarioRemarks).from(scenarioRemarks);
+  return (
+    scenarioRemarkWhere ? scenarioRemarksQuery.where(scenarioRemarkWhere) : scenarioRemarksQuery
   )
     .orderBy(desc(scenarioRemarks.createdAt))
     .limit(limit);
@@ -623,14 +593,11 @@ const fetchScenarioRemarksByScenarioIds = async ({
   const scenarioRemarkWhere = andWhere(
     inArray(scenarioRemarks.scenarioId, scenarioIds),
     assetTypes?.length ? inArray(scenarioRemarks.asset, assetTypes) : undefined,
-    entityIds?.length ? inArray(scenarioRemarks.entityId, entityIds) : undefined
+    entityIds?.length ? inArray(scenarioRemarks.entityId, entityIds) : undefined,
   );
-  const scenarioRemarksQuery = getDb()
-    .select(selectScenarioRemarks)
-    .from(scenarioRemarks);
-  return (scenarioRemarkWhere
-    ? scenarioRemarksQuery.where(scenarioRemarkWhere)
-    : scenarioRemarksQuery
+  const scenarioRemarksQuery = getDb().select(selectScenarioRemarks).from(scenarioRemarks);
+  return (
+    scenarioRemarkWhere ? scenarioRemarksQuery.where(scenarioRemarkWhere) : scenarioRemarksQuery
   )
     .orderBy(desc(scenarioRemarks.createdAt))
     .limit(limit);
@@ -652,25 +619,17 @@ const fetchCalendarEvents = async ({
   offset?: number;
 }): Promise<CalendarEventRow[]> => {
   const calendarEventWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(calendarEvents.highlightId, highlightIdScope)
-      : undefined,
+    highlightIdScope?.length ? inArray(calendarEvents.highlightId, highlightIdScope) : undefined,
     filters.teamId ? eq(calendarEvents.teamId, filters.teamId) : undefined,
-    filters.userIds?.length
-      ? inArray(calendarEvents.authorId, filters.userIds)
-      : undefined,
+    filters.userIds?.length ? inArray(calendarEvents.authorId, filters.userIds) : undefined,
     from ? gte(calendarEvents.createdAt, from) : undefined,
-    to ? lte(calendarEvents.createdAt, to) : undefined
+    to ? lte(calendarEvents.createdAt, to) : undefined,
   );
-  const calendarEventsQuery = getDb()
-    .select(selectCalendarEvents)
-    .from(calendarEvents);
-  const ordered = (calendarEventWhere
-    ? calendarEventsQuery.where(calendarEventWhere)
-    : calendarEventsQuery
-  )
-    .orderBy(desc(calendarEvents.createdAt));
-  return await applyPagination(ordered, limit, offset) as CalendarEventRow[];
+  const calendarEventsQuery = getDb().select(selectCalendarEvents).from(calendarEvents);
+  const ordered = (
+    calendarEventWhere ? calendarEventsQuery.where(calendarEventWhere) : calendarEventsQuery
+  ).orderBy(desc(calendarEvents.createdAt));
+  return (await applyPagination(ordered, limit, offset)) as CalendarEventRow[];
 };
 
 const fetchCalendarEventEntities = async ({
@@ -684,12 +643,10 @@ const fetchCalendarEventEntities = async ({
     calendarEventRows.length
       ? inArray(
           calendarEventsEntitiesRel.calendarEventId,
-          calendarEventRows.map((row) => Number(row.id))
+          calendarEventRows.map((row) => Number(row.id)),
         )
       : undefined,
-    entityIds?.length
-      ? inArray(calendarEventsEntitiesRel.entityId, entityIds)
-      : undefined
+    entityIds?.length ? inArray(calendarEventsEntitiesRel.entityId, entityIds) : undefined,
   );
   const calendarEntitiesQuery = getDb()
     .select({
@@ -716,19 +673,13 @@ const fetchHighlightComments = async ({
   limit: number;
 }) => {
   const commentWhere = andWhere(
-    highlightIdScope?.length
-      ? inArray(highlightComments.highlightId, highlightIdScope)
-      : undefined,
+    highlightIdScope?.length ? inArray(highlightComments.highlightId, highlightIdScope) : undefined,
     filters.teamId ? eq(highlightComments.teamId, filters.teamId) : undefined,
-    filters.userIds?.length
-      ? inArray(highlightComments.authorId, filters.userIds)
-      : undefined,
+    filters.userIds?.length ? inArray(highlightComments.authorId, filters.userIds) : undefined,
     from ? gte(highlightComments.createdAt, from) : undefined,
-    to ? lte(highlightComments.createdAt, to) : undefined
+    to ? lte(highlightComments.createdAt, to) : undefined,
   );
-  const commentsQuery = getDb()
-    .select(selectHighlightComments)
-    .from(highlightComments);
+  const commentsQuery = getDb().select(selectHighlightComments).from(highlightComments);
   return (commentWhere ? commentsQuery.where(commentWhere) : commentsQuery)
     .orderBy(desc(highlightComments.createdAt))
     .limit(limit);
@@ -743,7 +694,7 @@ const fetchDocuments = async ({
 }) => {
   const documentWhere = andWhere(
     filters.documentIds?.length ? inArray(documents.id, filters.documentIds) : undefined,
-    filters.teamId ? eq(documents.teamId, filters.teamId) : undefined
+    filters.teamId ? eq(documents.teamId, filters.teamId) : undefined,
   );
   const documentsQuery = getDb().select(selectDocuments).from(documents);
   return (documentWhere ? documentsQuery.where(documentWhere) : documentsQuery)
@@ -782,9 +733,7 @@ const buildGroups = ({
   entityRows: EntityRow[];
   tagRows: TagRow[];
 }) => {
-  const highlightsById = new Map(
-    highlightRows.map((row) => [Number(row.id), row])
-  );
+  const highlightsById = new Map(highlightRows.map((row) => [Number(row.id), row]));
   const { highlightItems } = buildHighlightItems({
     highlightRows,
     highlightEntities,
@@ -828,9 +777,7 @@ const buildGroups = ({
     if (bucket) bucket.scenarioRemarks.push(scenarioRemarkRow);
   }
 
-  const calendarEventById = new Map(
-    calendarEventRows.map((row) => [Number(row.id), row])
-  );
+  const calendarEventById = new Map(calendarEventRows.map((row) => [Number(row.id), row]));
   for (const rel of calendarEventEntities) {
     const event = calendarEventById.get(Number(rel.calendarEventId));
     const bucket = byEntityId[String(rel.entityId)];
@@ -1072,7 +1019,7 @@ const selectAccounts = {
 
 // Primary entry point: fetches external context and groups by common pivots.
 export const getExternalContext = async (
-  filters: ExternalContextFilters
+  filters: ExternalContextFilters,
 ): Promise<ExternalContextResult> => {
   const limit = clampLimit(filters.limit);
   const from = normalizeDate(filters.from);
@@ -1107,11 +1054,9 @@ export const getExternalContext = async (
   });
 
   const entityIds = new Set<number>(
-    filters.entityIds ?? highlightEntities.map((row) => Number(row.entityId))
+    filters.entityIds ?? highlightEntities.map((row) => Number(row.entityId)),
   );
-  const tagIds = new Set<number>(
-    filters.tagIds ?? highlightTags.map((row) => Number(row.tagId))
-  );
+  const tagIds = new Set<number>(filters.tagIds ?? highlightTags.map((row) => Number(row.tagId)));
 
   const entityRows = await fetchEntities({ entityIds, limit });
 
@@ -1176,23 +1121,22 @@ export const getExternalContext = async (
 
   const documentRows = await fetchDocuments({ filters, limit });
 
-  const { highlightItems, trendItems, scenarioItems, calendarItems, ...groups } =
-    buildGroups({
-      highlightRows,
-      highlightEntities,
-      highlightTags,
-      trendRows,
-      trendAssetRows,
-      scenarioRows,
-      scenarioRemarkRows,
-      calendarEventRows,
-      calendarEventEntities,
-      commentRows,
-      entityIds,
-      tagIds,
-      entityRows,
-      tagRows,
-    });
+  const { highlightItems, trendItems, scenarioItems, calendarItems, ...groups } = buildGroups({
+    highlightRows,
+    highlightEntities,
+    highlightTags,
+    trendRows,
+    trendAssetRows,
+    scenarioRows,
+    scenarioRemarkRows,
+    calendarEventRows,
+    calendarEventEntities,
+    commentRows,
+    entityIds,
+    tagIds,
+    entityRows,
+    tagRows,
+  });
 
   return {
     highlights: {
@@ -1218,36 +1162,36 @@ export const getExternalContext = async (
 
 export const getExternalEntityContext = async (
   entityId: number,
-  filters: Omit<ExternalContextFilters, "entityIds">
+  filters: Omit<ExternalContextFilters, "entityIds">,
 ) => getExternalContext({ ...filters, entityIds: [entityId] });
 
 export const getExternalTagContext = async (
   tagId: number,
-  filters: Omit<ExternalContextFilters, "tagIds">
+  filters: Omit<ExternalContextFilters, "tagIds">,
 ) => getExternalContext({ ...filters, tagIds: [tagId] });
 
 export const getExternalUserContext = async (
   userId: string,
-  filters: Omit<ExternalContextFilters, "userIds">
+  filters: Omit<ExternalContextFilters, "userIds">,
 ) => getExternalContext({ ...filters, userIds: [userId] });
 
 export const getExternalAssetContext = async (
   assetType: AssetType,
-  filters: Omit<ExternalContextFilters, "assetTypes">
+  filters: Omit<ExternalContextFilters, "assetTypes">,
 ) => getExternalContext({ ...filters, assetTypes: [assetType] });
 
 export const getExternalHighlightContext = async (
   highlightId: number,
-  filters: Omit<ExternalContextFilters, "highlightIds">
+  filters: Omit<ExternalContextFilters, "highlightIds">,
 ) => getExternalContext({ ...filters, highlightIds: [highlightId] });
 
 export const getExternalDocumentContext = async (
   documentId: number,
-  filters: Omit<ExternalContextFilters, "documentIds">
+  filters: Omit<ExternalContextFilters, "documentIds">,
 ) => getExternalContext({ ...filters, documentIds: [documentId] });
 
 export const getHighlightsContext = async (
-  filters: ExternalContextFilters & PaginationOptions
+  filters: ExternalContextFilters & PaginationOptions,
 ): Promise<HighlightsContextResult> => {
   const limit = clampLimit(filters.limit);
   const offset = filters.offset;
@@ -1291,11 +1235,9 @@ export const getHighlightsContext = async (
   });
 
   const entityIds = new Set<number>(
-    filters.entityIds ?? highlightEntities.map((row) => Number(row.entityId))
+    filters.entityIds ?? highlightEntities.map((row) => Number(row.entityId)),
   );
-  const tagIds = new Set<number>(
-    filters.tagIds ?? highlightTags.map((row) => Number(row.tagId))
-  );
+  const tagIds = new Set<number>(filters.tagIds ?? highlightTags.map((row) => Number(row.tagId)));
 
   const entityRows = await fetchEntities({ entityIds, limit });
   const tagRows = await fetchTags({
@@ -1318,7 +1260,7 @@ export const getHighlightsContext = async (
 };
 
 export const getTrendsContext = async (
-  filters: ExternalContextFilters & PaginationOptions
+  filters: ExternalContextFilters & PaginationOptions,
 ): Promise<TrendsContextResult> => {
   const limit = clampLimit(filters.limit);
   const offset = filters.offset;
@@ -1355,7 +1297,7 @@ export const getTrendsContext = async (
 };
 
 export const getScenariosContext = async (
-  filters: ExternalContextFilters & PaginationOptions
+  filters: ExternalContextFilters & PaginationOptions,
 ): Promise<ScenariosContextResult> => {
   const limit = clampLimit(filters.limit);
   const offset = filters.offset;
@@ -1392,7 +1334,7 @@ export const getScenariosContext = async (
 };
 
 export const getCalendarContext = async (
-  filters: ExternalContextFilters & PaginationOptions
+  filters: ExternalContextFilters & PaginationOptions,
 ): Promise<CalendarContextResult> => {
   const limit = clampLimit(filters.limit);
   const offset = filters.offset;
@@ -1446,8 +1388,8 @@ export const searchExternalEntities = async ({
       or(
         ilike(entities.name, pattern),
         ilike(entities.uniqueId, pattern),
-        ilike(entities.description, pattern)
-      )
+        ilike(entities.description, pattern),
+      ),
     )
     .orderBy(entities.name)
     .limit(clampLimit(limit));
@@ -1471,8 +1413,8 @@ export const searchExternalTags = async ({
     .where(
       and(
         or(ilike(tags.name, pattern), ilike(tags.description, pattern)),
-        teamId ? eq(tags.teamId, teamId) : undefined
-      )
+        teamId ? eq(tags.teamId, teamId) : undefined,
+      ),
     )
     .orderBy(tags.name)
     .limit(clampLimit(limit));
@@ -1495,8 +1437,8 @@ export const searchExternalUsers = async ({
       or(
         ilike(accounts.name, pattern),
         ilike(accounts.email, pattern),
-        ilike(accounts.slug, pattern)
-      )
+        ilike(accounts.slug, pattern),
+      ),
     )
     .orderBy(accounts.name)
     .limit(clampLimit(limit));
