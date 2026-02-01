@@ -239,7 +239,7 @@ export const calendarEventsEntitiesRel = createExternalTable(
 
 export const documents = createExternalTable("documents", (t) => ({
   id: bigint("id", { mode: "number" }).primaryKey(),
-  type: text("type"),
+  type: text("type").$type<"webpage" | "pdf">(),
   title: text("title"),
   teamId: uuid("team_id"),
   assetId: uuid("asset_id"),

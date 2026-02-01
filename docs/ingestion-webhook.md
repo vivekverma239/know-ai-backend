@@ -112,19 +112,22 @@ When `type: "document"` and `action: "insert" | "update"`:
 
 1) The document is upserted in the external `documents` table.
 2) A `user_file` entry is created or updated.
-3) The document is downloaded (from `document_url` or `asset_url`), uploaded
-   to storage at:
+3) If `data.type === "webpage"`, the URL is fetched and stored as a
+   `web_article` with `webArticleMetadata`.
+4) If `data.type !== "webpage"`, the document is downloaded
+   (from `document_url` or `asset_url`), uploaded to storage at:
 
    `files/{userId}/{userFileId}/document.pdf`
 
-4) The existing parse pipeline (`parsePDF`) is triggered.
-5) Failures set `user_file.status = "failed"`.
+5) The existing parse pipeline (`parsePDF`) is triggered.
+6) Failures set `user_file.status = "failed"`.
 
 ### Required document fields for parsing
 
 In `data` (snake_case):
 
 - `id` (number)
+- `type` ("pdf" | "webpage")
 - `author_id` (maps to userId)
 - `team_id` (maps to orgId)
 - `document_url` or `asset_url`

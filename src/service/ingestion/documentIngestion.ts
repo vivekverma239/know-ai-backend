@@ -8,6 +8,7 @@ import { getStorage } from "../googleStorage";
 
 type DocumentIngestionData = {
   id?: number | string;
+  type?: "webpage" | "pdf" | null;
   title?: string | null;
   teamId?: string | null;
   authorId?: string | null;
@@ -41,6 +42,31 @@ const downloadDocument = async (url: string): Promise<Buffer> => {
   }
 };
 
+const extractTitle = (content: string, fallback: string) => {
+  const match = /<title[^>]*>([^<]+)<\/title>/i.exec(content);
+  if (!match) return fallback;
+  const title = match[1]?.trim();
+  return title && title.length > 0 ? title : fallback;
+};
+
+const fetchWebpageContent = async (url: string): Promise<{ title: string; content: string }> => {
+  const controller = new AbortController();
+  const timeoutMs = Number(process.env.DOCUMENT_DOWNLOAD_TIMEOUT_MS ?? "120000");
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Webpage fetch failed: ${response.status} ${response.statusText}`);
+    }
+    const content = await response.text();
+    const title = extractTitle(content, url);
+    return { title, content };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 export const ensureUserFileForDocument = async (
   data: DocumentIngestionData,
   action: "insert" | "update",
@@ -63,6 +89,7 @@ export const ensureUserFileForDocument = async (
     logger.warn("Document ingestion skipped: missing document URL.", { documentId });
     return;
   }
+  const documentType = data.type === "webpage" ? "webpage" : "pdf";
 
   const existing = await getDb().query.userFile.findFirst({
     where: and(
@@ -72,7 +99,7 @@ export const ensureUserFileForDocument = async (
     ),
   });
 
-  if (existing && existing.status === "completed") {
+  if (existing && existing.status === "completed" && existing.sourceDocumentUrl === sourceUrl) {
     return;
   }
 
@@ -80,28 +107,57 @@ export const ensureUserFileForDocument = async (
   const fileId = existing?.id ?? randomUUID();
 
   if (!existing) {
-    await getDb().insert(userFile).values({
-      id: fileId,
-      name,
-      userId,
-      orgId,
-      type: "pdf",
-      status: "pending",
-      sourceDocumentId: documentId,
-    });
-  } else if (action === "update" && existing.name !== name) {
-    await getDb().update(userFile).set({ name }).where(eq(userFile.id, existing.id));
+    await getDb()
+      .insert(userFile)
+      .values({
+        id: fileId,
+        name,
+        userId,
+        orgId,
+        type: documentType === "webpage" ? "web_article" : "pdf",
+        status: "pending",
+        sourceDocumentId: documentId,
+        sourceDocumentUrl: sourceUrl,
+      });
+  } else if (action === "update") {
+    const updates: Partial<typeof userFile.$inferInsert> = {};
+    if (existing.name !== name) {
+      updates.name = name;
+    }
+    if (existing.sourceDocumentUrl !== sourceUrl) {
+      updates.sourceDocumentUrl = sourceUrl;
+    }
+    if (Object.keys(updates).length > 0) {
+      await getDb().update(userFile).set(updates).where(eq(userFile.id, existing.id));
+    }
   }
 
   try {
-    const buffer = await downloadDocument(sourceUrl);
-    await getStorage().uploadFile({
-      data: buffer,
-      contentType: "application/pdf",
-      path: `files/${userId}/${fileId}/document.pdf`,
-    });
-    await getDb().update(userFile).set({ status: "pending" }).where(eq(userFile.id, fileId));
-    await parsePDF(fileId);
+    if (documentType === "webpage") {
+      const { title, content } = await fetchWebpageContent(sourceUrl);
+      await getDb()
+        .update(userFile)
+        .set({
+          name: title,
+          status: "completed",
+          type: "web_article",
+          webArticleMetadata: {
+            url: sourceUrl,
+            title,
+            content,
+          },
+        })
+        .where(eq(userFile.id, fileId));
+    } else {
+      const buffer = await downloadDocument(sourceUrl);
+      await getStorage().uploadFile({
+        data: buffer,
+        contentType: "application/pdf",
+        path: `files/${userId}/${fileId}/document.pdf`,
+      });
+      await getDb().update(userFile).set({ status: "pending" }).where(eq(userFile.id, fileId));
+      await parsePDF(fileId);
+    }
   } catch (error) {
     logError(error, { operation: "documentIngestion:parse", documentId, fileId });
     await getDb().update(userFile).set({ status: "failed" }).where(eq(userFile.id, fileId));

@@ -11,7 +11,6 @@ import { sql } from "drizzle-orm";
 import { index, pgTableCreator } from "drizzle-orm/pg-core";
 // import { type AdapterAccountType } from "next-auth/adapters";
 
-
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
  * database instance for multiple projects.
@@ -19,7 +18,6 @@ import { index, pgTableCreator } from "drizzle-orm/pg-core";
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 export const createTable = pgTableCreator((name) => `${name}`);
-
 
 export type Company = {
   name: string;
@@ -51,7 +49,6 @@ export type Source = {
   pageNumbers: number[];
 };
 
-
 export type UserFileStatus = "pending" | "in_progress" | "completed" | "failed";
 
 export const userFile = createTable("user_file", (d) => ({
@@ -74,6 +71,7 @@ export const userFile = createTable("user_file", (d) => ({
   }>(),
   tokenUsage: d.jsonb().$type<TokenUsage>(),
   sourceDocumentId: d.bigint({ mode: "number" }),
+  sourceDocumentUrl: d.text(),
   createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   type: d

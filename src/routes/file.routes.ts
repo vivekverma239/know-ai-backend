@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";
 import {
+  type UserFileStatus,
   chunks,
   userFile,
   userFileChapter,
@@ -11,7 +12,6 @@ import {
   userFileHeirarchialIndex,
   userFilePage,
   userFileSection,
-  UserFileStatus,
 } from "../db/schema";
 import {
   DeleteResponse,
@@ -64,8 +64,8 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           Type.Union([
             Type.Literal("all"),
             Type.Literal("pending"),
-            Type.Literal("processing"),
-            Type.Literal("processed"),
+            Type.Literal("in_progress"),
+            Type.Literal("completed"),
           ]),
         ),
       }),
@@ -102,7 +102,8 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         ) as SQLWrapper,
       ];
 
-      if (status && status !== "all") whereConditions.push(eq(userFile.status, status as UserFileStatus));
+      if (status && status !== "all")
+        whereConditions.push(eq(userFile.status, status as UserFileStatus));
       if ((search?.trim?.() ?? "") !== "") {
         const searchTerms = search
           ?.trim()

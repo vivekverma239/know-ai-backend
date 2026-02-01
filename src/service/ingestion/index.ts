@@ -216,6 +216,7 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                 await ensureUserFileForDocument(
                   {
                     id: (data.id as string | number | undefined) ?? undefined,
+                    type: internalData.type as "webpage" | "pdf" | undefined,
                     title: internalData.title as string | undefined,
                     teamId: internalData.teamId as string | undefined,
                     authorId: internalData.authorId as string | undefined,
