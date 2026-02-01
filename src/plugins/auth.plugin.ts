@@ -5,8 +5,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
   // Check for required headers
-  const userId = request.headers["x-user-id"] as string;
-  const orgId = request.headers["x-org-id"] as string;
+  const userId = request.headers["x-user-id"] as string | undefined;
+  const orgId = request.headers["x-org-id"] as string | undefined;
   const authHeader = request.headers.authorization;
 
   // Validate required headers
@@ -46,14 +46,16 @@ const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
     });
   }
 
-  // Populate request object with user information
-  request.user = {
-    id: userId,
-    orgId: orgId,
-    // Add other user fields as needed
-    email: request.headers["x-user-email"] as string,
-    name: request.headers["x-user-name"] as string,
-  };
+  if (userId && orgId) {
+    // Populate request object with user information
+    request.user = {
+      id: userId,
+      orgId: orgId,
+      // Add other user fields as needed
+      email: request.headers["x-user-email"] as string,
+      name: request.headers["x-user-name"] as string,
+    };
+  }
 };
 
 const authPlugin = async (fastify: FastifyInstance) => {

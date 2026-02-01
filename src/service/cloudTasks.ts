@@ -12,6 +12,9 @@ type CreateTaskParams = {
 };
 
 function getClient(projectId?: string) {
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+    throw new Error("GOOGLE_APPLICATION_CREDENTIALS_BASE64 is not set");
+  }
   const raw = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64, "base64").toString(
     "utf-8",
   );

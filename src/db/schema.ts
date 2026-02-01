@@ -7,11 +7,10 @@ import type { LanguageModelUsage } from "ai";
 
 import type { MODELS } from "@/@types/llm";
 import type { ChunkPageSummary, DocumentMetadata, Toc } from "@/agents/document/parseToCMeta";
-import { relations, sql } from "drizzle-orm";
-import { index, pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { index, pgTableCreator } from "drizzle-orm/pg-core";
 // import { type AdapterAccountType } from "next-auth/adapters";
 
-type AdapterAccountType = "email" | "oidc" | "oauth" | "webauthn";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -21,19 +20,6 @@ type AdapterAccountType = "email" | "oidc" | "oauth" | "webauthn";
  */
 export const createTable = pgTableCreator((name) => `${name}`);
 
-export const processingStatus = pgEnum("processing_status", [
-  "pending",
-  "processing",
-  "processed",
-  "failed",
-]);
-
-export const webSearchStatus = pgEnum("web_search_status", [
-  "pending",
-  "in_progress",
-  "completed",
-  "failed",
-]);
 
 export type Company = {
   name: string;
@@ -65,6 +51,9 @@ export type Source = {
   pageNumbers: number[];
 };
 
+
+export type UserFileStatus = "pending" | "in_progress" | "completed" | "failed";
+
 export const userFile = createTable("user_file", (d) => ({
   id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
   name: d.varchar({ length: 256 }),
@@ -77,13 +66,14 @@ export const userFile = createTable("user_file", (d) => ({
   orgId: d.varchar({ length: 255 }).notNull(), // knows in case of admin file
   embedding: d.vector({ dimensions: 768 }),
   metadata: d.jsonb().$type<FileMetadata>(),
-  status: processingStatus("processing_status").default("pending"),
+  status: d.varchar({ length: 20 }).$type<UserFileStatus>().default("pending"),
   parsingMetadata: d.jsonb().$type<{
     done: number;
     total: number;
     retry: number;
   }>(),
   tokenUsage: d.jsonb().$type<TokenUsage>(),
+  sourceDocumentId: d.bigint({ mode: "number" }),
   createdAt: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   type: d

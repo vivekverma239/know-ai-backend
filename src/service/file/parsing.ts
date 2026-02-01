@@ -73,8 +73,7 @@ export const updateOutline = async ({
           logger.info(`Creating chapter ${index + 1} for file ${fileId}`);
           const chapterEmbedding = (
             await getEmbeddings([
-              `Document Title: ${title}\nChapter ${index + 1} Title: ${
-                chapter.title
+              `Document Title: ${title}\nChapter ${index + 1} Title: ${chapter.title
               }\nChapter Summary: ${chapter.summary}`,
             ])
           )[0];
@@ -334,7 +333,7 @@ export const updateParsedMetadata = async (fileId: string, parsedData: DocumentM
               })),
             },
             embedding: fileEmbedding,
-            status: "processed",
+            status: "completed",
             updatedAt: new Date(),
           })
           .where(eq(userFile.id, fileId));
@@ -381,7 +380,7 @@ export const updateStatus = async (fileId: string) => {
     return;
   }
 
-  await getDb().update(userFile).set({ status: "processed" }).where(eq(userFile.id, fileId));
+  await getDb().update(userFile).set({ status: "completed" }).where(eq(userFile.id, fileId));
 };
 
 export const updateHeirarchialIndex = async (fileId: string, data: HeirarchialIndexData) => {
@@ -422,8 +421,7 @@ export const updateHeirarchialIndex = async (fileId: string, data: HeirarchialIn
         const embeddings = await getEmbeddings(
           levelData.map(
             (level) =>
-              `\nLevel ${level.startPage}-${level.endPage}: ${
-                level.summary
+              `\nLevel ${level.startPage}-${level.endPage}: ${level.summary
               }\n${level.children.map((child) => child.summary).join("\n")}`,
           ),
         );

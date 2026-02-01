@@ -6,7 +6,6 @@ import { httpClient } from "../../utils/httpClient";
 import { logError, logger } from "../../utils/logger";
 import { traceManager } from "../../utils/tracing";
 import { getStorage } from "../googleStorage";
-import { StorageService } from "../storage";
 
 export const parsePDF = async (fileId: string): Promise<void> => {
   return traceManager.withSpan(
@@ -37,6 +36,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
           throw new Error("BACKEND_TOKEN is not set");
         }
 
+        const parsingTimeoutMs = Number(process.env.PARSING_TIMEOUT_MS ?? "120000");
         const response = await httpClient.post(
           backendUrl,
           {
@@ -51,6 +51,7 @@ export const parsePDF = async (fileId: string): Promise<void> => {
               "Content-Type": "application/json",
               "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
+            timeout: Number.isFinite(parsingTimeoutMs) ? parsingTimeoutMs : 120000,
           },
         );
 
@@ -111,6 +112,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
           throw new Error("BACKEND_TOKEN is not set");
         }
 
+        const parsingTimeoutMs = Number(process.env.PARSING_TIMEOUT_MS ?? "120000");
         const response = await httpClient.post(
           backendUrl,
           {
@@ -123,6 +125,7 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
               "Content-Type": "application/json",
               "X-APP-TOKEN": process.env.BACKEND_TOKEN,
             },
+            timeout: Number.isFinite(parsingTimeoutMs) ? parsingTimeoutMs : 120000,
           },
         );
 
@@ -308,7 +311,7 @@ export const parseToCMetaService = async (fileId: string): Promise<void> => {
   if (!file) {
     throw new Error("File not found");
   }
-  const storage = new StorageService();
+  const storage = getStorage();
   const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
   const pdfBuffer = await storage.downloadFile(path);
   const { result, tokenUsage } = await parseToCMeta(pdfBuffer);

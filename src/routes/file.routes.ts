@@ -11,6 +11,7 @@ import {
   userFileHeirarchialIndex,
   userFilePage,
   userFileSection,
+  UserFileStatus,
 } from "../db/schema";
 import {
   DeleteResponse,
@@ -89,7 +90,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         page?: number;
         pageSize?: number;
         search?: string;
-        status?: "all" | "pending" | "processing" | "processed" | "failed";
+        status?: UserFileStatus | "all";
       };
       const offset = (page - 1) * pageSize;
 
@@ -101,7 +102,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         ) as SQLWrapper,
       ];
 
-      if (status && status !== "all") whereConditions.push(eq(userFile.status, status));
+      if (status && status !== "all") whereConditions.push(eq(userFile.status, status as UserFileStatus));
       if ((search?.trim?.() ?? "") !== "") {
         const searchTerms = search
           ?.trim()

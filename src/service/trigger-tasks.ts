@@ -1,9 +1,7 @@
 import crypto from "node:crypto";
 import { scraperService } from "@/service/scraper";
-import { StorageService } from "@/service/storage";
 import { logger } from "@/utils/logger";
-
-const storage = new StorageService(); // Assuming instantiation needed
+import { getStorage } from "./googleStorage";
 
 // Scraping app API URL - can be overridden via environment variable
 const SCRAPING_APP_URL =
@@ -47,7 +45,7 @@ export const downloadPDFWithScraperService = async ({
 
         // Upload to our storage
         const storagePath = `web-search/pdfs/${source?.fileId}.pdf`;
-        await storage.uploadFile({
+        await getStorage().uploadFile({
           data: Buffer.from(buffer),
           path: storagePath,
           contentType: "application/pdf",
@@ -104,7 +102,7 @@ export const urlToMarkdownWithScraperService = async ({
         const storagePath = `web-search/markdowns/${urlHash}.md`;
 
         // Upload to our storage
-        await storage.uploadFile({
+        await getStorage().uploadFile({
           data: Buffer.from(result.markdown), // markdown is string
           path: storagePath,
           contentType: "text/markdown",

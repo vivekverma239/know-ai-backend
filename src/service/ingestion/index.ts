@@ -19,6 +19,7 @@ import {
 import { logError, logger } from "@/utils/logger";
 import { traceManager } from "@/utils/tracing";
 import { and, eq } from "drizzle-orm";
+import { deleteUserFileForDocument, ensureUserFileForDocument } from "./documentIngestion";
 
 export type IngestionPayload = {
   id?: number | string;
@@ -212,6 +213,17 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                     target: documents.id,
                     set: internalData as typeof documents.$inferInsert,
                   });
+                await ensureUserFileForDocument(
+                  {
+                    id: (data.id as string | number | undefined) ?? undefined,
+                    title: internalData.title as string | undefined,
+                    teamId: internalData.teamId as string | undefined,
+                    authorId: internalData.authorId as string | undefined,
+                    documentUrl: internalData.documentUrl as string | undefined,
+                    assetUrl: internalData.assetUrl as string | undefined,
+                  },
+                  action,
+                );
                 break;
               case "organization":
                 await getDb()
@@ -291,6 +303,9 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                 break;
               case "document":
                 await getDb().delete(documents).where(eq(documents.id, id));
+                await deleteUserFileForDocument({
+                  id: (data.id as string | number | undefined) ?? undefined,
+                });
                 break;
             }
           }
