@@ -40,6 +40,7 @@ export const highlights = createExternalTable("highlights", (t) => ({
   contentEmbedding: vector("content_embedding", { dimensions: 768 }),
   aiDescription: text("ai_description"), // For screenshots
   aiSummary: text("ai_summary"),
+  imageParsedContent: text("image_parsed_content"),
 
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })

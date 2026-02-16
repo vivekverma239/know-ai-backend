@@ -16,6 +16,9 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/",
     {
+      config: {
+        rawBody: true,
+      },
       schema: {
         description: "Upstash QStash callback for web search tasks",
         tags: ["Callbacks"],
@@ -51,11 +54,13 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
           return reply.code(400).send({ success: false });
         }
 
-        // Best-effort raw body reconstruction
+        // Prefer raw body for signature verification, with JSON fallback
         const bodyText =
-          typeof request.body === "string"
-            ? (request.body as string)
-            : JSON.stringify(request.body ?? {});
+          typeof request.rawBody === "string"
+            ? request.rawBody
+            : typeof request.body === "string"
+              ? request.body
+              : JSON.stringify(request.body ?? {});
 
         try {
           const isValid = await receiver.verify({ body: bodyText, signature });

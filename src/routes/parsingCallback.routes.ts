@@ -14,7 +14,7 @@ import {
 } from "@/service/file/parsing";
 import { updateUsage } from "@/service/file/usage";
 import { logError, logger } from "@/utils/logger";
-import { getRequestId } from "@/utils/requestContext";
+import { resolveRequestId } from "@/utils/requestContext";
 import { mapCallbackTokenUsage } from "@/utils/tokenUsage";
 
 const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
@@ -36,7 +36,7 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
       },
     },
     async (request, reply) => {
-      const requestId = getRequestId();
+      const requestId = resolveRequestId(request);
 
       try {
         const { fileId } = request.params as { fileId: string };

@@ -1,11 +1,74 @@
 import cors from "@fastify/cors";
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
+
+const parseAllowedOrigins = () => {
+  const configured = process.env.CORS_ORIGIN;
+  if (!configured || configured.trim() === "") {
+    return new Set([
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173",
+    ]);
+  }
+  return new Set(
+    configured
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0),
+  );
+};
+
+const isLoopbackOrigin = (origin: string) => {
+  try {
+    const parsed = new URL(origin);
+    const isHttp = parsed.protocol === "http:" || parsed.protocol === "https:";
+    const isLoopbackHost = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    return isHttp && isLoopbackHost;
+  } catch {
+    return false;
+  }
+};
 
 const corsPlugin = async (fastify: FastifyInstance) => {
+  const allowedOrigins = parseAllowedOrigins();
   await fastify.register(cors, {
-    origin: "*", // or restrict to specific domains
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      if (process.env.ENV !== "prod" && isLoopbackOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin not allowed"), false);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    allowedHeaders: [
+      "Authorization",
+      "Content-Type",
+      "x-user-id",
+      "x-org-id",
+      "x-user-email",
+      "x-user-name",
+    ],
+    credentials: false,
+    maxAge: 86400,
   });
 };
 
-export default corsPlugin;
+export default fp(corsPlugin, {
+  name: "cors-plugin",
+  fastify: "5.x",
+});

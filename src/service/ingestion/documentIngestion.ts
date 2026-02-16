@@ -12,7 +12,6 @@ type DocumentIngestionData = {
   title?: string | null;
   teamId?: string | null;
   authorId?: string | null;
-  documentUrl?: string | null;
   assetUrl?: string | null;
 };
 
@@ -84,9 +83,9 @@ export const ensureUserFileForDocument = async (
     return;
   }
 
-  const sourceUrl = data.documentUrl ?? data.assetUrl ?? undefined;
+  const sourceUrl = data.assetUrl ?? undefined;
   if (!sourceUrl) {
-    logger.warn("Document ingestion skipped: missing document URL.", { documentId });
+    logger.warn("Document ingestion skipped: missing asset URL.", { documentId });
     return;
   }
   const documentType = data.type === "webpage" ? "webpage" : "pdf";

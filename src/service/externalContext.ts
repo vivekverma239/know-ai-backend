@@ -890,6 +890,7 @@ const selectHighlights = {
   contentEmbedding: highlights.contentEmbedding,
   aiDescription: highlights.aiDescription,
   aiSummary: highlights.aiSummary,
+  imageParsedContent: highlights.imageParsedContent,
   createdAt: highlights.createdAt,
   updatedAt: highlights.updatedAt,
 };

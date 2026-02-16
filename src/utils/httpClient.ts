@@ -1,6 +1,6 @@
 import { logError, logger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
-import { traceManager } from "@/utils/tracing";
+import { traceManager, withActiveSpan } from "@/utils/tracing";
 
 /**
  * HTTP request configuration
@@ -94,107 +94,109 @@ export class TracedHttpClient {
     let lastError: Error | undefined;
     let attemptCount = 0;
 
-    while (attemptCount <= retries) {
-      try {
-        attemptCount++;
+    return withActiveSpan(span, async () => {
+      while (attemptCount <= retries) {
+        try {
+          attemptCount++;
 
-        // Add correlation headers
-        const enrichedHeaders = {
-          ...headers,
-          "X-Request-ID": getRequestId() || "unknown",
-          "User-Agent": "knowsis-ai-backend/1.0",
-        };
+          // Add correlation headers
+          const enrichedHeaders = {
+            ...headers,
+            "X-Request-ID": getRequestId() || "unknown",
+            "User-Agent": "knowsis-ai-backend/1.0",
+          };
 
-        // Create abort controller for timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
+          // Create abort controller for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        // Make the request
-        const response = await fetch(url, {
-          method,
-          headers: enrichedHeaders,
-          body: body ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        // Record successful span
-        traceManager.endSpan(span.id, {
-          status: response.status,
-          statusText: response.statusText,
-          contentType: response.headers.get("content-type"),
-          contentLength: response.headers.get("content-length"),
-          attemptCount,
-        });
-
-        // Log warning for non-ok responses
-        if (!response.ok) {
-          logger.warn("External API call returned non-OK status", {
-            url: this.sanitizeUrl(url),
+          // Make the request
+          const response = await fetch(url, {
             method,
+            headers: enrichedHeaders,
+            body: body ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          // Record successful span
+          traceManager.endSpan(span.id, {
             status: response.status,
             statusText: response.statusText,
-            spanId: span.id,
+            contentType: response.headers.get("content-type"),
+            contentLength: response.headers.get("content-length"),
             attemptCount,
           });
-        } else {
-          logger.debug("External API call successful", {
+
+          // Log warning for non-ok responses
+          if (!response.ok) {
+            logger.warn("External API call returned non-OK status", {
+              url: this.sanitizeUrl(url),
+              method,
+              status: response.status,
+              statusText: response.statusText,
+              spanId: span.id,
+              attemptCount,
+            });
+          } else {
+            logger.debug("External API call successful", {
+              url: this.sanitizeUrl(url),
+              method,
+              status: response.status,
+              spanId: span.id,
+              attemptCount,
+            });
+          }
+
+          return response;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+
+          // Check if it's a timeout
+          const isTimeout = lastError.name === "AbortError";
+
+          logger.warn("External API call failed", {
             url: this.sanitizeUrl(url),
             method,
-            status: response.status,
+            error: lastError.message,
+            isTimeout,
+            attemptCount,
+            retriesLeft: retries - attemptCount,
+            spanId: span.id,
+          });
+
+          // If we have retries left, continue to next iteration
+          if (attemptCount <= retries) {
+            // Exponential backoff: 1s, 2s, 4s, etc.
+            const backoffMs = Math.min(1000 * 2 ** (attemptCount - 1), 10000);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+
+          // No more retries, record error and throw
+          traceManager.recordError(span.id, lastError);
+          traceManager.endSpan(span.id, {
+            status: "error",
+            attemptCount,
+            errorType: isTimeout ? "timeout" : "fetch_error",
+          });
+
+          logError(lastError, {
+            url: this.sanitizeUrl(url),
+            method,
             spanId: span.id,
             attemptCount,
+            operation: "httpClient:request",
           });
+
+          throw lastError;
         }
-
-        return response;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        // Check if it's a timeout
-        const isTimeout = lastError.name === "AbortError";
-
-        logger.warn("External API call failed", {
-          url: this.sanitizeUrl(url),
-          method,
-          error: lastError.message,
-          isTimeout,
-          attemptCount,
-          retriesLeft: retries - attemptCount,
-          spanId: span.id,
-        });
-
-        // If we have retries left, continue to next iteration
-        if (attemptCount <= retries) {
-          // Exponential backoff: 1s, 2s, 4s, etc.
-          const backoffMs = Math.min(1000 * 2 ** (attemptCount - 1), 10000);
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          continue;
-        }
-
-        // No more retries, record error and throw
-        traceManager.recordError(span.id, lastError);
-        traceManager.endSpan(span.id, {
-          status: "error",
-          attemptCount,
-          errorType: isTimeout ? "timeout" : "fetch_error",
-        });
-
-        logError(lastError, {
-          url: this.sanitizeUrl(url),
-          method,
-          spanId: span.id,
-          attemptCount,
-          operation: "httpClient:request",
-        });
-
-        throw lastError;
       }
-    }
 
-    // This should never be reached, but TypeScript needs it
-    throw lastError || new Error("Unknown error in HTTP request");
+      // This should never be reached, but TypeScript needs it
+      throw lastError || new Error("Unknown error in HTTP request");
+    });
   }
 
   /**

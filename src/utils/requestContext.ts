@@ -72,6 +72,27 @@ export function getRequestId(): string | undefined {
 }
 
 /**
+ * Resolve a request ID with safe fallbacks for schema-required responses.
+ * Order: AsyncLocalStorage context -> Fastify request.id -> generated UUID.
+ */
+export function resolveRequestId(request?: FastifyRequest): string {
+  const contextId = getRequestId();
+  if (typeof contextId === "string" && contextId.trim() !== "") {
+    return contextId;
+  }
+
+  const reqId = request?.id;
+  if (typeof reqId === "string" && reqId.trim() !== "") {
+    return reqId;
+  }
+  if (typeof reqId === "number" && Number.isFinite(reqId)) {
+    return String(reqId);
+  }
+
+  return uuidv4();
+}
+
+/**
  * Get the full request context
  * @returns The request context if available, undefined otherwise
  */

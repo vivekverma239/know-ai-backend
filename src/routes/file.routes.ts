@@ -30,6 +30,7 @@ import {
   parsePDFHeirarchialIndex,
   parsePDFMetadata,
 } from "../service/file/triggerParsing";
+import { resolveExistingPdfStoragePath } from "../service/file/storagePath";
 import { getStorage } from "../service/googleStorage";
 import { logger } from "../utils/logger";
 
@@ -212,13 +213,15 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         );
       if (!file) return reply.code(404).send({ message: "File not found" });
       const storageService = getStorage();
-      // Use different path for admin files
-      const filePath = file.isAdminFile
-        ? `files/admin/${file.orgId}/${file.id}/document.pdf`
-        : `files/${file.userId}/${file.id}/${file.id}.pdf`;
+      const filePath = await resolveExistingPdfStoragePath(storageService, {
+        id: file.id,
+        userId: file.userId,
+        orgId: file.orgId,
+        isAdminFile: file.isAdminFile,
+      });
       return reply.send({
         ...file,
-        signedUrl: await storageService.getSignedUrl(filePath),
+        signedUrl: filePath ? await storageService.getSignedUrl(filePath) : null,
       });
     },
   });

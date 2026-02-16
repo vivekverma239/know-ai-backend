@@ -1,5 +1,5 @@
 import { logError, logger } from "@/utils/logger";
-import { getRequestContext, getRequestId } from "@/utils/requestContext";
+import { getRequestContext, resolveRequestId } from "@/utils/requestContext";
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 /**
@@ -147,9 +147,10 @@ export function createErrorResponse(
   isDevelopment = false,
 ): Record<string, unknown> {
   type ErrorResponse = {
-    error: {
-      message: string;
-      requestId: string;
+    success: false;
+    error: string;
+    requestId: string;
+    details?: {
       type?: string;
       name?: string;
       stack?: string;
@@ -158,26 +159,25 @@ export function createErrorResponse(
   };
 
   const response: ErrorResponse = {
-    error: {
-      message: sanitizeErrorMessage(error, isDevelopment),
-      requestId: requestId || "unknown",
-    },
+    success: false,
+    error: sanitizeErrorMessage(error, isDevelopment),
+    requestId: requestId || "unknown",
   };
 
-  // Add error type if it's an AppError
+  // Add structured details for diagnostics.
   if (error instanceof AppError) {
     const errorType =
       typeof error.context.errorType === "string" ? error.context.errorType : "application_error";
-    response.error = {
-      ...response.error,
+    response.details = {
+      ...response.details,
       type: errorType,
     };
   }
 
   // In development, add more details
   if (isDevelopment) {
-    response.error = {
-      ...response.error,
+    response.details = {
+      ...response.details,
       name: error.name,
       stack: error.stack,
       ...(error instanceof AppError ? { context: error.context } : {}),
@@ -200,7 +200,7 @@ export function createErrorHandler(fastify: FastifyInstance): void {
       request: FastifyRequest,
       reply: FastifyReply,
     ) => {
-      const requestId = getRequestId();
+      const requestId = resolveRequestId(request);
       const requestContext = getRequestContext();
       const statusCode = getStatusCode(error);
 
@@ -281,7 +281,7 @@ export async function tryWithLogging<T>(
     logError(error, {
       ...context,
       operation,
-      requestId: getRequestId(),
+      requestId: resolveRequestId(),
     });
     throw error;
   }

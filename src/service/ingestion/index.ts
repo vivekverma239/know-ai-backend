@@ -20,6 +20,7 @@ import { logError, logger } from "@/utils/logger";
 import { traceManager } from "@/utils/tracing";
 import { and, eq } from "drizzle-orm";
 import { deleteUserFileForDocument, ensureUserFileForDocument } from "./documentIngestion";
+import { ensureHighlightEmbedding } from "./highlightIngestion";
 
 export type IngestionPayload = {
   id?: number | string;
@@ -65,12 +66,51 @@ const tableMap: Record<string, ExternalTable> = {
   account: accounts,
 };
 
+const TIMESTAMP_KEYS = new Set(["createdAt", "updatedAt", "fromDate", "toDate"]);
+
+const coerceTimestampValue = (value: unknown, key: string): Date | null | undefined => {
+  if (value === undefined) return undefined;
+
+  if (value === null) {
+    // Let DB defaults handle createdAt/updatedAt if null comes in from webhook.
+    if (key === "createdAt" || key === "updatedAt") return undefined;
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value;
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  logger.warn("Ingestion event: invalid timestamp value skipped.", {
+    key,
+    value,
+  });
+  return undefined;
+};
+
 // Helper to map payload keys to camelCase keys used in Drizzle
 const mapToInternal = (data: Record<string, unknown>): Record<string, unknown> => {
   const mapped: Record<string, unknown> = {};
   for (const key in data) {
     const internalKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-    mapped[internalKey] = data[key];
+    const value = data[key];
+
+    if (TIMESTAMP_KEYS.has(internalKey)) {
+      const coerced = coerceTimestampValue(value, internalKey);
+      if (coerced !== undefined) {
+        mapped[internalKey] = coerced;
+      }
+      continue;
+    }
+
+    mapped[internalKey] = value;
   }
   return mapped;
 };
@@ -123,6 +163,13 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                     target: highlights.id,
                     set: internalData as typeof highlights.$inferInsert,
                   });
+                await ensureHighlightEmbedding(
+                  {
+                    id: (data.id as string | number | undefined) ?? undefined,
+                    imageUrl: internalData.imageUrl as string | undefined,
+                  },
+                  action,
+                );
                 break;
               case "entity":
                 await getDb()
@@ -220,7 +267,6 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                     title: internalData.title as string | undefined,
                     teamId: internalData.teamId as string | undefined,
                     authorId: internalData.authorId as string | undefined,
-                    documentUrl: internalData.documentUrl as string | undefined,
                     assetUrl: internalData.assetUrl as string | undefined,
                   },
                   action,

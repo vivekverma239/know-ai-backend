@@ -5,6 +5,7 @@ import { userFile, userFileToCMeta } from "../../db/schema";
 import { httpClient } from "../../utils/httpClient";
 import { logError, logger } from "../../utils/logger";
 import { traceManager } from "../../utils/tracing";
+import { resolveExistingPdfStoragePath } from "./storagePath";
 import { getStorage } from "../googleStorage";
 
 export const parsePDF = async (fileId: string): Promise<void> => {
@@ -23,7 +24,15 @@ export const parsePDF = async (fileId: string): Promise<void> => {
         }
 
         const storage = getStorage();
-        const path = `files/${file.userId}/${fileId}/document.pdf`;
+        const path = await resolveExistingPdfStoragePath(storage, {
+          id: fileId,
+          userId: file.userId,
+          orgId: file.orgId,
+          isAdminFile: file.isAdminFile,
+        });
+        if (!path) {
+          throw new Error(`PDF file not found in storage for file ${fileId}`);
+        }
         const signedUrl = await storage.getSignedUrl(path);
 
         const backendUrl = `${process.env.BACKEND_URL}/parse/document/async`;
@@ -99,7 +108,15 @@ export const parsePDFMetadata = async (fileId: string): Promise<void> => {
         }
 
         const storage = getStorage();
-        const path = `files/${file.userId}/${fileId}/document.pdf`;
+        const path = await resolveExistingPdfStoragePath(storage, {
+          id: fileId,
+          userId: file.userId,
+          orgId: file.orgId,
+          isAdminFile: file.isAdminFile,
+        });
+        if (!path) {
+          throw new Error(`PDF file not found in storage for file ${fileId}`);
+        }
         const signedUrl = await storage.getSignedUrl(path);
 
         const backendUrl = `${process.env.BACKEND_URL}/parse-metadata/background`;
@@ -173,7 +190,15 @@ export const parsePDFChapters = async (fileId: string): Promise<void> => {
         }
 
         const storage = getStorage();
-        const path = `files/${file.userId}/${fileId}/document.pdf`;
+        const path = await resolveExistingPdfStoragePath(storage, {
+          id: fileId,
+          userId: file.userId,
+          orgId: file.orgId,
+          isAdminFile: file.isAdminFile,
+        });
+        if (!path) {
+          throw new Error(`PDF file not found in storage for file ${fileId}`);
+        }
         const signedUrl = await storage.getSignedUrl(path);
 
         const backendUrl = `${process.env.BACKEND_URL}/parse-outline/background`;
@@ -248,7 +273,15 @@ export const parsePDFHeirarchialIndex = async (fileId: string): Promise<void> =>
         }
 
         const storage = getStorage();
-        const path = `files/${file.userId}/${fileId}/document.pdf`;
+        const path = await resolveExistingPdfStoragePath(storage, {
+          id: fileId,
+          userId: file.userId,
+          orgId: file.orgId,
+          isAdminFile: file.isAdminFile,
+        });
+        if (!path) {
+          throw new Error(`PDF file not found in storage for file ${fileId}`);
+        }
         const signedUrl = await storage.getSignedUrl(path);
 
         const backendUrl = `${process.env.BACKEND_URL}/parse-heirarchial-index/background`;
@@ -312,7 +345,15 @@ export const parseToCMetaService = async (fileId: string): Promise<void> => {
     throw new Error("File not found");
   }
   const storage = getStorage();
-  const path = `files/${file.userId}/${fileId}/${fileId}.pdf`;
+  const path = await resolveExistingPdfStoragePath(storage, {
+    id: fileId,
+    userId: file.userId,
+    orgId: file.orgId,
+    isAdminFile: file.isAdminFile,
+  });
+  if (!path) {
+    throw new Error(`PDF file not found in storage for file ${fileId}`);
+  }
   const pdfBuffer = await storage.downloadFile(path);
   const { result, tokenUsage } = await parseToCMeta(pdfBuffer);
 

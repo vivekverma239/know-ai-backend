@@ -397,3 +397,14 @@ export function getTraceSummary(): {
 export function getTracer(): Tracer {
   return trace.getTracer("knowsis-ai-backend", "1.0.0");
 }
+
+/**
+ * Execute a function with the provided span set as the active OpenTelemetry span.
+ * Useful when span lifecycle is managed manually with startSpan/endSpan.
+ */
+export async function withActiveSpan<T>(span: Span, fn: () => Promise<T>): Promise<T> {
+  const otelContext = span._otelSpan
+    ? trace.setSpan(context.active(), span._otelSpan)
+    : context.active();
+  return context.with(otelContext, fn);
+}

@@ -10,14 +10,18 @@ import { logger } from "@/utils/logger";
 import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
 import Fastify from "fastify";
+import rawBody from "fastify-raw-body";
 
 import swaggerUI from "@fastify/swagger-ui";
 // import multipartPlugin from "./plugins/multipart.plugin";
+import adminAuthPlugin from "./plugins/adminAuth.plugin";
 import authPlugin, { authFn } from "./plugins/auth.plugin";
 import corsPlugin from "./plugins/cors.plugin";
 import loggingPlugin from "./plugins/logging.plugin";
 import { createErrorHandler } from "./utils/errorHandler";
 
+import adminAuthRoutes from "./routes/adminAuth.routes";
+import adminRoutes from "./routes/admin.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import chatRoutes from "./routes/chatSession.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
@@ -50,6 +54,13 @@ const start = async () => {
   await fastify.register(multipart, {
     attachFieldsToBody: false,
     limits: { fileSize: 50 * 1024 * 1024 },
+  });
+  await fastify.register(rawBody, {
+    field: "rawBody",
+    global: false,
+    encoding: "utf8",
+    runFirst: true,
+    routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback"],
   });
   //   await fastify.register(multipartPlugin);
   // Swagger / OpenAPI
@@ -86,6 +97,10 @@ const start = async () => {
           name: "Callbacks",
           description: "Webhook endpoints for external service callbacks",
         },
+        {
+          name: "Admin",
+          description: "Admin authentication and dashboard read APIs",
+        },
       ],
     },
   });
@@ -93,6 +108,7 @@ const start = async () => {
   //   await fastify.register(fastifyAuth);
   //   await fastify.register(authPlugin);
   fastify.decorate("authenticate", authFn);
+  await fastify.register(adminAuthPlugin);
 
   logger.debug("Authenticate plugin registered", { authenticate: !!fastify.authenticate });
   // Routes
@@ -115,6 +131,8 @@ const start = async () => {
   });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
   await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
+  await fastify.register(adminAuthRoutes, { prefix: "/api/v1/admin/auth" });
+  await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 
   // Start server
   const start = async () => {

@@ -4,6 +4,7 @@ import {
   getRequestContext,
   getRequestId,
   initRequestContext,
+  requestContextStorage,
   withRequestContext,
 } from "@/utils/requestContext";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
@@ -89,6 +90,8 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (fastify, 
 
     // Initialize request context
     const context = initRequestContext(request);
+    // Make context available for the entire request lifecycle.
+    requestContextStorage.enterWith(context);
 
     // Store context and run within it
     await withRequestContext(context, async () => {

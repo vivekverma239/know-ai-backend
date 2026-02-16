@@ -2,7 +2,7 @@ import { MODELS } from "@/@types/llm";
 import { logger as appLogger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
-import { traceManager } from "@/utils/tracing";
+import { traceManager, withActiveSpan } from "@/utils/tracing";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -241,29 +241,31 @@ export const generateTextWrapper = async ({
   });
 
   try {
-    const response = await generateText({
-      model: llm,
-      messages: messages,
-      tools,
-      providerOptions: providerOptions,
-      experimental_telemetry: {
-        isEnabled: true,
-        tracer: getTracer(),
-        metadata: {
-          ...(userID && { userId: userID }),
-          ...(sessionID && { sessionId: sessionID }),
-          ...(lastMessageID && { messageId: lastMessageID }),
-          ...(functionName && { functionName }),
-          ...(requestId && { requestId }),
-          spanId: span.id,
+    const response = await withActiveSpan(span, async () =>
+      generateText({
+        model: llm,
+        messages: messages,
+        tools,
+        providerOptions: providerOptions,
+        experimental_telemetry: {
+          isEnabled: true,
+          tracer: getTracer(),
+          metadata: {
+            ...(userID && { userId: userID }),
+            ...(sessionID && { sessionId: sessionID }),
+            ...(lastMessageID && { messageId: lastMessageID }),
+            ...(functionName && { functionName }),
+            ...(requestId && { requestId }),
+            spanId: span.id,
+          },
         },
-      },
-      onStepFinish: (step) => {
-        onStepFinishCallback?.(step);
-      },
-      stopWhen: stepCountIs(10),
-      maxRetries: 3,
-    });
+        onStepFinish: (step) => {
+          onStepFinishCallback?.(step);
+        },
+        stopWhen: stepCountIs(10),
+        maxRetries: 3,
+      }),
+    );
 
     // Record token usage in span
     if (response.usage) {
@@ -359,34 +361,36 @@ export const generateObjectWrapper = async <T>({
   while (retryCount < 3) {
     try {
       const providerOptions = getProviderOptions(model, reasoningLevel);
-      const response = await generateObject({
-        model: llm,
-        messages: messages,
-        schema,
-        providerOptions: providerOptions,
-        maxRetries: 3,
-        experimental_telemetry: {
-          isEnabled: true,
-          tracer: getTracer(),
-          metadata: {
-            ...(requestId && { requestId }),
-            spanId: span.id,
+      const response = await withActiveSpan(span, async () =>
+        generateObject({
+          model: llm,
+          messages: messages,
+          schema,
+          providerOptions: providerOptions,
+          maxRetries: 3,
+          experimental_telemetry: {
+            isEnabled: true,
+            tracer: getTracer(),
+            metadata: {
+              ...(requestId && { requestId }),
+              spanId: span.id,
+            },
           },
-        },
-        experimental_repairText: ({ text }) => {
-          try {
-            const data = JSON.parse(text) as T;
-            // Try validating the data
-            const validation = schema.safeParse(data);
-            if (validation.success) {
-              return Promise.resolve(text);
+          experimental_repairText: ({ text }) => {
+            try {
+              const data = JSON.parse(text) as T;
+              // Try validating the data
+              const validation = schema.safeParse(data);
+              if (validation.success) {
+                return Promise.resolve(text);
+              }
+              return Promise.resolve(null);
+            } catch (error) {
+              return Promise.resolve(null);
             }
-            return Promise.resolve(null);
-          } catch (error) {
-            return Promise.resolve(null);
-          }
-        },
-      });
+          },
+        }),
+      );
 
       // Record token usage if available
       if (response.usage) {
@@ -466,6 +470,14 @@ export const streamTextWrapper = async ({
 }) => {
   const llm = getLLM(model);
   const providerOptions = getProviderOptions(model, reasoningLevel);
+  const requestId = getRequestId();
+  const span = traceManager.startSpan("llm:streamText", {
+    model,
+    requestId,
+    messageCount: messages.length,
+    hasTools: !!tools,
+    isStreaming: true,
+  });
 
   const modelMessages = messages;
   if (modelMessages[0]?.role !== "system") {
@@ -475,21 +487,104 @@ export const streamTextWrapper = async ({
     } as ModelMessage);
   }
   let retryCount = 0;
+  let spanClosed = false;
+
+  const closeSpan = (metadata: Record<string, unknown>) => {
+    if (spanClosed) {
+      return;
+    }
+
+    traceManager.endSpan(span.id, metadata);
+    spanClosed = true;
+  };
 
   while (retryCount < 3) {
     try {
-      const response = streamText({
-        model: llm,
-        messages: modelMessages,
-        tools,
-        providerOptions: providerOptions,
-        experimental_telemetry: {
-          isEnabled: true,
-          tracer: getTracer(),
-        },
-        stopWhen: stepCountIs(100),
-        maxRetries: 3,
-      });
+      const response = await withActiveSpan(span, async () =>
+        streamText({
+          model: llm,
+          messages: modelMessages,
+          tools,
+          providerOptions: providerOptions,
+          experimental_telemetry: {
+            isEnabled: true,
+            tracer: getTracer(),
+            metadata: {
+              ...(requestId && { requestId }),
+              spanId: span.id,
+              isStreaming: true,
+            },
+          },
+          onFinish: async (event) => {
+            const promptTokens = event.totalUsage.inputTokens ?? 0;
+            const completionTokens = event.totalUsage.outputTokens ?? 0;
+            const totalTokens = event.totalUsage.totalTokens ?? promptTokens + completionTokens;
+
+            traceManager.recordTokenUsage(span.id, {
+              promptTokens,
+              completionTokens,
+              totalTokens,
+              model,
+              timestamp: new Date(),
+              operationId: span.id,
+              operationName: "streamText",
+            });
+
+            try {
+              const cost = await calculateUsageCost(model, promptTokens, completionTokens);
+              appLogger.info("LLM streamText completed with cost", {
+                model,
+                promptTokens,
+                completionTokens,
+                totalTokens,
+                cost: formatCost(cost),
+                costUSD: cost,
+                spanId: span.id,
+              });
+            } catch (error) {
+              appLogger.debug("Cost calculation failed (non-blocking)", {
+                model,
+                error: error instanceof Error ? error.message : String(error),
+                spanId: span.id,
+              });
+            }
+
+            closeSpan({
+              finishReason: event.finishReason,
+              stepCount: event.steps.length,
+              responseLength: event.text.length,
+              retryCount,
+              isStreaming: true,
+            });
+
+            const latestResponseMessage =
+              event.response.messages[event.response.messages.length - 1];
+            if (latestResponseMessage) {
+              await onFinish(latestResponseMessage);
+            }
+          },
+          onError: (event) => {
+            const error =
+              event.error instanceof Error ? event.error : new Error(String(event.error));
+            traceManager.recordError(span.id, error);
+            closeSpan({
+              status: "error",
+              retryCount,
+              isStreaming: true,
+            });
+          },
+          onAbort: (event) => {
+            closeSpan({
+              aborted: true,
+              stepCount: event.steps.length,
+              retryCount,
+              isStreaming: true,
+            });
+          },
+          stopWhen: stepCountIs(100),
+          maxRetries: 3,
+        }),
+      );
 
       const origin = requestHeaders?.get("Origin") ?? "*";
       const corsHeaders: Record<string, string> = {
@@ -512,12 +607,25 @@ export const streamTextWrapper = async ({
       appLogger.error("Error in streamTextWrapper", {
         error: error instanceof Error ? error.message : String(error),
         retryCount,
+        spanId: span.id,
       });
       retryCount++;
       if (retryCount === 3) {
+        traceManager.recordError(span.id, error);
+        closeSpan({
+          status: "error",
+          retryCount,
+          isStreaming: true,
+        });
         return err(error as Error);
       }
     }
   }
+
+  closeSpan({
+    status: "error",
+    retryCount,
+    isStreaming: true,
+  });
   return err(new Error("Failed to stream text"));
 };

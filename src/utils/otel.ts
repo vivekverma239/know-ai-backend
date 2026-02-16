@@ -1,9 +1,12 @@
 import { logger } from "@/utils/logger";
 import { TraceExporter } from "@google-cloud/opentelemetry-cloud-trace-exporter";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { FastifyInstrumentation } from "@opentelemetry/instrumentation-fastify";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import { BatchLogRecordProcessor } from "@opentelemetry/sdk-logs";
+import type { LogRecordProcessor } from "@opentelemetry/sdk-logs";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import type { SpanExporter } from "@opentelemetry/sdk-trace-base";
 import {
@@ -27,6 +30,53 @@ import {
 
 let sdk: NodeSDK | undefined;
 
+function parseOtlpHeaders(rawHeaders: string | undefined): Record<string, string> {
+  if (!rawHeaders) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(rawHeaders) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return Object.entries(parsed as Record<string, unknown>).reduce<Record<string, string>>(
+        (acc, [key, value]) => {
+          if (
+            typeof value === "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean"
+          ) {
+            acc[key] = String(value);
+          }
+          return acc;
+        },
+        {},
+      );
+    }
+  } catch (_error) {
+    // Ignore and fall back to "k=v,k2=v2" format
+  }
+
+  return rawHeaders
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((acc, part) => {
+      const separatorIndex = part.indexOf("=");
+      if (separatorIndex <= 0) {
+        return acc;
+      }
+
+      const key = part.slice(0, separatorIndex).trim();
+      const value = part.slice(separatorIndex + 1).trim();
+      if (!key || !value) {
+        return acc;
+      }
+
+      acc[key] = value;
+      return acc;
+    }, {});
+}
+
 /**
  * Create appropriate trace exporter based on configuration
  */
@@ -48,10 +98,54 @@ function createTraceExporter(): SpanExporter {
 
   return new OTLPTraceExporter({
     url: otlpEndpoint,
-    headers: process.env.OTEL_EXPORTER_OTLP_HEADERS
-      ? JSON.parse(process.env.OTEL_EXPORTER_OTLP_HEADERS)
-      : {},
+    headers: parseOtlpHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS),
   });
+}
+
+function createLogRecordProcessors(): LogRecordProcessor[] {
+  const isEnabled = process.env.ENABLE_OPENTELEMETRY_LOGS !== "false";
+  if (!isEnabled) {
+    logger.info("OpenTelemetry logs export is disabled");
+    return [];
+  }
+
+  const exporterType = process.env.OTEL_EXPORTER_TYPE || "otlp";
+  if (exporterType === "google-cloud") {
+    logger.info("OpenTelemetry log export not configured for google-cloud exporter type");
+    return [];
+  }
+
+  const axiomToken = process.env.AXIOM_TOKEN;
+  const axiomDataset = process.env.AXIOM_DATASET;
+  const isAxiomConfigured = Boolean(axiomToken && axiomDataset);
+  const logEndpoint =
+    process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ||
+    (isAxiomConfigured ? "https://api.axiom.co/v1/logs" : "http://localhost:4318/v1/logs");
+
+  const explicitLogHeaders = parseOtlpHeaders(
+    process.env.OTEL_EXPORTER_OTLP_LOGS_HEADERS || process.env.OTEL_EXPORTER_OTLP_HEADERS,
+  );
+  let headers: Record<string, string> = explicitLogHeaders;
+  if (Object.keys(headers).length === 0 && axiomToken && axiomDataset) {
+    headers = {
+      Authorization: `Bearer ${axiomToken}`,
+      "x-axiom-dataset": axiomDataset,
+    };
+  }
+
+  logger.info("Using OTLP logs exporter", {
+    endpoint: logEndpoint,
+    provider: isAxiomConfigured ? "axiom" : "otlp",
+  });
+
+  return [
+    new BatchLogRecordProcessor(
+      new OTLPLogExporter({
+        url: logEndpoint,
+        headers,
+      }),
+    ),
+  ];
 }
 
 /**
@@ -77,11 +171,13 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
 
     // Create appropriate trace exporter
     const traceExporter = createTraceExporter();
+    const logRecordProcessors = createLogRecordProcessors();
 
     // Initialize SDK with instrumentations
     sdk = new NodeSDK({
       resource,
       traceExporter,
+      ...(logRecordProcessors.length > 0 ? { logRecordProcessors } : {}),
       instrumentations: [
         // Automatic HTTP instrumentation
         new HttpInstrumentation({
@@ -120,6 +216,7 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
       serviceName: resource.attributes[ATTR_SERVICE_NAME],
       environment: resource.attributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT],
       exporterType: process.env.OTEL_EXPORTER_TYPE || "otlp",
+      logsEnabled: logRecordProcessors.length > 0,
       projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || "default",
     });
 

@@ -1,6 +1,6 @@
 import { type IngestionPayload, processIngestionEvent } from "@/service/ingestion";
 import { logError, logger } from "@/utils/logger";
-import { getRequestId } from "@/utils/requestContext";
+import { resolveRequestId } from "@/utils/requestContext";
 import { Type } from "@sinclair/typebox";
 import { Receiver } from "@upstash/qstash";
 import type { FastifyInstance } from "fastify";
@@ -14,6 +14,9 @@ const ingestionRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/webhooks/ingestion",
     {
+      config: {
+        rawBody: true,
+      },
       schema: {
         description: "Webhook for ingesting events from the core app DB",
         tags: ["Webhooks"],
@@ -32,18 +35,25 @@ const ingestionRoutes = async (fastify: FastifyInstance) => {
           timestamp: Type.String(),
         }),
         response: {
-          200: Type.Object({ success: Type.Boolean(), requestId: Type.String() }),
-          400: Type.Object({ success: Type.Boolean(), error: Type.String() }),
+          200: Type.Object({
+            success: Type.Boolean(),
+            requestId: Type.Optional(Type.String()),
+          }),
+          400: Type.Object({
+            success: Type.Boolean(),
+            error: Type.String(),
+            requestId: Type.Optional(Type.String()),
+          }),
           500: Type.Object({
             success: Type.Boolean(),
             error: Type.String(),
-            requestId: Type.String(),
+            requestId: Type.Optional(Type.String()),
           }),
         },
       },
     },
     async (request, reply) => {
-      const requestId = getRequestId();
+      const requestId = resolveRequestId(request);
 
       try {
         // Verify signature from QStash
@@ -56,7 +66,11 @@ const ingestionRoutes = async (fastify: FastifyInstance) => {
         }
 
         const bodyText =
-          typeof request.body === "string" ? request.body : JSON.stringify(request.body);
+          typeof request.rawBody === "string"
+            ? request.rawBody
+            : typeof request.body === "string"
+              ? request.body
+              : JSON.stringify(request.body ?? {});
 
         const isValid = await receiver
           .verify({

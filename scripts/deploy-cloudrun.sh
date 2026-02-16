@@ -45,7 +45,7 @@ echo "Setting gcloud project: ${PROJECT_ID}"
 #   --description "Docker images for ${PROJECT_ID}" >/dev/null
 
 # echo "Building and pushing image via Cloud Build: ${IMAGE_URI}"
-# gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
+gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
 
 DEPLOY_ARGS=(
   --project "${PROJECT_ID}"
