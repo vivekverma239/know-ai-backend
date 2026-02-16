@@ -30,6 +30,16 @@ export type IngestionPayload = {
   timestamp: string;
 };
 
+export class RetryableIngestionError extends Error {
+  readonly reasons: string[];
+
+  constructor(message: string, reasons: string[]) {
+    super(message);
+    this.name = "RetryableIngestionError";
+    this.reasons = reasons;
+  }
+}
+
 // Define a type for our tables to avoid using any
 type ExternalTable =
   | typeof highlights
@@ -67,6 +77,210 @@ const tableMap: Record<string, ExternalTable> = {
 };
 
 const TIMESTAMP_KEYS = new Set(["createdAt", "updatedAt", "fromDate", "toDate"]);
+const INGESTION_DEBUG_ENABLED = ["1", "true", "yes", "on"].includes(
+  (process.env.INGESTION_DEBUG ?? "").toLowerCase(),
+);
+
+const logIngestionDebug = (message: string, meta: Record<string, unknown> = {}) => {
+  if (!INGESTION_DEBUG_ENABLED) return;
+  logger.debug(message, meta);
+};
+
+const toNumericId = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const toUuid = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const highlightExists = async (id: number) => {
+  const rows = await getDb().select({ id: highlights.id }).from(highlights).where(eq(highlights.id, id));
+  return rows.length > 0;
+};
+
+const entityExists = async (id: number) => {
+  const rows = await getDb().select({ id: entities.id }).from(entities).where(eq(entities.id, id));
+  return rows.length > 0;
+};
+
+const tagExists = async (id: number) => {
+  const rows = await getDb().select({ id: tags.id }).from(tags).where(eq(tags.id, id));
+  return rows.length > 0;
+};
+
+const trendExists = async (id: number) => {
+  const rows = await getDb().select({ id: trends.id }).from(trends).where(eq(trends.id, id));
+  return rows.length > 0;
+};
+
+const scenarioExists = async (id: number) => {
+  const rows = await getDb().select({ id: scenarios.id }).from(scenarios).where(eq(scenarios.id, id));
+  return rows.length > 0;
+};
+
+const calendarEventExists = async (id: number) => {
+  const rows = await getDb()
+    .select({ id: calendarEvents.id })
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, id));
+  return rows.length > 0;
+};
+
+const organizationExists = async (id: string) => {
+  const rows = await getDb()
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.id, id));
+  return rows.length > 0;
+};
+
+type ReferenceValidationResult = {
+  valid: boolean;
+  reasons: string[];
+};
+
+const validateNumericReference = async (
+  label: string,
+  value: unknown,
+  exists: (id: number) => Promise<boolean>,
+): Promise<string | null> => {
+  if (value === null || value === undefined) return null;
+  const id = toNumericId(value);
+  if (id === null) {
+    return `${label} is not a valid numeric id`;
+  }
+  const found = await exists(id);
+  if (!found) {
+    return `${label} ${id} does not exist`;
+  }
+  return null;
+};
+
+const validateUuidReference = async (
+  label: string,
+  value: unknown,
+  exists: (id: string) => Promise<boolean>,
+): Promise<string | null> => {
+  if (value === null || value === undefined) return null;
+  const id = toUuid(value);
+  if (!id) {
+    return `${label} is not a valid uuid`;
+  }
+  const found = await exists(id);
+  if (!found) {
+    return `${label} ${id} does not exist`;
+  }
+  return null;
+};
+
+const validateExternalReferences = async (
+  type: string,
+  internalData: Record<string, unknown>,
+): Promise<ReferenceValidationResult> => {
+  const reasons: string[] = [];
+
+  const pushIfPresent = (reason: string | null) => {
+    if (reason) reasons.push(reason);
+  };
+
+  switch (type) {
+    case "account":
+      pushIfPresent(
+        await validateUuidReference(
+          "organization_id",
+          internalData.organizationId,
+          organizationExists,
+        ),
+      );
+      break;
+    case "calendar_event":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      break;
+    case "followup":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      break;
+    case "highlight_comment":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      break;
+    case "highlight_entity":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      pushIfPresent(
+        await validateNumericReference("entity_id", internalData.entityId, entityExists),
+      );
+      break;
+    case "highlight_tag":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      pushIfPresent(await validateNumericReference("tag_id", internalData.tagId, tagExists));
+      break;
+    case "scenario":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      break;
+    case "scenario_remark":
+      pushIfPresent(
+        await validateNumericReference("scenario_id", internalData.scenarioId, scenarioExists),
+      );
+      pushIfPresent(
+        await validateNumericReference("entity_id", internalData.entityId, entityExists),
+      );
+      break;
+    case "trend":
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      pushIfPresent(
+        await validateNumericReference("entity_id", internalData.entityId, entityExists),
+      );
+      break;
+    case "trend_asset":
+      pushIfPresent(await validateNumericReference("trend_id", internalData.trendId, trendExists));
+      pushIfPresent(
+        await validateNumericReference("highlight_id", internalData.highlightId, highlightExists),
+      );
+      pushIfPresent(
+        await validateNumericReference("entity_id", internalData.entityId, entityExists),
+      );
+      break;
+    case "calendar_event_entity":
+      pushIfPresent(
+        await validateNumericReference(
+          "calendar_event_id",
+          internalData.calendarEventId,
+          calendarEventExists,
+        ),
+      );
+      pushIfPresent(
+        await validateNumericReference("entity_id", internalData.entityId, entityExists),
+      );
+      break;
+    default:
+      break;
+  }
+
+  return {
+    valid: reasons.length === 0,
+    reasons,
+  };
+};
 
 const coerceTimestampValue = (value: unknown, key: string): Date | null | undefined => {
   if (value === undefined) return undefined;
@@ -119,19 +333,58 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
   return traceManager.withSpan(
     "ingestion:processEvent",
     async (span) => {
+      const startedAt = Date.now();
       const { type, action, data } = event;
+      const eventMeta = {
+        type,
+        action,
+        eventId: event.id ?? null,
+        recordId: data.id ?? null,
+      };
+
+      logIngestionDebug("Ingestion event processing started", {
+        ...eventMeta,
+        timestamp: event.timestamp,
+        payloadKeys: Object.keys(data),
+      });
+
       const table = tableMap[type];
 
       if (!table) {
         logger.warn("Unknown event type received", { type, action });
+        logIngestionDebug("Ingestion event ignored due to unknown type", eventMeta);
         return;
       }
 
       try {
         const internalData = mapToInternal(data);
+        logIngestionDebug("Ingestion payload mapped to internal keys", {
+          ...eventMeta,
+          internalKeys: Object.keys(internalData),
+        });
 
         if (action === "insert" || action === "update") {
+          const validation = await validateExternalReferences(type, internalData);
+          logIngestionDebug("Ingestion reference validation completed", {
+            ...eventMeta,
+            isValid: validation.valid,
+            reasons: validation.reasons,
+          });
+          if (!validation.valid) {
+            logger.warn("Ingestion event failed reference validation; marking retryable", {
+              type,
+              action,
+              id: data.id,
+              reasons: validation.reasons,
+            });
+            throw new RetryableIngestionError(
+              "Missing required referenced records; retry when dependencies are ingested",
+              validation.reasons,
+            );
+          }
+
           logger.info(`Processing ${action} for ${type}`, { id: data.id });
+          logIngestionDebug("Executing ingestion mutation", eventMeta);
 
           if (type === "highlight_entity") {
             const relTable = highlightsEntitiesRel;
@@ -294,6 +547,7 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
           }
         } else if (action === "delete") {
           logger.info(`Processing delete for ${type}`, { id: data.id });
+          logIngestionDebug("Executing ingestion delete", eventMeta);
 
           if (type === "highlight_entity") {
             const relTable = highlightsEntitiesRel;
@@ -357,6 +611,11 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
             }
           }
         }
+
+        logIngestionDebug("Ingestion event processing completed", {
+          ...eventMeta,
+          durationMs: Date.now() - startedAt,
+        });
       } catch (error) {
         logError(error, {
           operation: "processIngestionEvent",
@@ -364,6 +623,11 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
           action,
           eventData: data,
           spanId: span.id,
+        });
+        logIngestionDebug("Ingestion event processing failed", {
+          ...eventMeta,
+          durationMs: Date.now() - startedAt,
+          error: error instanceof Error ? error.message : String(error),
         });
         throw error;
       }
