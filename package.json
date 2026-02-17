@@ -9,6 +9,8 @@
     "test:chat-stream": "tsx test/chatStream.test.ts",
     "test:ingestion-webhook": "tsx test/ingestionWebhook.test.ts",
     "test:admin-dashboard": "tsx test/adminDashboard.test.ts",
+    "test:e2e-ingestion": "tsx test/e2e-ingestion.test.ts",
+    "test:e2e-ingestion-webhook": "tsx test/e2e-ingestion-webhook.test.ts",
     "test:all": "npm run test:doc-parsing && npm run test:chat-stream",
     "dev": "dotenvx run -- nodemon --watch src --watch .env --ext ts,env --exec \"tsx src/server.ts\"",
     "start": "dotenvx run -- node dist/server.js",
@@ -20,7 +22,8 @@
     "admin:dev": "pnpm --dir admin-dashboard dev",
     "admin:build": "pnpm --dir admin-dashboard build",
     "admin:preview": "pnpm --dir admin-dashboard preview",
-    "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts"
+    "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts",
+    "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev"
   },
   "keywords": [],
   "author": "",
@@ -89,6 +92,7 @@
     "postgres": "^3.4.7",
     "qrcode": "^1.5.4",
     "tokenlens": "2.0.0-alpha.3",
+    "turndown": "^7.2.2",
     "unpdf": "^1.4.0",
     "uuid": "^11.1.0",
     "zod": "^4.1.11"
@@ -100,6 +104,7 @@
     "@types/lodash": "^4.17.23",
     "@types/node": "^24.6.0",
     "@types/pg": "^8.15.5",
+    "@types/turndown": "^5.0.6",
     "drizzle-kit": "^0.31.5",
     "form-data": "^4.0.4",
     "supabase": "^2.72.8",

@@ -5,6 +5,7 @@ import { logError, logger } from "@/utils/logger";
 import { and, eq } from "drizzle-orm";
 import { parsePDF } from "../file/triggerParsing";
 import { getStorage } from "../googleStorage";
+import { processWebpageContent } from "./webpageProcessing";
 
 type DocumentIngestionData = {
   id?: number | string;
@@ -134,11 +135,11 @@ export const ensureUserFileForDocument = async (
   try {
     if (documentType === "webpage") {
       const { title, content } = await fetchWebpageContent(sourceUrl);
+      // Store raw HTML in webArticleMetadata
       await getDb()
         .update(userFile)
         .set({
           name: title,
-          status: "completed",
           type: "web_article",
           webArticleMetadata: {
             url: sourceUrl,
@@ -146,6 +147,14 @@ export const ensureUserFileForDocument = async (
             content,
           },
         })
+        .where(eq(userFile.id, fileId));
+
+      // Convert HTML to markdown, split into pages, generate embeddings
+      await processWebpageContent(fileId, content, sourceUrl, title);
+
+      await getDb()
+        .update(userFile)
+        .set({ status: "completed" })
         .where(eq(userFile.id, fileId));
     } else {
       const buffer = await downloadDocument(sourceUrl);
