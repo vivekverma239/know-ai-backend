@@ -11,9 +11,13 @@ import type {
   AdminOrgItem,
   AdminSession,
   AdminVerifyTotpResponse,
+  PlaygroundMember,
+  PlaygroundReportDetail,
+  PlaygroundReportSummary,
+  PlaygroundTemplate,
 } from "./types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
 
 type QueryValue = string | number | boolean | null | undefined;
 
@@ -178,4 +182,45 @@ export const getAdminEntityDetail = (
     token,
     query,
   });
+};
+
+// --- Playground API ---
+
+export const getPlaygroundMembers = (token: string, orgId: string) => {
+  return apiRequest<{ items: PlaygroundMember[] }>("/admin/playground/members", {
+    token,
+    query: { orgId },
+  });
+};
+
+export const getPlaygroundTemplates = (token: string) => {
+  return apiRequest<{ items: PlaygroundTemplate[] }>("/admin/playground/templates", { token });
+};
+
+export const createPlaygroundReport = (
+  token: string,
+  body: {
+    userId: string;
+    templateId: string;
+    topic: string;
+    referencePeriod?: string;
+    modelConfig?: unknown;
+  },
+) => {
+  return apiRequest<PlaygroundReportSummary>("/admin/playground/reports", {
+    method: "POST",
+    token,
+    body,
+  });
+};
+
+export const getPlaygroundReports = (token: string, userId: string) => {
+  return apiRequest<{ items: PlaygroundReportSummary[] }>("/admin/playground/reports", {
+    token,
+    query: { userId },
+  });
+};
+
+export const getPlaygroundReport = (token: string, id: string) => {
+  return apiRequest<PlaygroundReportDetail>(`/admin/playground/reports/${id}`, { token });
 };

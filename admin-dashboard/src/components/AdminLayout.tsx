@@ -108,6 +108,16 @@ export function AdminLayout() {
               </Button>
             )}
           </NavLink>
+          <NavLink to="/dashboard/playground" className="contents">
+            {({ isActive }) => (
+              <Button
+                variant={isActive ? "default" : "ghost"}
+                className="w-full justify-start"
+              >
+                Playground
+              </Button>
+            )}
+          </NavLink>
         </nav>
 
         {/* Org Scope Picker */}

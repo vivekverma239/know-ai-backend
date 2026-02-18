@@ -6,6 +6,7 @@ import { DocumentsPage } from "./pages/DocumentsPage";
 import { EntitiesPage } from "./pages/EntitiesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PdfViewerPage } from "./pages/PdfViewerPage";
+import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { useAuthStore } from "./store/authStore";
 
 function RootRedirect() {
@@ -32,6 +33,7 @@ export function App() {
         <Route path="documents/:id" element={<DocumentDetailPage />} />
         <Route path="documents/:id/pdf" element={<PdfViewerPage />} />
         <Route path="entities" element={<EntitiesPage />} />
+        <Route path="playground" element={<PlaygroundPage />} />
       </Route>
 
       <Route path="*" element={<RootRedirect />} />

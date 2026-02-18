@@ -22,6 +22,7 @@ import { createErrorHandler } from "./utils/errorHandler";
 
 import adminAuthRoutes from "./routes/adminAuth.routes";
 import adminRoutes from "./routes/admin.routes";
+import adminPlaygroundRoutes from "./routes/adminPlayground.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import chatRoutes from "./routes/chatSession.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
@@ -133,6 +134,7 @@ const start = async () => {
   await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
   await fastify.register(adminAuthRoutes, { prefix: "/api/v1/admin/auth" });
   await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
+  await fastify.register(adminPlaygroundRoutes, { prefix: "/api/v1/admin/playground" });
 
   // Start server
   const start = async () => {

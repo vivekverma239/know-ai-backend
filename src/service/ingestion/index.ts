@@ -1,6 +1,7 @@
 import { getDb } from "@/db";
 import {
   accounts,
+  accountsMemberships,
   calendarEvents,
   documents,
   entities,
@@ -58,7 +59,8 @@ type ExternalTable =
   | typeof documents
   | typeof organizations
   | typeof organizationMembers
-  | typeof accounts;
+  | typeof accounts
+  | typeof accountsMemberships;
 
 const tableMap: Record<string, ExternalTable> = {
   highlight: highlights,
@@ -77,6 +79,7 @@ const tableMap: Record<string, ExternalTable> = {
   organization: organizations,
   organization_member: organizationMembers,
   account: accounts,
+  accounts_membership: accountsMemberships,
 };
 
 const TIMESTAMP_KEYS = new Set(["createdAt", "updatedAt", "fromDate", "toDate"]);
@@ -134,6 +137,14 @@ const calendarEventExists = async (id: number) => {
     .select({ id: calendarEvents.id })
     .from(calendarEvents)
     .where(eq(calendarEvents.id, id));
+  return rows.length > 0;
+};
+
+const accountExists = async (id: string) => {
+  const rows = await getDb()
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.id, id));
   return rows.length > 0;
 };
 
@@ -269,6 +280,15 @@ const validateExternalReferences = async (
           "organization_id",
           internalData.organizationId,
           organizationExists,
+        ),
+      );
+      break;
+    case "accounts_membership":
+      pushIfPresent(
+        await validateUuidReference(
+          "account_id",
+          internalData.accountId,
+          accountExists,
         ),
       );
       break;
@@ -579,6 +599,15 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                     set: internalData as typeof accounts.$inferInsert,
                   });
                 break;
+              case "accounts_membership":
+                await getDb()
+                  .insert(accountsMemberships)
+                  .values(internalData as typeof accountsMemberships.$inferInsert)
+                  .onConflictDoUpdate({
+                    target: [accountsMemberships.userId, accountsMemberships.accountId],
+                    set: internalData as typeof accountsMemberships.$inferInsert,
+                  });
+                break;
             }
           }
         } else if (action === "delete") {
@@ -644,6 +673,21 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                   id: (data.id as string | number | undefined) ?? undefined,
                 });
                 break;
+              case "accounts_membership": {
+                const delUserId = internalData.userId as string;
+                const delAccountId = internalData.accountId as string;
+                if (delUserId && delAccountId) {
+                  await getDb()
+                    .delete(accountsMemberships)
+                    .where(
+                      and(
+                        eq(accountsMemberships.userId, delUserId),
+                        eq(accountsMemberships.accountId, delAccountId),
+                      ),
+                    );
+                }
+                break;
+              }
               case "organization_member": {
                 // Delete by user UUID + org, not by numeric id
                 const delMemberId = internalData.id as string;

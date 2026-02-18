@@ -282,6 +282,24 @@ export const organizationMembers = createExternalTable("organization_members", (
     .$onUpdate(() => new Date()),
 }));
 
+export const accountsMemberships = createExternalTable(
+  "accounts_memberships",
+  (t) => ({
+    userId: uuid("user_id").notNull(),
+    accountId: uuid("account_id").notNull(),
+    accountRole: text("account_role"),
+    createdBy: uuid("created_by"),
+    updatedBy: uuid("updated_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (t) => ({
+    pk: uniqueIndex("accounts_memberships_pk").on(t.userId, t.accountId),
+  }),
+);
+
 export const accounts = createExternalTable("accounts", (t) => ({
   id: uuid("id").primaryKey(),
   primaryOwnerUserId: uuid("primary_owner_user_id"),

@@ -108,6 +108,46 @@ export type AdminRelatedDocument = {
   linkedUserFileId: string | null;
 };
 
+// --- Playground types ---
+
+export type PlaygroundMember = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  teams: { id: string; name: string; team_type: string }[] | null;
+};
+
+export type PlaygroundTemplate = {
+  id: string;
+  userId: string;
+  title: string;
+  taskDescription: string;
+  prompts: {
+    initialResearchPrompt: string;
+    subQuestionsIdentificationPrompt: string;
+    finalReportPrompt: string;
+  } | null;
+};
+
+export type PlaygroundReportSummary = {
+  id: string;
+  userId: string;
+  templateId: string;
+  topic: string;
+  referencePeriod: string | null;
+  status: "pending" | "in_progress" | "completed" | "failed";
+  metadata: { title?: string; summary?: string } | null;
+  templateName: string | null;
+};
+
+export type PlaygroundReportDetail = PlaygroundReportSummary & {
+  stepOutputs: unknown;
+  finalOutput: string | null;
+  sources: { title?: string; url?: string }[] | null;
+  usage: Record<string, unknown> | null;
+  modelConfig: unknown;
+};
+
 export type AdminEntityDetail = {
   entity: {
     id: number;
