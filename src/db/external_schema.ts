@@ -2,6 +2,7 @@ import {
   bigint,
   boolean,
   index,
+  uniqueIndex,
   jsonb,
   numeric,
   pgTableCreator,
@@ -205,7 +206,7 @@ export const highlightsEntitiesRel = createExternalTable(
     userDefined: boolean("user_defined").default(false),
   }),
   (t) => ({
-    pk: index("highlights_entities_rel_pk").on(t.highlightId, t.entityId),
+    pk: uniqueIndex("highlights_entities_rel_pk").on(t.highlightId, t.entityId),
   }),
 );
 
@@ -218,7 +219,7 @@ export const highlightsTagsRel = createExternalTable(
     tagId: bigint("tag_id", { mode: "number" }).references(() => tags.id, { onDelete: "cascade" }),
   }),
   (t) => ({
-    pk: index("highlights_tags_rel_pk").on(t.highlightId, t.tagId),
+    pk: uniqueIndex("highlights_tags_rel_pk").on(t.highlightId, t.tagId),
   }),
 );
 
@@ -234,7 +235,7 @@ export const calendarEventsEntitiesRel = createExternalTable(
     }),
   }),
   (t) => ({
-    pk: index("calendar_events_entities_rel_pk").on(t.calendarEventId, t.entityId),
+    pk: uniqueIndex("calendar_events_entities_rel_pk").on(t.calendarEventId, t.entityId),
   }),
 );
 
@@ -260,6 +261,21 @@ export const organizations = createExternalTable("organizations", (t) => ({
   name: text("name").notNull(),
   mnemonicId: text("mnemonic_id"),
   ownerId: uuid("owner_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+}));
+
+export const organizationMembers = createExternalTable("organization_members", (t) => ({
+  rowId: bigint("row_id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  id: uuid("id").notNull(),
+  name: text("name"),
+  email: text("email"),
+  teamType: text("team_type"),
+  organizationId: uuid("organization_id").references(() => organizations.id),
+  orgOwnerId: uuid("org_owner_id"),
+  teams: jsonb("teams").$type<{ id: string; name: string; team_type: string }[]>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()

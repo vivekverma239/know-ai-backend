@@ -1,5 +1,6 @@
 import { getDb } from "@/db";
 import {
+  accounts,
   documents,
   entities,
   highlights,
@@ -132,17 +133,30 @@ const adminRoutes = async (fastify: FastifyInstance) => {
 
       const orgIds = orgRows.map((row) => row.orgId);
       const uuidOrgIds = orgIds.filter((orgId) => isUuidLike(orgId));
-      const orgNames = uuidOrgIds.length
-        ? await getDb()
-            .select({
-              id: organizations.id,
-              name: organizations.name,
-            })
-            .from(organizations)
-            .where(inArray(organizations.id, uuidOrgIds))
-        : [];
 
-      const orgNameMap = new Map(orgNames.map((org) => [org.id, org.name]));
+      // userFile.orgId is actually a teamId from the external system.
+      // Look up names from both organizations and accounts (which stores team accounts).
+      const [orgNames, accountNames] = uuidOrgIds.length
+        ? await Promise.all([
+            getDb()
+              .select({ id: organizations.id, name: organizations.name })
+              .from(organizations)
+              .where(inArray(organizations.id, uuidOrgIds)),
+            getDb()
+              .select({ id: accounts.id, name: accounts.name })
+              .from(accounts)
+              .where(inArray(accounts.id, uuidOrgIds)),
+          ])
+        : [[], []];
+
+      const orgNameMap = new Map<string, string>();
+      for (const org of orgNames) {
+        if (org.name) orgNameMap.set(org.id, org.name);
+      }
+      // Account names (team accounts) take priority if both exist
+      for (const acc of accountNames) {
+        if (acc.name) orgNameMap.set(acc.id, acc.name);
+      }
 
       return reply.send({
         items: orgRows.map((row) => ({

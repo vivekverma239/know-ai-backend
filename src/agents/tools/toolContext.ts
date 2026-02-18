@@ -6,6 +6,7 @@ import type { FinAgentUIMessage } from "../finAgent";
 export type ToolContext = {
   userId: string;
   orgId: string;
+  teamIds: string[];
   sessionId: string;
   writer?: UIMessageStreamWriter<FinAgentUIMessage>;
   addUsage?: (addUsage: { usage: LanguageModelUsage; model: string }) => void;

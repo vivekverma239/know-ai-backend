@@ -5,6 +5,7 @@ import { DocumentDetailPage } from "./pages/DocumentDetailPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { EntitiesPage } from "./pages/EntitiesPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PdfViewerPage } from "./pages/PdfViewerPage";
 import { useAuthStore } from "./store/authStore";
 
 function RootRedirect() {
@@ -12,7 +13,7 @@ function RootRedirect() {
   return <Navigate to={isAuthenticated ? "/dashboard/documents" : "/login"} replace />;
 }
 
-export default function App() {
+export function App() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
@@ -29,6 +30,7 @@ export default function App() {
         <Route index element={<Navigate to="documents" replace />} />
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="documents/:id" element={<DocumentDetailPage />} />
+        <Route path="documents/:id/pdf" element={<PdfViewerPage />} />
         <Route path="entities" element={<EntitiesPage />} />
       </Route>
 
@@ -36,3 +38,5 @@ export default function App() {
     </Routes>
   );
 }
+
+export default App;

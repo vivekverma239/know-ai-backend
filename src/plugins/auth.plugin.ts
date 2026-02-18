@@ -1,3 +1,4 @@
+import { getUserTeamIds } from "@/service/userTeams";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 // We'll use type assertion instead of extending FastifyRequest
@@ -47,11 +48,13 @@ const authFn = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   if (userId && orgId) {
+    const teamIds = await getUserTeamIds(userId, orgId);
+
     // Populate request object with user information
     request.user = {
       id: userId,
       orgId: orgId,
-      // Add other user fields as needed
+      teamIds,
       email: request.headers["x-user-email"] as string,
       name: request.headers["x-user-name"] as string,
     };
@@ -81,4 +84,5 @@ export interface AuthenticatedUser {
   email?: string;
   name?: string;
   orgId: string;
+  teamIds: string[];
 }

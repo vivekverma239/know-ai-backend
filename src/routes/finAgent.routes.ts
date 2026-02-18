@@ -80,7 +80,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
 
       const result = await observe({ name: "finAgent" }, () =>
         finAgent({
-          context: { userId, sessionId, orgId },
+          context: { userId, sessionId, orgId, teamIds: user.teamIds },
           messages,
           saveMessage,
           model: modelEnum,

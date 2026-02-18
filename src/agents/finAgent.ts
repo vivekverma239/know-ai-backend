@@ -23,13 +23,15 @@ import { getChapterSearchTool, getChunkSearchTool } from "./tools/chunkSearch";
 import { getFileAnswerTool } from "./tools/fileAnswerTableOfContent";
 import { type Todo, getTodoListTools } from "./tools/todoListTool";
 import type { ToolContext } from "./tools/toolContext";
+import { getTeamContextTool } from "./tools/teamContext";
 import { getWebDocSearchTool } from "./tools/webDocSearchTool";
 import { getWebSearchTool, getWebsiteContentTool } from "./tools/websearch";
 
 export type FinAgentContext = {
   userId: string;
   sessionId: string;
-  orgId: string; // Added orgId
+  orgId: string;
+  teamIds: string[];
 };
 
 // Define your custom message type with data part schemas
@@ -94,6 +96,7 @@ export const finAgent = async ({
     userId: context.userId,
     sessionId: context.sessionId,
     orgId: context.orgId,
+    teamIds: context.teamIds,
     addUsage: (addUsage: { usage: LanguageModelUsage; model: string }) => {
       // Implement usage tracking callback
       agentLogger.debug("Usage update", addUsage);
@@ -120,6 +123,7 @@ export const finAgent = async ({
           }
         : {}),
       fileStatusTool: getFileStatusTool({ context: toolContext }),
+      teamContextTool: getTeamContextTool({ context: toolContext }),
       ...getTodoListTools({ context: toolContext }),
     },
     stopWhen: stepCountIs(15),

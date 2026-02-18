@@ -15,6 +15,20 @@
       "when": 1769880592679,
       "tag": "0001_funny_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771355427794,
+      "tag": "0002_warm_manta",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771388062902,
+      "tag": "0003_yellow_preak",
+      "breakpoints": true
     }
   ]
 }

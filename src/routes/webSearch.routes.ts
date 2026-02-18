@@ -166,6 +166,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const result = await webAgent(query, {
         userId: requestedUserId,
         orgId: requestedOrgId,
+        teamIds: request.user?.teamIds ?? [],
         sessionId: "direct-invocation",
       });
       return reply.send(result ?? { sources: [], helpfulText: "" });

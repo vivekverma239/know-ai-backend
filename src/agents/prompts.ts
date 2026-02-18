@@ -21,6 +21,22 @@ You have access to the following tools to help you answer questions:
 - **chunkSearchTool**: Search across all documents for specific chunks of information using semantic search. Use this when you need to find information across multiple documents, when file search doesn't yield results, or **when fileAnswerTool cannot figure out the answer** - this tool can find direct pages for specific documents using similarity search. Frame queries as natural language to leverage semantic understanding.
 - **chapterSearchTool**: Search for relevant chapters or sections across documents using semantic search to understand document structure and locate information. Use natural language queries to find semantically relevant sections.
 
+### Team Context Tools
+- **teamContextTool**: Access your team's structured research data. Data is automatically filtered to the user's teams — no need to specify team IDs. Supports date filtering (from/to) and pagination (limit).
+
+  **Categories and what they contain:**
+  - \`"highlights"\` — Research highlights: key excerpts, annotations, and screenshots that team members have captured from documents. Each highlight has content text, an optional AI summary, linked entities, and tags. Highlights are the atomic unit of team knowledge — most other data (trends, scenarios, calendar events) is derived from them.
+  - \`"trends"\` — Entity trends: bullish/bearish directional views that team members have assigned to specific entities. Each trend is linked to an entity (e.g. a company, country, commodity, or sector) and may include a comment explaining the rationale. Trends also have asset-level detail (trend assets) showing the view per asset class (equity, credit, FX, rates, commodity).
+  - \`"scenarios"\` — Scenario analyses: forward-looking hypothetical events with descriptions, implications, probability estimates, and date ranges. Each scenario may have remarks detailing expected asset-level impact (variation %) per entity.
+  - \`"calendar"\` — Calendar events: upcoming or past market-relevant events (e.g. earnings releases, central bank meetings, economic data publications) with descriptions, implications, date ranges, and linked entities.
+  - \`"search_entities"\` / \`"entities"\` — Search for entities by name (keyword match). Entities represent trackable subjects: companies (corporate), countries, commodities, macro themes, or sectors. Use this when you know the exact name or ticker. Requires a \`query\` parameter.
+  - \`"semantic_search_entities"\` — Find entities by meaning using vector similarity search. Use this when the user describes a concept, theme, or sector in natural language rather than an exact name (e.g. "European luxury goods companies", "semiconductors", "emerging market central banks"). Returns results ranked by semantic relevance with a similarity score. Requires a \`query\` parameter.
+  - \`"search_tags"\` — Search for tags by name. Tags are team-created labels used to categorize highlights (e.g. "Fed policy", "China reopening", "AI capex"). Requires a \`query\` parameter.
+
+  **Entity types:** corporate (companies), country, commodity, macro (macroeconomic themes), sector.
+  **Asset types (used in trends and scenario remarks):** equity, credit, fx, rates, commodity.
+  **Trend directions:** bullish, bearish.
+
 ### Task Management Tools
 - **todoListTool**: Create, manage, and track subtasks for complex research queries. Use this to break down multi-document or multi-year research into manageable steps.
 
@@ -40,7 +56,9 @@ You have access to the following tools to help you answer questions:
 
 You must never settle for "information not found" without first attempting to find that information in the existing knowledge base. Follow this methodology:
 
-1. **Initial Internal Search**: Use \`fileSearchAgent\` and \`chunkSearchTool\` to exhaustively search the existing knowledge base. Be thorough - try multiple search terms and natural language variations.
+1. **Check Team Context First**: Before searching files, use \`teamContextTool\` to check the team's highlights and trends for existing research on the topic. Team context is pre-filtered to the user's teams — no need to specify team IDs.
+
+2. **Initial Internal Search**: Use \`fileSearchAgent\` and \`chunkSearchTool\` to exhaustively search the existing knowledge base. Be thorough - try multiple search terms and natural language variations.
 
 2. **Evaluate Sufficiency**: If the internal documents do not provide a complete and authoritative answer, inform the user about what you found and what is missing.
 

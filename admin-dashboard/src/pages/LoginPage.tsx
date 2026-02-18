@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loginAdmin, verifyAdminTotp } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 type LoginStep = "credentials" | "totp";
 
@@ -47,91 +50,100 @@ export function LoginPage() {
   });
 
   return (
-    <div className="login-shell">
-      <div className="login-panel">
-        <p className="login-kicker">Knowsis Internal</p>
-        <h1>Admin Dashboard Access</h1>
-        <p className="login-subtext">
-          Review parsing quality, compare extracted pages with source PDFs, and inspect entity context.
-        </p>
+    <div className="min-h-screen grid place-items-center p-8">
+      <Card className="w-full max-w-[520px] shadow-xl border-border bg-card/97">
+        <CardHeader>
+          <p className="m-0 uppercase tracking-[0.08em] text-primary text-xs font-medium">Knowsis</p>
+          <CardTitle className="text-xl font-semibold mt-1">Admin Dashboard</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Review parsing quality, compare extracted pages with source PDFs, and inspect entity context.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {step === "credentials" ? (
+            <form
+              className="grid gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setErrorMessage(null);
+                loginMutation.mutate();
+              }}
+            >
+              <div className="space-y-1">
+                <label className="text-sm font-semibold" htmlFor="userId">Admin user ID</label>
+                <Input
+                  id="userId"
+                  type="text"
+                  autoComplete="username"
+                  value={userId}
+                  onChange={(event) => setUserId(event.target.value)}
+                  required
+                />
+              </div>
 
-        {step === "credentials" ? (
-          <form
-            className="login-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setErrorMessage(null);
-              loginMutation.mutate();
-            }}
-          >
-            <label htmlFor="userId">Admin user ID</label>
-            <input
-              id="userId"
-              type="text"
-              autoComplete="username"
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-              required
-            />
+              <div className="space-y-1">
+                <label className="text-sm font-semibold" htmlFor="password">Password</label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
 
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
+              {errorMessage ? <p className="text-destructive text-sm m-0">{errorMessage}</p> : null}
 
-            {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
+              <Button type="submit" disabled={loginMutation.isPending} className="mt-1">
+                {loginMutation.isPending ? "Verifying..." : "Continue"}
+              </Button>
+            </form>
+          ) : (
+            <form
+              className="grid gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setErrorMessage(null);
+                verifyMutation.mutate();
+              }}
+            >
+              <div className="space-y-1">
+                <label className="text-sm font-semibold" htmlFor="totp">Authenticator code</label>
+                <Input
+                  id="totp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={totpCode}
+                  onChange={(event) => setTotpCode(event.target.value)}
+                  placeholder="123456"
+                  required
+                />
+              </div>
 
-            <button type="submit" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? "Verifying..." : "Continue"}
-            </button>
-          </form>
-        ) : (
-          <form
-            className="login-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setErrorMessage(null);
-              verifyMutation.mutate();
-            }}
-          >
-            <label htmlFor="totp">Authenticator code</label>
-            <input
-              id="totp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={totpCode}
-              onChange={(event) => setTotpCode(event.target.value)}
-              placeholder="123456"
-              required
-            />
+              {errorMessage ? <p className="text-destructive text-sm m-0">{errorMessage}</p> : null}
 
-            {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-
-            <div className="totp-actions">
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setStep("credentials");
-                  setChallengeToken("");
-                  setTotpCode("");
-                }}
-              >
-                Back
-              </button>
-              <button type="submit" disabled={verifyMutation.isPending}>
-                {verifyMutation.isPending ? "Checking..." : "Sign in"}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+              <div className="flex gap-3 mt-1">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setStep("credentials");
+                    setChallengeToken("");
+                    setTotpCode("");
+                  }}
+                >
+                  Back
+                </Button>
+                <Button type="submit" disabled={verifyMutation.isPending}>
+                  {verifyMutation.isPending ? "Checking..." : "Sign in"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

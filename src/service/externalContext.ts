@@ -16,13 +16,27 @@ import {
   trends,
   trendsAssets,
 } from "@/db/external_schema";
-import { type SQL, and, desc, eq, gte, ilike, inArray, lte, or } from "drizzle-orm";
+import {
+  type Column,
+  type SQL,
+  and,
+  cosineDistance,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 type DateInput = Date | string;
 
 // Filters are optional and can be combined to shape the LLM context payload.
 export type ExternalContextFilters = {
   teamId?: string;
+  teamIds?: string[];
   entityIds?: number[];
   tagIds?: number[];
   assetTypes?: AssetType[];
@@ -179,6 +193,12 @@ const normalizeDate = (value?: DateInput) => (value ? new Date(value) : undefine
 const andWhere = (...clauses: Array<SQL | undefined>) => {
   const filtered = clauses.filter(Boolean) as SQL[];
   return filtered.length ? and(...filtered) : undefined;
+};
+
+const buildTeamFilter = (filters: ExternalContextFilters, column: Column): SQL | undefined => {
+  if (filters.teamIds?.length) return inArray(column, filters.teamIds);
+  if (filters.teamId) return eq(column, filters.teamId);
+  return undefined;
 };
 
 const intersectIds = (left: number[] | undefined, right: number[]) => {
@@ -356,7 +376,7 @@ const fetchHighlights = async ({
   offset?: number;
 }): Promise<HighlightRow[]> => {
   const highlightWhere = andWhere(
-    filters.teamId ? eq(highlights.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, highlights.teamId),
     highlightIdFilter?.length ? inArray(highlights.id, highlightIdFilter) : undefined,
     from ? gte(highlights.createdAt, from) : undefined,
     to ? lte(highlights.createdAt, to) : undefined,
@@ -431,19 +451,17 @@ const fetchEntities = async ({
 
 const fetchTags = async ({
   tagIds,
-  teamId,
+  filters,
   limit,
 }: {
   tagIds: Set<number>;
-  teamId?: string;
+  filters: ExternalContextFilters;
   limit: number;
 }) => {
   const tagsQuery = getDb().select(selectTags).from(tags);
   const tagsWhere = tagIds.size
     ? inArray(tags.id, Array.from(tagIds))
-    : teamId
-      ? eq(tags.teamId, teamId)
-      : undefined;
+    : buildTeamFilter(filters, tags.teamId);
   return (tagsWhere ? tagsQuery.where(tagsWhere) : tagsQuery).orderBy(tags.name).limit(limit);
 };
 
@@ -465,7 +483,7 @@ const fetchTrends = async ({
   const trendWhere = andWhere(
     highlightIdScope?.length ? inArray(trends.highlightId, highlightIdScope) : undefined,
     filters.entityIds?.length ? inArray(trends.entityId, filters.entityIds) : undefined,
-    filters.teamId ? eq(trends.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, trends.teamId),
     filters.userIds?.length ? inArray(trends.authorId, filters.userIds) : undefined,
     from ? gte(trends.createdAt, from) : undefined,
     to ? lte(trends.createdAt, to) : undefined,
@@ -543,7 +561,7 @@ const fetchScenarios = async ({
 }): Promise<ScenarioRow[]> => {
   const scenarioWhere = andWhere(
     highlightIdScope?.length ? inArray(scenarios.highlightId, highlightIdScope) : undefined,
-    filters.teamId ? eq(scenarios.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, scenarios.teamId),
     filters.userIds?.length ? inArray(scenarios.authorId, filters.userIds) : undefined,
     from ? gte(scenarios.createdAt, from) : undefined,
     to ? lte(scenarios.createdAt, to) : undefined,
@@ -569,7 +587,7 @@ const fetchScenarioRemarks = async ({
   const scenarioRemarkWhere = andWhere(
     filters.entityIds?.length ? inArray(scenarioRemarks.entityId, filters.entityIds) : undefined,
     filters.assetTypes?.length ? inArray(scenarioRemarks.asset, filters.assetTypes) : undefined,
-    filters.teamId ? eq(scenarioRemarks.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, scenarioRemarks.teamId),
     from ? gte(scenarioRemarks.createdAt, from) : undefined,
     to ? lte(scenarioRemarks.createdAt, to) : undefined,
   );
@@ -623,7 +641,7 @@ const fetchCalendarEvents = async ({
 }): Promise<CalendarEventRow[]> => {
   const calendarEventWhere = andWhere(
     highlightIdScope?.length ? inArray(calendarEvents.highlightId, highlightIdScope) : undefined,
-    filters.teamId ? eq(calendarEvents.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, calendarEvents.teamId),
     filters.userIds?.length ? inArray(calendarEvents.authorId, filters.userIds) : undefined,
     from ? gte(calendarEvents.createdAt, from) : undefined,
     to ? lte(calendarEvents.createdAt, to) : undefined,
@@ -677,7 +695,7 @@ const fetchHighlightComments = async ({
 }) => {
   const commentWhere = andWhere(
     highlightIdScope?.length ? inArray(highlightComments.highlightId, highlightIdScope) : undefined,
-    filters.teamId ? eq(highlightComments.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, highlightComments.teamId),
     filters.userIds?.length ? inArray(highlightComments.authorId, filters.userIds) : undefined,
     from ? gte(highlightComments.createdAt, from) : undefined,
     to ? lte(highlightComments.createdAt, to) : undefined,
@@ -697,7 +715,7 @@ const fetchDocuments = async ({
 }) => {
   const documentWhere = andWhere(
     filters.documentIds?.length ? inArray(documents.id, filters.documentIds) : undefined,
-    filters.teamId ? eq(documents.teamId, filters.teamId) : undefined,
+    buildTeamFilter(filters, documents.teamId),
   );
   const documentsQuery = getDb().select(selectDocuments).from(documents);
   return (documentWhere ? documentsQuery.where(documentWhere) : documentsQuery)
@@ -1066,7 +1084,7 @@ export const getExternalContext = async (
 
   const tagRows = await fetchTags({
     tagIds,
-    teamId: filters.teamId,
+    filters,
     limit,
   });
 
@@ -1246,7 +1264,7 @@ export const getHighlightsContext = async (
   const entityRows = await fetchEntities({ entityIds, limit });
   const tagRows = await fetchTags({
     tagIds,
-    teamId: filters.teamId,
+    filters,
     limit,
   });
 
@@ -1402,22 +1420,29 @@ export const searchExternalEntities = async ({
 export const searchExternalTags = async ({
   query,
   teamId,
+  teamIds,
   limit,
 }: {
   query: string;
   teamId?: string;
+  teamIds?: string[];
   limit?: number;
 }) => {
   const trimmed = query.trim();
   if (!trimmed) return [];
   const pattern = buildSearchPattern(trimmed);
+  const teamFilter = teamIds?.length
+    ? inArray(tags.teamId, teamIds)
+    : teamId
+      ? eq(tags.teamId, teamId)
+      : undefined;
   return getDb()
     .select(selectTags)
     .from(tags)
     .where(
       and(
         or(ilike(tags.name, pattern), ilike(tags.description, pattern)),
-        teamId ? eq(tags.teamId, teamId) : undefined,
+        teamFilter,
       ),
     )
     .orderBy(tags.name)
@@ -1445,5 +1470,32 @@ export const searchExternalUsers = async ({
       ),
     )
     .orderBy(accounts.name)
+    .limit(clampLimit(limit));
+};
+
+const SIMILARITY_THRESHOLD = 0.3;
+
+export const semanticSearchExternalEntities = async ({
+  embedding,
+  limit,
+}: {
+  embedding: number[];
+  limit?: number;
+}) => {
+  const similarity = sql<number>`1 - (${cosineDistance(entities.descriptionEmbedding, embedding)})`;
+  return getDb()
+    .select({
+      id: entities.id,
+      name: entities.name,
+      uniqueId: entities.uniqueId,
+      type: entities.type,
+      description: entities.description,
+      createdAt: entities.createdAt,
+      updatedAt: entities.updatedAt,
+      similarity,
+    })
+    .from(entities)
+    .where(gte(similarity, SIMILARITY_THRESHOLD))
+    .orderBy(desc(similarity))
     .limit(clampLimit(limit));
 };
