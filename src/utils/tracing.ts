@@ -1,14 +1,20 @@
-import { AsyncLocalStorage } from "async_hooks";
-import { v4 as uuidv4 } from "uuid";
-import { logger, logError } from "@/utils/logger";
-import { getRequestId, getRequestContext } from "@/utils/requestContext";
 import type { TokenUsage } from "@/utils/asyncHook";
+import { logError, logger } from "@/utils/logger";
+import { getRequestContext, getRequestId } from "@/utils/requestContext";
+import {
+  type Span as OtelSpan,
+  SpanStatusCode,
+  type Tracer,
+  context,
+  trace,
+} from "@opentelemetry/api";
 
 /**
  * Span represents a single traced operation
+ * This is our wrapper around OpenTelemetry spans
  */
 export interface Span {
-  /** Unique span identifier */
+  /** Unique span identifier (OpenTelemetry span ID) */
   id: string;
 
   /** Human-readable span name */
@@ -40,36 +46,24 @@ export interface Span {
 
   /** Error if the span failed */
   error?: Error;
+
+  /** Internal OpenTelemetry span */
+  _otelSpan?: OtelSpan;
 }
-
-/**
- * Trace context stored in AsyncLocalStorage
- */
-interface TraceContext {
-  /** Root span ID */
-  traceId: string;
-
-  /** Currently active span */
-  activeSpan?: Span;
-
-  /** All spans in this trace */
-  spans: Map<string, Span>;
-
-  /** Metadata for the entire trace */
-  metadata: Record<string, unknown>;
-}
-
-// Create async storage for trace context
-const traceStorage = new AsyncLocalStorage<TraceContext>();
 
 /**
  * Trace Manager - Unified interface for distributed tracing
- * Integrates with Braintrust and Laminar automatically
+ * Now uses OpenTelemetry under the hood
  */
 export class TraceManager {
   private static instance: TraceManager;
+  private tracer: Tracer;
+  private activeSpans: Map<string, Span>;
 
-  private constructor() {}
+  private constructor() {
+    this.tracer = trace.getTracer("knowsis-ai-backend", "1.0.0");
+    this.activeSpans = new Map();
+  }
 
   static getInstance(): TraceManager {
     if (!TraceManager.instance) {
@@ -79,17 +73,32 @@ export class TraceManager {
   }
 
   /**
-   * Start a new span
+   * Start a new span using OpenTelemetry
    */
   startSpan(name: string, metadata: Record<string, unknown> = {}): Span {
-    const context = traceStorage.getStore();
     const requestId = getRequestId();
     const requestContext = getRequestContext();
 
+    // Start OpenTelemetry span
+    const otelSpan = this.tracer.startSpan(name, {
+      attributes: {
+        ...metadata,
+        "request.id": requestId || "unknown",
+        "user.id": requestContext?.userId,
+        "session.id": requestContext?.sessionId,
+        "org.id": requestContext?.orgId,
+      },
+    });
+
+    // Get span context for IDs
+    const spanContext = otelSpan.spanContext();
+    const parentSpanContext = trace.getSpan(context.active())?.spanContext();
+
+    // Create our wrapper span
     const span: Span = {
-      id: uuidv4(),
+      id: spanContext.spanId,
       name,
-      parentId: context?.activeSpan?.id,
+      parentId: parentSpanContext?.spanId,
       requestId,
       startTime: new Date(),
       metadata: {
@@ -99,13 +108,11 @@ export class TraceManager {
         orgId: requestContext?.orgId,
       },
       status: "pending",
+      _otelSpan: otelSpan,
     };
 
-    // Store span in context if available
-    if (context) {
-      context.spans.set(span.id, span);
-      context.activeSpan = span;
-    }
+    // Store for later retrieval
+    this.activeSpans.set(span.id, span);
 
     // Log span start
     logger.debug("Span started", {
@@ -122,8 +129,7 @@ export class TraceManager {
    * End a span
    */
   endSpan(spanId: string, metadata: Record<string, unknown> = {}): void {
-    const context = traceStorage.getStore();
-    const span = context?.spans.get(spanId);
+    const span = this.activeSpans.get(spanId);
 
     if (!span) {
       logger.warn("Attempted to end non-existent span", { spanId });
@@ -135,13 +141,47 @@ export class TraceManager {
     span.status = span.status === "error" ? "error" : "success";
     span.metadata = { ...span.metadata, ...metadata };
 
+    // Set attributes on OpenTelemetry span
+    if (span._otelSpan) {
+      for (const [key, value] of Object.entries(metadata)) {
+        if (value !== undefined && value !== null) {
+          span._otelSpan?.setAttribute(key, String(value));
+        }
+      }
+
+      // Set status
+      if (span.status === "error") {
+        span._otelSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: span.error?.message,
+        });
+      } else {
+        span._otelSpan.setStatus({ code: SpanStatusCode.OK });
+      }
+
+      // Add duration as attribute
+      span._otelSpan.setAttribute("duration.ms", span.duration);
+
+      // Add token usage if present
+      if (span.tokenUsage) {
+        span._otelSpan.setAttribute("llm.tokens.prompt", span.tokenUsage.promptTokens);
+        span._otelSpan.setAttribute("llm.tokens.completion", span.tokenUsage.completionTokens);
+        span._otelSpan.setAttribute("llm.tokens.total", span.tokenUsage.totalTokens);
+        span._otelSpan.setAttribute("llm.model", span.tokenUsage.model);
+      }
+
+      // End OpenTelemetry span
+      span._otelSpan.end();
+    }
+
     // Log span completion
     const logLevel = span.status === "error" ? "error" : span.duration > 5000 ? "warn" : "debug";
-    const logMessage = span.status === "error"
-      ? "Span failed"
-      : span.duration > 5000
-        ? "Slow span completed"
-        : "Span completed";
+    const logMessage =
+      span.status === "error"
+        ? "Span failed"
+        : span.duration > 5000
+          ? "Slow span completed"
+          : "Span completed";
 
     logger[logLevel](logMessage, {
       spanId: span.id,
@@ -153,19 +193,15 @@ export class TraceManager {
       ...(span.tokenUsage ? { tokenUsage: span.tokenUsage } : {}),
     });
 
-    // Reset active span to parent if this was the active span
-    if (context?.activeSpan?.id === spanId) {
-      const parentSpan = span.parentId ? context.spans.get(span.parentId) : undefined;
-      context.activeSpan = parentSpan;
-    }
+    // Clean up
+    this.activeSpans.delete(spanId);
   }
 
   /**
    * Record an error in a span
    */
   recordError(spanId: string, error: Error | unknown): void {
-    const context = traceStorage.getStore();
-    const span = context?.spans.get(spanId);
+    const span = this.activeSpans.get(spanId);
 
     if (!span) {
       logger.warn("Attempted to record error in non-existent span", { spanId });
@@ -174,6 +210,15 @@ export class TraceManager {
 
     span.status = "error";
     span.error = error instanceof Error ? error : new Error(String(error));
+
+    // Record exception in OpenTelemetry span
+    if (span._otelSpan) {
+      span._otelSpan.recordException(span.error);
+      span._otelSpan.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: span.error.message,
+      });
+    }
 
     logError(span.error, {
       spanId: span.id,
@@ -187,8 +232,7 @@ export class TraceManager {
    * Record token usage in a span
    */
   recordTokenUsage(spanId: string, usage: TokenUsage): void {
-    const context = traceStorage.getStore();
-    const span = context?.spans.get(spanId);
+    const span = this.activeSpans.get(spanId);
 
     if (!span) {
       logger.warn("Attempted to record token usage in non-existent span", { spanId });
@@ -196,6 +240,14 @@ export class TraceManager {
     }
 
     span.tokenUsage = usage;
+
+    // Add token usage as span attributes
+    if (span._otelSpan) {
+      span._otelSpan.setAttribute("llm.tokens.prompt", usage.promptTokens);
+      span._otelSpan.setAttribute("llm.tokens.completion", usage.completionTokens);
+      span._otelSpan.setAttribute("llm.tokens.total", usage.totalTokens);
+      span._otelSpan.setAttribute("llm.model", usage.model);
+    }
 
     logger.debug("Token usage recorded in span", {
       spanId: span.id,
@@ -208,18 +260,23 @@ export class TraceManager {
   }
 
   /**
-   * Get the currently active span
+   * Get the currently active span from OpenTelemetry context
    */
   getActiveSpan(): Span | undefined {
-    return traceStorage.getStore()?.activeSpan;
+    const activeOtelSpan = trace.getSpan(context.active());
+    if (!activeOtelSpan) {
+      return undefined;
+    }
+
+    const spanId = activeOtelSpan.spanContext().spanId;
+    return this.activeSpans.get(spanId);
   }
 
   /**
    * Get all spans in the current trace
    */
   getAllSpans(): Span[] {
-    const context = traceStorage.getStore();
-    return context ? Array.from(context.spans.values()) : [];
+    return Array.from(this.activeSpans.values());
   }
 
   /**
@@ -229,19 +286,26 @@ export class TraceManager {
   async withSpan<T>(
     name: string,
     fn: (span: Span) => Promise<T>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     const span = this.startSpan(name, metadata);
 
-    try {
-      const result = await fn(span);
-      this.endSpan(span.id);
-      return result;
-    } catch (error) {
-      this.recordError(span.id, error);
-      this.endSpan(span.id);
-      throw error;
-    }
+    // Create OpenTelemetry context with this span as active
+    const otelContext = span._otelSpan
+      ? trace.setSpan(context.active(), span._otelSpan)
+      : context.active();
+
+    return context.with(otelContext, async () => {
+      try {
+        const result = await fn(span);
+        this.endSpan(span.id);
+        return result;
+      } catch (error) {
+        this.recordError(span.id, error);
+        this.endSpan(span.id);
+        throw error;
+      }
+    });
   }
 
   /**
@@ -251,15 +315,11 @@ export class TraceManager {
   async withTrace<T>(
     traceId: string,
     fn: () => Promise<T>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
-    const context: TraceContext = {
-      traceId,
-      spans: new Map(),
-      metadata: metadata || {},
-    };
-
-    return traceStorage.run(context, fn);
+    // OpenTelemetry handles trace context automatically
+    // We just need to start a root span
+    return this.withSpan(traceId, async () => fn(), metadata);
   }
 }
 
@@ -277,21 +337,16 @@ export const traceManager = TraceManager.getInstance();
  * }
  */
 export function Traced(operationName?: string) {
-  return function (
-    target: object,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return (target: object, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
     const targetWithConstructor = target as { constructor: { name: string } };
     const name = operationName || `${targetWithConstructor.constructor.name}.${propertyKey}`;
 
     descriptor.value = async function (...args: unknown[]) {
-      return traceManager.withSpan(
-        name,
-        async () => originalMethod.apply(this, args),
-        { method: propertyKey, class: targetWithConstructor.constructor.name }
-      );
+      return traceManager.withSpan(name, async () => originalMethod.apply(this, args), {
+        method: propertyKey,
+        class: targetWithConstructor.constructor.name,
+      });
     };
 
     return descriptor;
@@ -301,14 +356,14 @@ export function Traced(operationName?: string) {
 /**
  * Helper function to create a traced function wrapper
  */
-export function traced<T extends (...args: unknown[]) => Promise<unknown>>(
+export function traced<TArgs extends unknown[], TResult>(
   name: string,
-  fn: T,
-  metadata?: Record<string, unknown>
-): T {
-  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-    return traceManager.withSpan(name, async () => fn(...args), metadata);
-  }) as T;
+  fn: (...args: TArgs) => Promise<TResult>,
+  metadata?: Record<string, unknown>,
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs): Promise<TResult> => {
+    return traceManager.withSpan<TResult>(name, async () => fn(...args), metadata);
+  };
 }
 
 /**
@@ -329,14 +384,27 @@ export function getTraceSummary(): {
     errors: spans.filter((span) => span.status === "error").length,
   };
 
-  spans.forEach((span) => {
+  for (const span of spans) {
     summary.spansByName[span.name] = (summary.spansByName[span.name] || 0) + 1;
-  });
+  }
 
   return summary;
 }
 
 /**
- * Export trace storage for advanced use cases
+ * Get the OpenTelemetry tracer for advanced use cases
  */
-export { traceStorage };
+export function getTracer(): Tracer {
+  return trace.getTracer("knowsis-ai-backend", "1.0.0");
+}
+
+/**
+ * Execute a function with the provided span set as the active OpenTelemetry span.
+ * Useful when span lifecycle is managed manually with startSpan/endSpan.
+ */
+export async function withActiveSpan<T>(span: Span, fn: () => Promise<T>): Promise<T> {
+  const otelContext = span._otelSpan
+    ? trace.setSpan(context.active(), span._otelSpan)
+    : context.active();
+  return context.with(otelContext, fn);
+}

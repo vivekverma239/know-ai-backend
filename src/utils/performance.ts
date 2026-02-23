@@ -5,15 +5,19 @@ import { traceManager } from "@/utils/tracing";
  * Slow operation threshold in milliseconds
  * Operations taking longer than this will be logged as warnings
  */
-const SLOW_OPERATION_THRESHOLD =
-  parseInt(process.env.SLOW_OPERATION_THRESHOLD_MS || "5000", 10);
+const SLOW_OPERATION_THRESHOLD = Number.parseInt(
+  process.env.SLOW_OPERATION_THRESHOLD_MS || "5000",
+  10,
+);
 
 /**
  * Critical operation threshold in milliseconds
  * Operations taking longer than this will be logged as errors
  */
-const CRITICAL_OPERATION_THRESHOLD =
-  parseInt(process.env.CRITICAL_OPERATION_THRESHOLD_MS || "30000", 10);
+const CRITICAL_OPERATION_THRESHOLD = Number.parseInt(
+  process.env.CRITICAL_OPERATION_THRESHOLD_MS || "30000",
+  10,
+);
 
 /**
  * Measure and log operation duration
@@ -27,7 +31,7 @@ const CRITICAL_OPERATION_THRESHOLD =
 export async function timed<T>(
   operationName: string,
   fn: () => Promise<T>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<T> {
   return traceManager.withSpan(
     operationName,
@@ -77,7 +81,7 @@ export async function timed<T>(
         throw error;
       }
     },
-    metadata
+    metadata,
   );
 }
 
@@ -94,13 +98,11 @@ export async function timed<T>(
  * }
  */
 export function Timed(operationName?: string, slowThreshold?: number) {
-  return function (
-    target: object,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return (target: object, propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
-    const name = operationName || `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`;
+    const name =
+      operationName ||
+      `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`;
     const threshold = slowThreshold || SLOW_OPERATION_THRESHOLD;
 
     descriptor.value = async function (...args: unknown[]) {
@@ -217,10 +219,10 @@ class PerformanceMetrics {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
     }
-    this.metrics.get(name)!.push(value);
+    this.metrics.get(name)?.push(value);
 
     // Keep only last 1000 measurements to avoid memory issues
-    const values = this.metrics.get(name)!;
+    const values = this.metrics.get(name) ?? [];
     if (values.length > 1000) {
       values.shift();
     }
@@ -284,10 +286,7 @@ export const performanceMetrics = PerformanceMetrics.getInstance();
 /**
  * Measure async operation and record metric
  */
-export async function measure<T>(
-  metricName: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function measure<T>(metricName: string, fn: () => Promise<T>): Promise<T> {
   const timer = createTimer();
   try {
     const result = await fn();

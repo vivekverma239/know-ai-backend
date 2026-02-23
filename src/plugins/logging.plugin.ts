@@ -1,13 +1,14 @@
-import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from "fastify";
-import fp from "fastify-plugin";
 import { logger } from "@/utils/logger";
 import {
-  initRequestContext,
-  withRequestContext,
-  getRequestId,
-  getRequestContext,
   type RequestContext,
+  getRequestContext,
+  getRequestId,
+  initRequestContext,
+  requestContextStorage,
+  withRequestContext,
 } from "@/utils/requestContext";
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 
 /**
  * Extended FastifyRequest with logging properties
@@ -43,10 +44,7 @@ export interface LoggingPluginOptions {
  * - Adds X-Request-ID header to responses
  * - Detects and logs slow requests
  */
-const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
-  fastify,
-  options
-) => {
+const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (fastify, options) => {
   const {
     logLevel = "info",
     sanitizeHeaders = ["authorization", "cookie", "x-api-key"],
@@ -66,7 +64,7 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
    * Sanitize headers for logging (remove sensitive data)
    */
   const sanitizeHeadersForLogging = (
-    headers: FastifyRequest["headers"]
+    headers: FastifyRequest["headers"],
   ): Record<string, unknown> => {
     const sanitized: Record<string, unknown> = {};
 
@@ -92,6 +90,8 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
 
     // Initialize request context
     const context = initRequestContext(request);
+    // Make context available for the entire request lifecycle.
+    requestContextStorage.enterWith(context);
 
     // Store context and run within it
     await withRequestContext(context, async () => {
@@ -144,9 +144,7 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
     // Run within the same request context
     await withRequestContext(context, async () => {
       const logMethod = isSlow ? logger.warn : logger.info;
-      const logMessage = isSlow
-        ? "Slow request completed"
-        : "Request completed";
+      const logMessage = isSlow ? "Slow request completed" : "Request completed";
 
       logMethod(logMessage, {
         requestId: context.requestId,
@@ -222,5 +220,5 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (
 
 export default fp(loggingPlugin, {
   name: "logging-plugin",
-  fastify: "4.x",
+  fastify: "5.x",
 });

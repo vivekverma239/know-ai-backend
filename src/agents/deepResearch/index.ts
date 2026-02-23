@@ -1,13 +1,13 @@
-import { z } from "zod";
-import { generateObject } from "ai";
+import { type StepMessage, StepType } from "@/@types/agents";
 import { DEFAULT_SMALL_MODEL } from "@/ai-backend/llm";
 import { getLLM } from "@/ai-backend/llm";
 import type { SimilarChunk } from "@/db/queries/simChunks";
 import { similaritySearchChunks } from "@/service/simSearch";
-import { StepType, type StepMessage } from "@/@types/agents";
 import { logger } from "@/utils/logger";
-import { v4 as uuidv4 } from "uuid";
 import { observe } from "@lmnr-ai/lmnr";
+import { generateObject } from "ai";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { chapterAgentV3 } from "../fileAgent/chapter";
 
 export const chunkSearch = async ({
@@ -40,10 +40,8 @@ export const chunkSearch = async ({
         z.object({
           id: z.string(),
           title: z.string(),
-          queries: z
-            .array(z.string())
-            .describe("List of things to extract from the document"),
-        })
+          queries: z.array(z.string()).describe("List of things to extract from the document"),
+        }),
       ),
     }),
     experimental_telemetry: {
@@ -65,14 +63,12 @@ export const chunkSearch = async ({
           page: 1,
           userId,
           orgId,
-        })
+        }),
       );
     }
   }
   const chunks = await Promise.all(chunkPromises);
-  const sortedChunks = chunks
-    .flat()
-    .sort((a, b) => b.similarity - a.similarity);
+  const sortedChunks = chunks.flat().sort((a, b) => b.similarity - a.similarity);
   callback?.({
     id: uuidv4(),
     type: StepType.CHUNK_SEARCH,
@@ -81,7 +77,7 @@ export const chunkSearch = async ({
     metadata: {
       chunks: sortedChunks.slice(0, 10).map((c) => ({
         document: documents.find((d) => d.id === c.documentId)?.title,
-        content: c.content.slice(0, 100) + "...",
+        content: `${c.content.slice(0, 100)}...`,
       })),
     },
   });
@@ -113,7 +109,7 @@ export const processDeepSearchQuery = async ({
   };
   callback?.(queryExpansionStep);
 
-  logger.info(`Running chapter agent`);
+  logger.info("Running chapter agent");
 
   const responseCall = () =>
     observe(
@@ -122,7 +118,7 @@ export const processDeepSearchQuery = async ({
         await chapterAgentV3({ query, userId, orgId, callback }),
       query,
       userId,
-      orgId
+      orgId,
     );
   const response = await responseCall();
 

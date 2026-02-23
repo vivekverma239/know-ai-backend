@@ -1,16 +1,16 @@
-import { getLLM } from "@/ai-backend/llm";
-import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
-import { logger } from "@/utils/logger";
-import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
-import { getSimilarChapters } from "@/db/queries/simChunks";
-import { getEmbeddings } from "@/ai-backend/embeddings";
-import { parseJson } from "@/utils/parseJson";
-import { similaritySearchChunks } from "@/service/simSearch";
-import { v4 as uuidv4 } from "uuid";
 import { StepType } from "@/@types/agents";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
+import { MODELS } from "@/@types/llm";
+import { getEmbeddings } from "@/ai-backend/embeddings";
+import { getLLM } from "@/ai-backend/llm";
+import { getSimilarChapters } from "@/db/queries/simChunks";
+import { similaritySearchChunks } from "@/service/simSearch";
+import { logger } from "@/utils/logger";
+import { parseJson } from "@/utils/parseJson";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { generateText, stepCountIs, tool } from "ai";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 
 const CHAPTER_FILTER_SYSTEM_PROMPT = `
 You are an expert financial research assistant. Your task is to figure out relevant chapters for the user query from repository of chapters.
@@ -194,7 +194,7 @@ export const chapterFilter = async (query: string) => {
           chapters: items.filter((chapter) => chapter !== null),
         };
       },
-      query
+      query,
     );
   return await fn();
 };
@@ -232,7 +232,6 @@ export const chapterAgentV2 = async ({
   };
   callback?.(documentSearchStep);
 
-
   const chapters = filteredChapters.chapters;
 
   const alreadyLookedAtChunks: string[] = [];
@@ -257,9 +256,7 @@ export const chapterAgentV2 = async ({
               description: "Search for chunks",
               inputSchema: z.object({
                 query: z.string(),
-                page: z
-                  .number()
-                  .describe("Page number of paginate results, start from 1"),
+                page: z.number().describe("Page number of paginate results, start from 1"),
               }),
               execute: async ({ query, page = 1 }) => {
                 const chunkSearchStep: StepMessage = {
@@ -283,9 +280,7 @@ export const chapterAgentV2 = async ({
                   orgId,
                 });
                 alreadyLookedAtChunks.push(
-                  ...chunks
-                    .map((chunk) => chunk.id)
-                    .filter((id) => id !== undefined)
+                  ...chunks.map((chunk) => chunk.id).filter((id) => id !== undefined),
                 );
                 // logger.info(`Chunks: ${JSON.stringify(chunks, null, 2)}`);
                 chunkSearchStep.message = "Chunks found";
@@ -300,7 +295,7 @@ export const chapterAgentV2 = async ({
                   .map(
                     (chunk) => `<doc id="${chunk.documentId}" >
           ${chunk.content}
-          </doc>`
+          </doc>`,
                   )
                   .join("\n\n");
               },
@@ -316,7 +311,7 @@ export const chapterAgentV2 = async ({
         return response.text;
       },
       query,
-      chapters
+      chapters,
     );
   return await fn();
 };

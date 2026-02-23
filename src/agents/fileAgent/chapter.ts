@@ -1,15 +1,15 @@
 "use server";
-import { getLLM } from "@/ai-backend/llm";
-import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
+import { type StepMessage, StepType } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
-import { StepType, type StepMessage } from "@/@types/agents";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { getLLM } from "@/ai-backend/llm";
 import { similaritySearchChunks } from "@/service/simSearch";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { generateText, stepCountIs, tool } from "ai";
 import { v4 as uuidv4 } from "uuid";
-import { chapterFilter } from "./chapterFilter";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
+import { z } from "zod";
 import { queryExpansion } from "../queryExpansion";
+import { chapterFilter } from "./chapterFilter";
 
 const queryAgent = async (
   searchQuery: string,
@@ -19,7 +19,7 @@ const queryAgent = async (
     documentId: string;
     content: string;
     similarity: number;
-  }[]
+  }[],
 ) => {
   // const llm = getLLM(MODELS.O4_MINI);
   // const llm = getLLM(MODELS.GEMINI_2_5_FLASH);
@@ -51,10 +51,7 @@ Keep in mind curent year is ${new Date().getFullYear()}
         Search query: ${searchQuery}
         User query: ${userQuery}
         Chunks: ${chunks
-          .map(
-            (chunk) =>
-              `<chunk documentId="${chunk.documentId}">${chunk.content}</chunk>`
-          )
+          .map((chunk) => `<chunk documentId="${chunk.documentId}">${chunk.content}</chunk>`)
           .join("\n\n")}
         `,
       },
@@ -188,7 +185,6 @@ export const chapterAgentV3 = async ({
   };
   callback?.(documentSearchStep);
 
-
   const chapters = filteredChapters.chapters;
 
   const alreadyLookedAtChunks: string[] = [];
@@ -215,12 +211,8 @@ export const chapterAgentV3 = async ({
               inputSchema: z.object({
                 searchQuery: z
                   .string()
-                  .describe(
-                    "Describe the information you are looking for in the documents"
-                  ),
-                page: z
-                  .number()
-                  .describe("Page number of paginate results, start from 1"),
+                  .describe("Describe the information you are looking for in the documents"),
+                page: z.number().describe("Page number of paginate results, start from 1"),
               }),
               execute: async ({ searchQuery, page = 1 }) => {
                 const chunkSearchStep: StepMessage = {
@@ -244,14 +236,10 @@ export const chapterAgentV3 = async ({
                 });
 
                 const validChunks = chunks.filter(
-                  (chunk) => !alreadyLookedAtChunks.includes(chunk.id!)
+                  (chunk) => chunk.id !== undefined && !alreadyLookedAtChunks.includes(chunk.id),
                 );
 
-                const queryAgentResponse = await queryAgent(
-                  searchQuery,
-                  query,
-                  validChunks
-                );
+                const queryAgentResponse = await queryAgent(searchQuery, query, validChunks);
 
                 chunkSearchStep.message = "Chunks analyzed";
                 chunkSearchStep.status = "done";
@@ -263,9 +251,7 @@ export const chapterAgentV3 = async ({
                 callback?.(chunkSearchStep);
 
                 alreadyLookedAtChunks.push(
-                  ...chunks
-                    .map((chunk) => chunk.id)
-                    .filter((id) => id !== undefined)
+                  ...chunks.map((chunk) => chunk.id).filter((id) => id !== undefined),
                 );
 
                 return {
@@ -303,7 +289,7 @@ export const chapterAgentV3 = async ({
         return response.text;
       },
       query,
-      chapters
+      chapters,
     );
   return await fn();
 };

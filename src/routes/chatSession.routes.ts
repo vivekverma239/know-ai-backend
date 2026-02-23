@@ -1,14 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
-import {
-  getSessionWithMessages,
-  createSession,
-  listSessions,
-} from "../db/queries/message";
-import {
-  SessionWithMessagesResponse,
-  ListSessionsResponse,
-} from "../schemas/chat.schema";
+import { createSession, getSessionWithMessages, listSessions } from "../db/queries/message";
+import { ListSessionsResponse, SessionWithMessagesResponse } from "../schemas/chat.schema";
 
 const chatRoutes = async (fastify: FastifyInstance) => {
   // Get a chat session with its messages
@@ -28,7 +21,6 @@ const chatRoutes = async (fastify: FastifyInstance) => {
         return reply.code(401).send({ error: "Unauthorized" });
       }
       const userId: string = user.id;
-      const orgId: string = user.orgId;
       const { id } = request.params as { id: string };
       const session = await getSessionWithMessages(id, userId);
       return reply.send(session);
@@ -63,7 +55,6 @@ const chatRoutes = async (fastify: FastifyInstance) => {
         return reply.code(401).send({ error: "Unauthorized" });
       }
       const userId: string = user.id;
-      const orgId: string = user.orgId;
       const { id, title } = request.body as { id: string; title: string };
       const session = await createSession(userId, id, title);
       return reply.code(201).send(session);
@@ -93,7 +84,6 @@ const chatRoutes = async (fastify: FastifyInstance) => {
         return reply.code(401).send({ error: "Unauthorized" });
       }
       const userId: string = user.id;
-      const orgId: string = user.orgId;
       const { cursor, limit = 10 } =
         (request.query as {
           cursor?: string;
@@ -102,10 +92,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       const sessions = await listSessions(userId, limit, cursor);
       return reply.send({
         sessions,
-        nextCursor:
-          sessions.length === limit
-            ? sessions[sessions.length - 1]?.id
-            : undefined,
+        nextCursor: sessions.length === limit ? sessions[sessions.length - 1]?.id : undefined,
       });
     },
   });

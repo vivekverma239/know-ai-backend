@@ -1,3 +1,9 @@
+import type { Chapter, Section, Subsection, SubsectionAPI } from "@/@types/fileIndex";
+import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
+import type { DocumentMetadata } from "@/@types/metadata";
+import type { ParsedPDF } from "@/@types/parsedData";
+import { getEmbeddings } from "@/ai-backend/embeddings";
+import { getDb } from "@/db";
 import {
   chunks,
   userFile,
@@ -7,19 +13,10 @@ import {
   userFilePage,
   userFileSection,
 } from "@/db/schema";
+import { logError, logger } from "@/utils/logger";
+import { timed } from "@/utils/performance";
+import { traceManager } from "@/utils/tracing";
 import { and, count, eq, gte, lte } from "drizzle-orm";
-import { getDb } from "@/db";
-import type {
-  Chapter,
-  Section,
-  Subsection,
-  SubsectionAPI,
-} from "@/@types/fileIndex";
-import { getEmbeddings } from "@/ai-backend/embeddings";
-import { logger } from "@/utils/logger";
-import type { ParsedPDF } from "@/@types/parsedData";
-import type { DocumentMetadata } from "@/@types/metadata";
-import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
 
 /**
  * Update the chapters for the chunks
@@ -38,8 +35,8 @@ export const updateChapterForChunks = async (fileId: string) => {
         and(
           eq(chunks.documentId, fileId),
           gte(chunks.startPage, chapter.startPage),
-          lte(chunks.endPage, chapter.endPage)
-        )
+          lte(chunks.endPage, chapter.endPage),
+        ),
       );
   }
 };
@@ -55,212 +52,311 @@ export const updateOutline = async ({
   summary: string;
   fileId: string;
 }) => {
-  // Delete existing sections and chapters
-  logger.info(`Deleting existing sections and chapters for file ${fileId}`);
-  await getDb()
-    .delete(userFileSection)
-    .where(eq(userFileSection.fileId, fileId));
-  await getDb()
-    .delete(userFileChapter)
-    .where(eq(userFileChapter.fileId, fileId));
+  return traceManager.withSpan(
+    "file:updateOutline",
+    async (span) => {
+      try {
+        // Delete existing sections and chapters
+        logger.info("Deleting existing sections and chapters for file", {
+          fileId,
+          chapterCount: chapters.length,
+          spanId: span.id,
+        });
+        await getDb().delete(userFileSection).where(eq(userFileSection.fileId, fileId));
+        await getDb().delete(userFileChapter).where(eq(userFileChapter.fileId, fileId));
 
-  const files = await getDb()
-    .select()
-    .from(userFile)
-    .where(eq(userFile.id, fileId));
-  if (!files[0]) throw new Error("File not found");
+        const files = await getDb().select().from(userFile).where(eq(userFile.id, fileId));
+        if (!files[0]) throw new Error("File not found");
 
-  const file = files[0];
-  for (const [index, chapter] of chapters.entries()) {
-    logger.info(`Creating chapter ${index + 1} for file ${fileId}`);
-    const chapterEmbedding = (
-      await getEmbeddings([
-        `Document Title: ${title}\nChapter ${index + 1} Title: ${
-          chapter.title
-        }\nChapter Summary: ${chapter.summary}`,
-      ])
-    )[0];
-    const [newChapter] = await getDb()
-      .insert(userFileChapter)
-      .values({
-        fileId,
-        userId: file.userId,
-        orgId: file.orgId,
-        startPage: chapter.start_page,
-        endPage: chapter.end_page,
-        summary: chapter.summary ?? "No summary",
-        title: chapter.title,
-        embedding: chapterEmbedding,
-      })
-      .returning();
-    if (!newChapter) throw new Error("Failed to create chapter");
+        const file = files[0];
+        for (const [index, chapter] of chapters.entries()) {
+          logger.info(`Creating chapter ${index + 1} for file ${fileId}`);
+          const chapterEmbedding = (
+            await getEmbeddings([
+              `Document Title: ${title}\nChapter ${index + 1} Title: ${
+                chapter.title
+              }\nChapter Summary: ${chapter.summary}`,
+            ])
+          )[0];
+          const [newChapter] = await getDb()
+            .insert(userFileChapter)
+            .values({
+              fileId,
+              userId: file.userId,
+              orgId: file.orgId,
+              startPage: chapter.start_page,
+              endPage: chapter.end_page,
+              summary: chapter.summary ?? "No summary",
+              title: chapter.title,
+              embedding: chapterEmbedding,
+            })
+            .returning();
+          if (!newChapter) throw new Error("Failed to create chapter");
 
-    logger.info(
-      `Creating sections for chapter ${index + 1} for file ${fileId}`
-    );
-    const sectionEmbeddings = await getEmbeddings(
-      chapter.sections.map(
-        (section: Section) =>
-          `Section ${section.start_page}-${section.end_page}: ${section.section_summary}`
-      )
-    );
-    const sectionData = chapter.sections.map((section: Section, i: number) => ({
-      fileId,
-      userId: file.userId,
-      orgId: file.orgId,
-      startPage: section.start_page,
-      endPage: section.end_page,
-      summary: section.section_summary,
-      title: section.title,
-      chapterId: newChapter.id,
-      embedding: sectionEmbeddings[i],
-      subsections: section.subsections?.map((sub: SubsectionAPI) => ({
-        id: sub.id,
-        startPage: sub.start_page,
-        endPage: sub.end_page,
-        summary: sub.subsection_summary,
-        title: sub.title,
-      })),
-    }));
-    await getDb().insert(userFileSection).values(sectionData);
-  }
-  logger.info(`Updating chapters for chunks for file ${fileId}`);
-  await updateChapterForChunks(fileId);
-  await updateStatus(fileId);
-};
+          logger.info(`Creating sections for chapter ${index + 1} for file ${fileId}`);
+          const sectionEmbeddings = await getEmbeddings(
+            chapter.sections.map(
+              (section: Section) =>
+                `Section ${section.start_page}-${section.end_page}: ${section.section_summary}`,
+            ),
+          );
+          const sectionData = chapter.sections.map((section: Section, i: number) => ({
+            fileId,
+            userId: file.userId,
+            orgId: file.orgId,
+            startPage: section.start_page,
+            endPage: section.end_page,
+            summary: section.section_summary,
+            title: section.title,
+            chapterId: newChapter.id,
+            embedding: sectionEmbeddings[i],
+            subsections: section.subsections?.map((sub: SubsectionAPI) => ({
+              id: sub.id,
+              startPage: sub.start_page,
+              endPage: sub.end_page,
+              summary: sub.subsection_summary,
+              title: sub.title,
+            })),
+          }));
+          await getDb().insert(userFileSection).values(sectionData);
+        }
+        logger.info("Updating chapters for chunks for file", { fileId, spanId: span.id });
+        await updateChapterForChunks(fileId);
+        await updateStatus(fileId);
 
-export const updateParsedPages = async (
-  fileId: string,
-  parsedData: ParsedPDF
-) => {
-  // Delete existing pages
-  await getDb().delete(userFilePage).where(eq(userFilePage.fileId, fileId));
-  // Delete existing chunks
-  await getDb().delete(chunks).where(eq(chunks.documentId, fileId));
-  // Create new pages
-  await getDb()
-    .insert(userFilePage)
-    .values(
-      parsedData.pages.map((page) => ({
-        fileId,
-        pageNumber: page.page_number,
-        content: page.content,
-      }))
-    );
-
-  const chunkInputs = [] as Array<{
-    content: string;
-    start: number;
-    end: number;
-  }>;
-  for (const page of parsedData.pages) {
-    chunkInputs.push({
-      content: page.content,
-      start: page.page_number,
-      end: page.page_number,
-    });
-  }
-  const embeddings = await getEmbeddings(chunkInputs.map((c) => c.content));
-  await getDb()
-    .insert(chunks)
-    .values(
-      chunkInputs.map((c, i) => ({
-        content: c.content,
-        documentId: fileId,
-        startPage: c.start,
-        endPage: c.end,
-        embedding: embeddings[i],
-      }))
-    );
-
-  await updateChapterForChunks(fileId);
-  await updateStatus(fileId);
-};
-
-export const updateParsedMetadata = async (
-  fileId: string,
-  parsedData: DocumentMetadata
-) => {
-  const files = await getDb()
-    .select()
-    .from(userFile)
-    .where(eq(userFile.id, fileId));
-  if (!files[0]) throw new Error("File not found");
-
-  const file = files[0];
-  const { clusters } = parsedData;
-  const total_pages = parsedData.total_pages;
-  const clusterDocs = clusters.map((cluster) => ({
-    fileId,
-    startPage: cluster.start_page,
-    endPage: cluster.end_page,
-    summary: cluster.cluster_summary,
-    pageSummaries: parsedData.page_summaries.filter(
-      (page) =>
-        page.page_number >= Math.max(cluster.start_page - 5, 0) &&
-        page.page_number <= Math.min(cluster.end_page + 5, total_pages - 1)
-    ),
-  }));
-  const embeddings = await getEmbeddings(
-    clusterDocs.map(
-      (c) =>
-        `Cluster ${c.startPage}-${c.endPage}: ${c.summary}\n${c.pageSummaries
-          .map((p) => p.summary)
-          .join("\n")}`
-    )
+        logger.info("Outline updated successfully", {
+          fileId,
+          chapterCount: chapters.length,
+          spanId: span.id,
+        });
+      } catch (error) {
+        logError(error, {
+          fileId,
+          operation: "updateOutline",
+          chapterCount: chapters.length,
+          spanId: span.id,
+        });
+        throw error;
+      }
+    },
+    { fileId, operation: "updateOutline", chapterCount: chapters.length },
   );
-  await getDb()
-    .delete(userFileCluster)
-    .where(eq(userFileCluster.fileId, fileId));
-  await getDb()
-    .insert(userFileCluster)
-    .values(
-      clusterDocs.map((c, i) => ({
-        ...c,
-        embedding: embeddings[i],
-        userId: file.userId,
-        orgId: file.orgId,
-      }))
-    );
+};
 
-  const fileEmbedding = (
-    await getEmbeddings([
-      `Document Title: ${parsedData.document_metadata.title}\n${JSON.stringify(
-        parsedData.document_metadata.summary
-      )}`,
-    ])
-  )[0];
-  await getDb()
-    .update(userFile)
-    .set({
-      name: parsedData.document_metadata.title,
-      metadata: {
-        summary: parsedData.document_metadata.summary,
-        shortSummary: parsedData.document_metadata.short_summary,
-        referencePeriod: parsedData.document_metadata.reference_period,
-        documentType: parsedData.document_metadata.document_type,
-        year: parsedData.document_metadata.published_year,
-        title: parsedData.document_metadata.title,
-        referencePeriodEnd:
-          parsedData.document_metadata.reference_period_end_date,
-        documentPublishedDate:
-          parsedData.document_metadata.document_published_date,
-        industry: parsedData.document_metadata.industry,
-        companies: parsedData.document_metadata.companies?.map((company) => ({
-          name: company.name,
-          countries: company.countries,
-          industry: company.industry,
-          productsOrServices: company.products_or_services,
-          customers: company.customers,
-          suppliers: company.suppliers,
-        })),
-      },
-      embedding: fileEmbedding!,
-      status: "processed",
-      updatedAt: new Date(),
-    })
-    .where(eq(userFile.id, fileId));
-  await updateStatus(fileId);
+export const updateParsedPages = async (fileId: string, parsedData: ParsedPDF) => {
+  return traceManager.withSpan(
+    "file:updateParsedPages",
+    async (span) => {
+      try {
+        const pageCount = parsedData.pages.length;
+        logger.info("Starting parsed pages update", {
+          fileId,
+          pageCount,
+          spanId: span.id,
+        });
+
+        // Delete existing pages
+        await getDb().delete(userFilePage).where(eq(userFilePage.fileId, fileId));
+        // Delete existing chunks
+        await getDb().delete(chunks).where(eq(chunks.documentId, fileId));
+
+        // Create new pages
+        await getDb()
+          .insert(userFilePage)
+          .values(
+            parsedData.pages.map((page) => ({
+              fileId,
+              pageNumber: page.page_number,
+              content: page.content,
+            })),
+          );
+
+        logger.info("Pages inserted, creating chunks", {
+          fileId,
+          pageCount,
+          spanId: span.id,
+        });
+
+        const chunkInputs = [] as Array<{
+          content: string;
+          start: number;
+          end: number;
+        }>;
+        for (const page of parsedData.pages) {
+          chunkInputs.push({
+            content: page.content,
+            start: page.page_number,
+            end: page.page_number,
+          });
+        }
+
+        // Generate embeddings for chunks
+        const embeddings = await timed(
+          "generateEmbeddings",
+          async () => {
+            return getEmbeddings(chunkInputs.map((c) => c.content));
+          },
+          { fileId, chunkCount: chunkInputs.length },
+        );
+
+        await getDb()
+          .insert(chunks)
+          .values(
+            chunkInputs.map((c, i) => ({
+              content: c.content,
+              documentId: fileId,
+              startPage: c.start,
+              endPage: c.end,
+              embedding: embeddings[i],
+            })),
+          );
+
+        logger.info("Chunks created, updating chapter associations", {
+          fileId,
+          chunkCount: chunkInputs.length,
+          spanId: span.id,
+        });
+
+        await updateChapterForChunks(fileId);
+        await updateStatus(fileId);
+
+        logger.info("Parsed pages updated successfully", {
+          fileId,
+          pageCount,
+          chunkCount: chunkInputs.length,
+          spanId: span.id,
+        });
+      } catch (error) {
+        logError(error, {
+          fileId,
+          operation: "updateParsedPages",
+          pageCount: parsedData.pages.length,
+          spanId: span.id,
+        });
+        throw error;
+      }
+    },
+    { fileId, operation: "updateParsedPages", pageCount: parsedData.pages.length },
+  );
+};
+
+export const updateParsedMetadata = async (fileId: string, parsedData: DocumentMetadata) => {
+  return traceManager.withSpan(
+    "file:updateParsedMetadata",
+    async (span) => {
+      try {
+        logger.info("Starting metadata update", {
+          fileId,
+          title: parsedData.document_metadata.title,
+          spanId: span.id,
+        });
+
+        const files = await getDb().select().from(userFile).where(eq(userFile.id, fileId));
+        if (!files[0]) throw new Error("File not found");
+
+        const file = files[0];
+        const { clusters } = parsedData;
+        const total_pages = parsedData.total_pages;
+
+        logger.info("Processing clusters for metadata", {
+          fileId,
+          clusterCount: clusters.length,
+          spanId: span.id,
+        });
+
+        const clusterDocs = clusters.map((cluster) => ({
+          fileId,
+          startPage: cluster.start_page,
+          endPage: cluster.end_page,
+          summary: cluster.cluster_summary,
+          pageSummaries: parsedData.page_summaries.filter(
+            (page) =>
+              page.page_number >= Math.max(cluster.start_page - 5, 0) &&
+              page.page_number <= Math.min(cluster.end_page + 5, total_pages - 1),
+          ),
+        }));
+
+        const embeddings = await getEmbeddings(
+          clusterDocs.map(
+            (c) =>
+              `Cluster ${c.startPage}-${c.endPage}: ${c.summary}\n${c.pageSummaries
+                .map((p) => p.summary)
+                .join("\n")}`,
+          ),
+        );
+
+        await getDb().delete(userFileCluster).where(eq(userFileCluster.fileId, fileId));
+        await getDb()
+          .insert(userFileCluster)
+          .values(
+            clusterDocs.map((c, i) => ({
+              ...c,
+              embedding: embeddings[i],
+              userId: file.userId,
+              orgId: file.orgId,
+            })),
+          );
+
+        logger.info("Clusters processed, updating file metadata", {
+          fileId,
+          spanId: span.id,
+        });
+
+        const fileEmbedding = (
+          await getEmbeddings([
+            `Document Title: ${parsedData.document_metadata.title}\n${JSON.stringify(
+              parsedData.document_metadata.summary,
+            )}`,
+          ])
+        )[0];
+
+        await getDb()
+          .update(userFile)
+          .set({
+            name: parsedData.document_metadata.title,
+            metadata: {
+              summary: parsedData.document_metadata.summary,
+              shortSummary: parsedData.document_metadata.short_summary,
+              referencePeriod: parsedData.document_metadata.reference_period,
+              documentType: parsedData.document_metadata.document_type,
+              year: parsedData.document_metadata.published_year,
+              title: parsedData.document_metadata.title,
+              referencePeriodEnd: parsedData.document_metadata.reference_period_end_date,
+              documentPublishedDate: parsedData.document_metadata.document_published_date,
+              industry: parsedData.document_metadata.industry,
+              companies: parsedData.document_metadata.companies?.map((company) => ({
+                name: company.name,
+                countries: company.countries,
+                industry: company.industry,
+                productsOrServices: company.products_or_services,
+                customers: company.customers,
+                suppliers: company.suppliers,
+              })),
+            },
+            embedding: fileEmbedding,
+            status: "completed",
+            updatedAt: new Date(),
+          })
+          .where(eq(userFile.id, fileId));
+
+        await updateStatus(fileId);
+
+        logger.info("Metadata updated successfully", {
+          fileId,
+          clusterCount: clusters.length,
+          spanId: span.id,
+        });
+      } catch (error) {
+        logError(error, {
+          fileId,
+          operation: "updateParsedMetadata",
+          spanId: span.id,
+        });
+        throw error;
+      }
+    },
+    { fileId, operation: "updateParsedMetadata" },
+  );
 };
 
 export const updateStatus = async (fileId: string) => {
@@ -277,70 +373,90 @@ export const updateStatus = async (fileId: string) => {
     .where(eq(userFileChapter.fileId, fileId));
 
   // Check if metadata are there
-  const file = await getDb()
-    .select()
-    .from(userFile)
-    .where(eq(userFile.id, fileId));
+  const file = await getDb().select().from(userFile).where(eq(userFile.id, fileId));
   const metadata = file[0]?.metadata;
 
-  if (
-    pagesCount[0]?.count === 0 ||
-    chaptersCount[0]?.count === 0 ||
-    !metadata?.summary
-  ) {
+  if (pagesCount[0]?.count === 0 || chaptersCount[0]?.count === 0 || !metadata?.summary) {
     // Do nothing
     return;
   }
 
-  await getDb()
-    .update(userFile)
-    .set({ status: "processed" })
-    .where(eq(userFile.id, fileId));
+  await getDb().update(userFile).set({ status: "completed" }).where(eq(userFile.id, fileId));
 };
 
-export const updateHeirarchialIndex = async (
-  fileId: string,
-  data: HeirarchialIndexData
-) => {
-  const files = await getDb()
-    .select()
-    .from(userFile)
-    .where(eq(userFile.id, fileId));
-  if (!files[0]) throw new Error("File not found");
+export const updateHeirarchialIndex = async (fileId: string, data: HeirarchialIndexData) => {
+  return traceManager.withSpan(
+    "file:updateHeirarchialIndex",
+    async (span) => {
+      try {
+        logger.info("Starting hierarchical index update", {
+          fileId,
+          levelCount: data.levels.length,
+          spanId: span.id,
+        });
 
-  const file = files[0];
-  const levelData = data.levels.map((level) => ({
-    fileId,
-    startPage: level.start_page,
-    endPage: level.end_page,
-    title: level.title,
-    level: level.level,
-    summary: level.summary,
-    children: level.children.map((child) => ({
-      startPage: child.start_page,
-      endPage: child.end_page,
-      summary: child.summary,
-    })),
-  }));
-  const embeddings = await getEmbeddings(
-    levelData.map(
-      (level) =>
-        `\nLevel ${level.startPage}-${level.endPage}: ${
-          level.summary
-        }\n${level.children.map((child) => child.summary).join("\n")}`
-    )
+        const files = await getDb().select().from(userFile).where(eq(userFile.id, fileId));
+        if (!files[0]) throw new Error("File not found");
+
+        const file = files[0];
+        const levelData = data.levels.map((level) => ({
+          fileId,
+          startPage: level.start_page,
+          endPage: level.end_page,
+          title: level.title,
+          level: level.level,
+          summary: level.summary,
+          children: level.children.map((child) => ({
+            startPage: child.start_page,
+            endPage: child.end_page,
+            summary: child.summary,
+          })),
+        }));
+
+        logger.info("Generating embeddings for hierarchical index", {
+          fileId,
+          levelCount: levelData.length,
+          spanId: span.id,
+        });
+
+        const embeddings = await getEmbeddings(
+          levelData.map(
+            (level) =>
+              `\nLevel ${level.startPage}-${level.endPage}: ${
+                level.summary
+              }\n${level.children.map((child) => child.summary).join("\n")}`,
+          ),
+        );
+
+        await getDb()
+          .delete(userFileHeirarchialIndex)
+          .where(eq(userFileHeirarchialIndex.fileId, fileId));
+        await getDb()
+          .insert(userFileHeirarchialIndex)
+          .values(
+            levelData.map((level, index) => ({
+              ...level,
+              userId: file.userId,
+              orgId: file.orgId,
+              embedding: embeddings[index],
+            })),
+          );
+
+        logger.info("Hierarchical index updated successfully", {
+          fileId,
+          levelCount: levelData.length,
+          spanId: span.id,
+        });
+      } catch (error) {
+        logError(error, {
+          fileId,
+          operation: "updateHeirarchialIndex",
+          levelCount: data.levels.length,
+          spanId: span.id,
+        });
+        throw error;
+      }
+    },
+    { fileId, operation: "updateHeirarchialIndex", levelCount: data.levels.length },
   );
-  await getDb()
-    .delete(userFileHeirarchialIndex)
-    .where(eq(userFileHeirarchialIndex.fileId, fileId));
-  await getDb()
-    .insert(userFileHeirarchialIndex)
-    .values(
-      levelData.map((level, index) => ({
-        ...level,
-        userId: file.userId,
-        orgId: file.orgId,
-        embedding: embeddings[index],
-      }))
-    );
 };

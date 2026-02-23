@@ -1,6 +1,7 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import process from "node:process";
+import { type AnyValue, type AnyValueMap, SeverityNumber, logs } from "@opentelemetry/api-logs";
 import pino from "pino";
-import { AsyncLocalStorage } from "async_hooks";
-import process from "process";
 
 // Create async storage for context
 const asyncStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -27,6 +28,84 @@ import { loggerConfig } from "@/config/logging";
 
 // Create the base logger with configuration
 const baseLogger = pino(loggerConfig);
+const otelLoggerName = process.env.OTEL_SERVICE_NAME || "knowsis-ai-backend";
+
+type AppLogLevel = "error" | "warn" | "info" | "debug";
+
+function toOtelSeverity(level: AppLogLevel): SeverityNumber {
+  switch (level) {
+    case "error":
+      return SeverityNumber.ERROR;
+    case "warn":
+      return SeverityNumber.WARN;
+    case "info":
+      return SeverityNumber.INFO;
+    case "debug":
+      return SeverityNumber.DEBUG;
+  }
+}
+
+function sanitizeForOtel(value: unknown, depth = 0): AnyValue {
+  if (depth > 4) {
+    return typeof value === "string" ? value : String(value);
+  }
+
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+    };
+  }
+
+  if (Array.isArray(value)) {
+    return value.slice(0, 100).map((entry) => sanitizeForOtel(entry, depth + 1));
+  }
+
+  if (typeof value === "object") {
+    const mappedValue: AnyValueMap = {};
+    for (const [key, entry] of Object.entries(value)) {
+      mappedValue[key] = sanitizeForOtel(entry, depth + 1);
+    }
+    return mappedValue;
+  }
+
+  return String(value);
+}
+
+function emitOpenTelemetryLog(
+  level: AppLogLevel,
+  message: string,
+  meta: Record<string, unknown>,
+): void {
+  const isOtelEnabled =
+    process.env.ENABLE_OPENTELEMETRY !== "false" &&
+    process.env.ENABLE_OPENTELEMETRY_LOGS !== "false";
+
+  if (!isOtelEnabled) {
+    return;
+  }
+
+  try {
+    const otelLogger = logs.getLogger(otelLoggerName, process.env.npm_package_version || "1.0.0");
+    otelLogger.emit({
+      severityNumber: toOtelSeverity(level),
+      severityText: level.toUpperCase(),
+      body: message,
+      attributes: sanitizeForOtel(meta) as AnyValueMap,
+    });
+  } catch (_error) {
+    // Logging should never throw
+  }
+}
 
 /**
  * Helper to merge all context sources
@@ -47,19 +126,27 @@ const getAllContext = (): Record<string, unknown> => {
 export const logger = {
   error: (message: string, meta: Record<string, unknown> = {}) => {
     const context = getAllContext();
-    baseLogger.error({ ...context, ...meta }, message);
+    const payload = { ...context, ...meta };
+    baseLogger.error(payload, message);
+    emitOpenTelemetryLog("error", message, payload);
   },
   warn: (message: string, meta: Record<string, unknown> = {}) => {
     const context = getAllContext();
-    baseLogger.warn({ ...context, ...meta }, message);
+    const payload = { ...context, ...meta };
+    baseLogger.warn(payload, message);
+    emitOpenTelemetryLog("warn", message, payload);
   },
   info: (message: string, meta: Record<string, unknown> = {}) => {
     const context = getAllContext();
-    baseLogger.info({ ...context, ...meta }, message);
+    const payload = { ...context, ...meta };
+    baseLogger.info(payload, message);
+    emitOpenTelemetryLog("info", message, payload);
   },
   debug: (message: string, meta: Record<string, unknown> = {}) => {
     const context = getAllContext();
-    baseLogger.debug({ ...context, ...meta }, message);
+    const payload = { ...context, ...meta };
+    baseLogger.debug(payload, message);
+    emitOpenTelemetryLog("debug", message, payload);
   },
 };
 
@@ -88,7 +175,7 @@ export function clearLogContext(): void {
 // Middleware to automatically add request context
 export async function withLogContext<T>(
   context: Record<string, unknown>,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   const store = new Map(Object.entries(context));
   return asyncStorage.run(store, fn);
@@ -142,7 +229,7 @@ export function logError(error: Error | unknown, context?: Record<string, unknow
 export function logWithDuration(
   message: string,
   startTime: Date,
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown>,
 ): void {
   const duration = Date.now() - startTime.getTime();
   logger.info(message, { ...meta, duration });

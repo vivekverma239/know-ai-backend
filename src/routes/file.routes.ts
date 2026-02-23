@@ -1,51 +1,49 @@
 import { Type } from "@sinclair/typebox";
+import { type SQLWrapper, and, count, desc, eq, or, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
-import { and, count, desc, eq, or, sql, type SQLWrapper } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { getDb } from "../db";
 import {
-  userFile,
-  userFilePage,
+  type UserFileStatus,
   chunks,
-  userFileCluster,
-  userFileSection,
-  userFileHeirarchialIndex,
+  userFile,
   userFileChapter,
+  userFileCluster,
+  userFileHeirarchialIndex,
+  userFilePage,
+  userFileSection,
 } from "../db/schema";
-import { getStorage } from "../service/googleStorage";
+import {
+  DeleteResponse,
+  FilePagesResponse,
+  FileSectionsResponse,
+  FileUploadRequest,
+  FileUploadResponse,
+  HierarchicalIndexItems,
+  SignedUrlResponse,
+  UserFileSchema,
+  UserFileWithMetaSchema,
+} from "../schemas/file.schema";
 import {
   parsePDF,
   parsePDFChapters,
   parsePDFHeirarchialIndex,
   parsePDFMetadata,
 } from "../service/file/triggerParsing";
+import { resolveExistingPdfStoragePath } from "../service/file/storagePath";
+import { getStorage } from "../service/googleStorage";
 import { logger } from "../utils/logger";
-import { getDb } from "../db";
-import {
-  UserFileWithMetaSchema,
-  SignedUrlResponse,
-  FilePagesResponse,
-  FileSectionsResponse,
-  HierarchicalIndexItems,
-  DeleteResponse,
-  UserFileSchema,
-  FileUploadRequest,
-  FileUploadResponse,
-} from "../schemas/file.schema";
-import { v4 as uuidv4 } from "uuid";
 
 // Helper function to check if user has access to a file
-const checkFileAccess = async (
-  fileId: string,
-  userId: string,
-  orgId: string
-) => {
+const checkFileAccess = async (fileId: string, userId: string, orgId: string) => {
   const file = await getDb().query.userFile.findFirst({
     where: and(
       eq(userFile.id, fileId),
       // Users can access their own files OR admin files from the same org
       or(
         and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-        and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-      )
+        and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)), // Admin files in same org
+      ),
     ),
   });
   return file;
@@ -67,9 +65,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           Type.Union([
             Type.Literal("all"),
             Type.Literal("pending"),
-            Type.Literal("processing"),
-            Type.Literal("processed"),
-          ])
+            Type.Literal("in_progress"),
+            Type.Literal("completed"),
+          ]),
         ),
       }),
       response: {
@@ -93,7 +91,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         page?: number;
         pageSize?: number;
         search?: string;
-        status?: "all" | "pending" | "processing" | "processed" | "failed";
+        status?: UserFileStatus | "all";
       };
       const offset = (page - 1) * pageSize;
 
@@ -101,18 +99,18 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         // Users can access their own files OR admin files from the same org
         or(
           and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-        )!,
+          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)), // Admin files in same org
+        ) as SQLWrapper,
       ];
 
       if (status && status !== "all")
-        whereConditions.push(eq(userFile.status, status));
+        whereConditions.push(eq(userFile.status, status as UserFileStatus));
       if ((search?.trim?.() ?? "") !== "") {
-        const searchTerms = search!
-          .trim()
+        const searchTerms = search
+          ?.trim()
           .split(/\s+/)
           .filter((term) => term.length > 0);
-        if (searchTerms.length > 0) {
+        if (searchTerms && searchTerms.length > 0) {
           const searchConditions = searchTerms.map((term) => {
             const exactMatch = sql`(${userFile.name} ~* ${`\\b${term}\\b`})`;
             const partialMatch = sql`(${userFile.name} ILIKE ${`%${term}%`})`;
@@ -120,12 +118,10 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             const endsWith = sql`(${userFile.name} ILIKE ${`%${term}`})`;
             return sql`(${sql.join(
               [exactMatch, partialMatch, startsWith, endsWith],
-              sql` OR `
+              sql` OR `,
             )})` as SQLWrapper;
           });
-          whereConditions.push(
-            sql`(${sql.join(searchConditions, sql` AND `)})` as SQLWrapper
-          );
+          whereConditions.push(sql`(${sql.join(searchConditions, sql` AND `)})` as SQLWrapper);
         }
       }
 
@@ -211,19 +207,21 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             // Users can access their own files OR admin files from the same org
             or(
               and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-            )
-          )
+              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)), // Admin files in same org
+            ),
+          ),
         );
       if (!file) return reply.code(404).send({ message: "File not found" });
       const storageService = getStorage();
-      // Use different path for admin files
-      const filePath = file.isAdminFile
-        ? `files/admin/${file.orgId}/${file.id}/document.pdf`
-        : `files/${file.userId}/${file.id}/${file.id}.pdf`;
+      const filePath = await resolveExistingPdfStoragePath(storageService, {
+        id: file.id,
+        userId: file.userId,
+        orgId: file.orgId,
+        isAdminFile: file.isAdminFile,
+      });
       return reply.send({
         ...file,
-        signedUrl: await storageService.getSignedUrl(filePath),
+        signedUrl: filePath ? await storageService.getSignedUrl(filePath) : null,
       });
     },
   });
@@ -300,7 +298,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             summary: Type.String(),
             startPage: Type.Number(),
             endPage: Type.Number(),
-          })
+          }),
         ),
       },
     },
@@ -430,9 +428,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       const items = await getDb().query.userFileHeirarchialIndex.findMany({
         where: and(
           eq(userFileHeirarchialIndex.fileId, fileId),
-          level !== undefined
-            ? eq(userFileHeirarchialIndex.level, level)
-            : undefined
+          level !== undefined ? eq(userFileHeirarchialIndex.level, level) : undefined,
         ),
         limit,
         offset,
@@ -469,8 +465,8 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             // Users can access their own files OR admin files from the same org
             or(
               and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-            )
+              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)), // Admin files in same org
+            ),
           ),
         });
         if (!file) return reply.code(404).send({ message: "File not found" });
@@ -494,17 +490,11 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           });
           // Continue with database cleanup even if storage deletion fails
         }
-        await getDb()
-          .delete(userFileSection)
-          .where(eq(userFileSection.fileId, id));
+        await getDb().delete(userFileSection).where(eq(userFileSection.fileId, id));
         await getDb().delete(userFilePage).where(eq(userFilePage.fileId, id));
         await getDb().delete(chunks).where(eq(chunks.documentId, id));
-        await getDb()
-          .delete(userFileCluster)
-          .where(eq(userFileCluster.fileId, id));
-        await getDb()
-          .delete(userFileChapter)
-          .where(eq(userFileChapter.fileId, id));
+        await getDb().delete(userFileCluster).where(eq(userFileCluster.fileId, id));
+        await getDb().delete(userFileChapter).where(eq(userFileChapter.fileId, id));
         await getDb()
           .delete(userFileHeirarchialIndex)
           .where(eq(userFileHeirarchialIndex.fileId, id));
@@ -530,15 +520,14 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       },
     },
     handler: async (request, reply) => {
-      const user = request.user;
-      if (!user) {
+      const userId = request.user?.id;
+      if (!userId) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
-      const userId: string = request.user!.id;
       const { fileId } = request.body;
       const storageService = getStorage();
       const signedUrl = await storageService.createUploadSignedUrl(
-        `files/${userId}/${fileId}/document.pdf`
+        `files/${userId}/${fileId}/document.pdf`,
       );
       return reply.send({
         signedUrl,
@@ -649,10 +638,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
 
         // Trigger parsing asynchronously
         parsePDF(fileId).catch((error) => {
-          logger.error(
-            `Error parsing file ${fileId}:`,
-            error as Record<string, unknown>
-          );
+          logger.error(`Error parsing file ${fileId}:`, error as Record<string, unknown>);
           // Update file status to error
           getDb()
             .update(userFile)
@@ -661,7 +647,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             .catch((updateError) => {
               logger.error(
                 `Error updating file status for ${fileId}:`,
-                updateError as Record<string, unknown>
+                updateError as Record<string, unknown>,
               );
             });
         });
@@ -673,10 +659,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "File uploaded successfully and parsing started",
         });
       } catch (error) {
-        logger.error(`Error uploading file:`, { error });
+        logger.error("Error uploading file:", { error });
         return reply.code(400).send({
-          error:
-            error instanceof Error ? error.message : "Failed to upload file",
+          error: error instanceof Error ? error.message : "Failed to upload file",
         });
       }
     },
@@ -752,10 +737,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
 
         // Trigger parsing asynchronously
         parsePDF(fileId).catch((error) => {
-          logger.error(
-            `Error parsing admin file ${fileId}:`,
-            error as Record<string, unknown>
-          );
+          logger.error(`Error parsing admin file ${fileId}:`, error as Record<string, unknown>);
           // Update file status to error
           getDb()
             .update(userFile)
@@ -764,7 +746,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             .catch((updateError) => {
               logger.error(
                 `Error updating admin file status for ${fileId}:`,
-                updateError as Record<string, unknown>
+                updateError as Record<string, unknown>,
               );
             });
         });
@@ -777,12 +759,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           message: "Admin file uploaded successfully and parsing started",
         });
       } catch (error) {
-        logger.error(`Error uploading admin file:`, { error });
+        logger.error("Error uploading admin file:", { error });
         return reply.code(400).send({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to upload admin file",
+          error: error instanceof Error ? error.message : "Failed to upload admin file",
         });
       }
     },

@@ -1,20 +1,17 @@
-import { type Message } from "@/@types/message";
-import { type Message as SQLMessage } from "@/@types";
+import type { Message as SQLMessage } from "@/@types";
+import type { Message } from "@/@types/message";
 
-import { getDb } from "..";
-import { messages, chatSession } from "../schema";
-import { and, desc, eq, lt } from "drizzle-orm";
 import type { ChatSession } from "@/@types";
+import { and, desc, eq, lt } from "drizzle-orm";
+import { getDb } from "..";
+import { chatSession, messages } from "../schema";
 
 /**
  * Create a new message in the database.
  * @param message - The message to create.
  * @returns The created message.
  */
-export const createMessage = async (
-  message: Message,
-  chatSessionId: string
-) => {
+export const createMessage = async (message: Message, chatSessionId: string) => {
   const sqlMessage = {
     id: message.id,
     userId: message.userId,
@@ -23,10 +20,7 @@ export const createMessage = async (
     createdAt: message.createdAt,
     sessionId: chatSessionId,
   };
-  const newMessage = await getDb()
-    .insert(messages)
-    .values(sqlMessage)
-    .returning();
+  const newMessage = await getDb().insert(messages).values(sqlMessage).returning();
   return newMessage[0];
 };
 
@@ -45,7 +39,7 @@ export const syncMessages = async (sqlMessages: SQLMessage[]) => {
               updatedAt: new Date(),
             },
           });
-      })
+      }),
     );
   });
   return newMessages;
@@ -72,10 +66,7 @@ export const getMessages = async (chatSessionId: string) => {
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as Message[];
 };
 
-export const getSessionWithMessages = async (
-  sessionId: string,
-  userId: string
-) => {
+export const getSessionWithMessages = async (sessionId: string, userId: string) => {
   // First check if session exists AND belongs to user
   let session: ChatSession | undefined = await getDb()
     .select()
@@ -83,8 +74,8 @@ export const getSessionWithMessages = async (
     .where(
       and(
         eq(chatSession.id, sessionId),
-        eq(chatSession.userId, userId) // Verify session belongs to user
-      )
+        eq(chatSession.userId, userId), // Verify session belongs to user
+      ),
     )
     .then((sessions) => sessions[0]);
 
@@ -108,11 +99,7 @@ export const getSessionWithMessages = async (
  * @param userId - The ID of the user.
  * @returns The created session.
  */
-export const createSession = async (
-  userId: string,
-  id: string,
-  title: string
-) => {
+export const createSession = async (userId: string, id: string, title: string) => {
   const newSession = await getDb()
     .insert(chatSession)
     .values({ id: id, userId: userId, title: title })
@@ -125,19 +112,11 @@ export const createSession = async (
  * @param userId - The ID of the user.
  * @returns The sessions for the user.
  */
-export const listSessions = async (
-  userId: string,
-  limit: number,
-  cursor: string | undefined
-) => {
+export const listSessions = async (userId: string, limit: number, cursor: string | undefined) => {
   if (cursor) {
     // If we have a cursor, find the position of the cursor session
     const cursorSession = (
-      await getDb()
-        .select()
-        .from(chatSession)
-        .where(eq(chatSession.id, cursor))
-        .limit(1)
+      await getDb().select().from(chatSession).where(eq(chatSession.id, cursor)).limit(1)
     )[0];
 
     if (cursorSession) {
@@ -147,10 +126,7 @@ export const listSessions = async (
         .select()
         .from(chatSession)
         .where(
-          and(
-            eq(chatSession.userId, userId),
-            lt(chatSession.createdAt, cursorSessionCreatedAt)
-          )
+          and(eq(chatSession.userId, userId), lt(chatSession.createdAt, cursorSessionCreatedAt)),
         )
         .orderBy(desc(chatSession.createdAt))
         .limit(limit);
@@ -190,9 +166,6 @@ export const getLatestSessionId = async (userId: string) => {
  * @returns The session.
  */
 export const getSession = async (sessionId: string) => {
-  const session = await getDb()
-    .select()
-    .from(chatSession)
-    .where(eq(chatSession.id, sessionId));
+  const session = await getDb().select().from(chatSession).where(eq(chatSession.id, sessionId));
   return session[0];
 };

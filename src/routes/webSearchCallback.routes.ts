@@ -1,11 +1,11 @@
-import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
-import { Receiver } from "@upstash/qstash";
-import { getDb } from "@/db";
-import { eq } from "drizzle-orm";
-import { webSearchTask } from "@/db/schema";
 import { webAgent } from "@/agents/webAgent";
+import { getDb } from "@/db";
+import { webSearchTask } from "@/db/schema";
 import { logger } from "@/utils/logger";
+import { Type } from "@sinclair/typebox";
+import { Receiver } from "@upstash/qstash";
+import { eq } from "drizzle-orm";
+import type { FastifyInstance } from "fastify";
 
 const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
   const receiver = new Receiver({
@@ -16,6 +16,9 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/",
     {
+      config: {
+        rawBody: true,
+      },
       schema: {
         description: "Upstash QStash callback for web search tasks",
         tags: ["Callbacks"],
@@ -51,11 +54,13 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
           return reply.code(400).send({ success: false });
         }
 
-        // Best-effort raw body reconstruction
+        // Prefer raw body for signature verification, with JSON fallback
         const bodyText =
-          typeof request.body === "string"
-            ? (request.body as string)
-            : JSON.stringify(request.body ?? {});
+          typeof request.rawBody === "string"
+            ? request.rawBody
+            : typeof request.body === "string"
+              ? request.body
+              : JSON.stringify(request.body ?? {});
 
         try {
           const isValid = await receiver.verify({ body: bodyText, signature });
@@ -110,15 +115,13 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
 
         try {
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () => reject(new Error("Web agent execution timeout")),
-              5 * 60 * 1000
-            );
+            setTimeout(() => reject(new Error("Web agent execution timeout")), 5 * 60 * 1000);
           });
           const result = (await Promise.race([
             webAgent(task.query, {
               userId: task.userId,
-              orgId: "", // OrgId unused in web search tools currently or unavailable in task
+              orgId: "",
+              teamIds: [],
               sessionId: taskId,
             }),
             timeoutPromise,
@@ -157,7 +160,7 @@ const webSearchCallbackRoutes = async (fastify: FastifyInstance) => {
         });
         return reply.code(500).send({ success: false });
       }
-    }
+    },
   );
 };
 
