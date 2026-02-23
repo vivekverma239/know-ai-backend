@@ -23,7 +23,9 @@
     "admin:build": "pnpm --dir admin-dashboard build",
     "admin:preview": "pnpm --dir admin-dashboard preview",
     "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts",
-    "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev"
+    "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev",
+    "sync:auth": "tsx scripts/sync_auth_tables.ts",
+    "test:smoke": "tsx test/smokeTest.ts"
   },
   "keywords": [],
   "author": "",
