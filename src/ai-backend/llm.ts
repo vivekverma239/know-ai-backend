@@ -60,6 +60,8 @@ export function getLLM(model: MODELS) {
       return wrapAISDKModel(google("gemini-2.0-pro-exp-02-05"));
     case MODELS.GEMINI_2_5_FLASH:
       return wrapAISDKModel(google("gemini-2.5-flash"));
+    case MODELS.GEMINI_3_FLASH:
+      return wrapAISDKModel(google("gemini-3-flash-preview"));
     case MODELS.GEMINI_2_5_FLASH_LITE:
       return wrapAISDKModel(google("gemini-2.5-flash-lite-preview-06-17"));
     case MODELS.GEMINI_2_5_PRO:

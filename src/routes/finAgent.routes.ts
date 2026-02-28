@@ -11,7 +11,6 @@ import type { FastifyInstance } from "fastify";
 export interface FinAgentPostBody {
   messages: FinAgentUIMessage[];
   sessionId: string;
-  model?: string;
   webSearch?: boolean;
   fileAnswerModel?: string;
 }
@@ -27,7 +26,6 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
         body: Type.Object({
           messages: Type.Array(Type.Any()),
           sessionId: Type.String(),
-          model: Type.Optional(Type.String()),
           webSearch: Type.Optional(Type.Boolean()),
           fileAnswerModel: Type.Optional(Type.String()),
         }),
@@ -45,7 +43,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { messages, sessionId, model, webSearch, fileAnswerModel } = request.body;
+      const { messages, sessionId, webSearch, fileAnswerModel } = request.body;
 
       // Check if sessionId is valid
       const session = await getSession(sessionId);
@@ -53,9 +51,6 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
         return reply.code(400).send({ error: "Invalid sessionId" });
       }
 
-      // Map model string to enum if needed, or use default
-      // For now, using MODELS provided or falling back to default in finAgent
-      const modelEnum = (model as MODELS) || MODELS.GROK_CODE_FAST_1;
       const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GROK_CODE_FAST_1;
 
       const saveMessage = async (message: FinAgentUIMessage) => {
@@ -83,7 +78,6 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
           context: { userId, sessionId, orgId, teamIds: user.teamIds },
           messages,
           saveMessage,
-          model: modelEnum,
           webSearch: webSearch ?? false,
           fileAnswerModel: fileAnswerModelEnum,
         }),
