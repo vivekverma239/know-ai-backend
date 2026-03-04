@@ -48,14 +48,15 @@ export function getPerplexityLLM(model: MODELS) {
   return wrapAISDKModel(perplexity(model));
 }
 
-export function getLLM(model: MODELS) {
+export function getLLM(model: MODELS | string) {
   switch (model) {
     case MODELS.GEMINI_2_0_FLASH:
       return wrapAISDKModel(google("gemini-2.0-flash"));
     case MODELS.GEMINI_1_5_FLASH:
       return wrapAISDKModel(google("gemini-1.5-flash"));
     case MODELS.GEMINI_2_0_FLASH_LITE:
-      return wrapAISDKModel(google("gemini-2.0-flash-lite-preview-02-05"));
+    case "gemini-2.0-flash-lite":
+      return wrapAISDKModel(google("gemini-2.0-flash-lite"));
     case MODELS.GEMINI_2_0_PRO:
       return wrapAISDKModel(google("gemini-2.0-pro-exp-02-05"));
     case MODELS.GEMINI_2_5_FLASH:
@@ -63,7 +64,8 @@ export function getLLM(model: MODELS) {
     case MODELS.GEMINI_3_FLASH:
       return wrapAISDKModel(google("gemini-3-flash-preview"));
     case MODELS.GEMINI_2_5_FLASH_LITE:
-      return wrapAISDKModel(google("gemini-2.5-flash-lite-preview-06-17"));
+    case "gemini-2.5-flash-lite":
+      return wrapAISDKModel(google("gemini-2.5-flash-lite"));
     case MODELS.GEMINI_2_5_PRO:
       return wrapAISDKModel(google("gemini-2.5-pro"));
     case MODELS.DEEPSEEK_LLAMA_8B:

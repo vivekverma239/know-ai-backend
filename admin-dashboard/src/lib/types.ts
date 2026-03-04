@@ -113,8 +113,7 @@ export type AdminRelatedDocument = {
 export type PlaygroundMember = {
   id: string;
   name: string | null;
-  email: string | null;
-  teams: { id: string; name: string; team_type: string }[] | null;
+  teams: { id: string; name: string | null }[];
 };
 
 export type PlaygroundTemplate = {

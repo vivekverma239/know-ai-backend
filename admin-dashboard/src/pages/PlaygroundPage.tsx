@@ -42,8 +42,13 @@ import { useAuthStore } from "@/store/authStore";
 import { useOrgStore } from "@/store/orgStore";
 
 function MemberLabel(member: PlaygroundMember) {
-  if (member.name && member.email) return `${member.name} (${member.email})`;
-  return member.name || member.email || member.id.slice(0, 8);
+  const teamNames = member.teams
+    ?.map((t) => t.name)
+    .filter(Boolean)
+    .join(", ");
+  const shortId = `${member.id.slice(0, 4)}...${member.id.slice(-4)}`;
+  const base = member.name ? `${member.name} (${shortId})` : shortId;
+  return teamNames ? `${base} - ${teamNames}` : base;
 }
 
 function getTextFromParts(parts: { type: string; text?: string }[]): string {
@@ -53,21 +58,45 @@ function getTextFromParts(parts: { type: string; text?: string }[]): string {
     .join("");
 }
 
+function createSessionId() {
+  return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+type ChatToolPart = {
+  type: string;
+  toolCallId?: string;
+  toolName?: string;
+  name?: string;
+  state?: string;
+  output?: unknown;
+};
+
+function getToolDisplayName(part: ChatToolPart): string {
+  if (part.toolName) return part.toolName;
+  if (part.name) return part.name;
+  if (part.type.startsWith("tool-")) return part.type.slice("tool-".length);
+  if (part.type === "dynamic-tool") return "dynamic-tool";
+  return "unknown";
+}
+
 // ─── Chat Tab ────────────────────────────────────────────────────────────────
 
 function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; orgId: string }) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
+  const [sessionId, setSessionId] = useState(() => createSessionId());
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: `${API_BASE_URL}/admin/playground/chat`,
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: { userId: selectedMember.id, orgId },
+        body: { userId: selectedMember.id, orgId, sessionId },
       }),
-    [accessToken, selectedMember.id, orgId],
+    [accessToken, selectedMember.id, orgId, sessionId],
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({ transport });
@@ -81,8 +110,9 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
 
   // Reset chat when user changes
   useEffect(() => {
+    setSessionId(createSessionId());
     setMessages([]);
-  }, [selectedMember.id, setMessages]);
+  }, [selectedMember.id, orgId, setMessages]);
 
   const handleSend = () => {
     const text = inputValue.trim();
@@ -102,7 +132,9 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
         )}
         {messages.map((msg) => {
           const textContent = getTextFromParts(msg.parts as { type: string; text?: string }[]);
-          const toolParts = msg.parts.filter((p) => p.type.startsWith("tool-"));
+          const toolParts = msg.parts.filter(
+            (p) => p.type.startsWith("tool-") || p.type === "dynamic-tool",
+          );
 
           return (
             <div
@@ -127,17 +159,11 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
                 )}
                 {/* Tool invocations */}
                 {toolParts.map((part, i) => {
-                  const toolPart = part as {
-                    type: string;
-                    toolCallId?: string;
-                    toolName?: string;
-                    state?: string;
-                    output?: unknown;
-                  };
+                  const toolPart = part as ChatToolPart;
                   return (
                     <details key={i} className="mt-2 text-xs">
                       <summary className="cursor-pointer text-muted-foreground">
-                        Tool: {toolPart.toolName ?? "unknown"}
+                        Tool: {getToolDisplayName(toolPart)}
                         {" "}
                         <Badge variant="secondary" className="text-[10px]">
                           {toolPart.state ?? toolPart.type}

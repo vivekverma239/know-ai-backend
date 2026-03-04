@@ -99,10 +99,12 @@ export const getSessionWithMessages = async (sessionId: string, userId: string) 
  * @param userId - The ID of the user.
  * @returns The created session.
  */
-export const createSession = async (userId: string, id: string, title: string) => {
+export const createSession = async (userId: string, title: string, id?: string) => {
+  const values: { userId: string; title: string; id?: string } = { userId, title };
+  if (id) values.id = id;
   const newSession = await getDb()
     .insert(chatSession)
-    .values({ id: id, userId: userId, title: title })
+    .values(values)
     .returning();
   return newSession[0];
 };

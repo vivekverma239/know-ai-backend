@@ -7,6 +7,7 @@ import { getLLM } from "@/ai-backend/llm";
 import { updateSession } from "@/db/mutation/session";
 import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
+import { createContextLogger } from "@/utils/logger";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
 import {
@@ -14,9 +15,11 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  stepCountIs,
   streamText,
 } from "ai";
 import type { FastifyInstance } from "fastify";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 const SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool which can provide you with \nadditional information about any topic. Feel free to use it to answer\nany of the user questions.\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [1](/doc/{documentId}/page/{pageNumber})\nwhere documentId is the id of the document and pageNumber is the page number of the document.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
@@ -52,7 +55,6 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           }),
           sessionId: Type.String(),
           deepSearch: Type.String(),
-          model: Type.String(),
         }),
         response: {
           200: Type.Any({
@@ -69,6 +71,12 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       const userId: string = user.id;
       const orgId: string = user.orgId;
       const { messages, sessionId, deepSearch } = request.body as ChatPostBody;
+      const agentLogger = createContextLogger({
+        agent: "chatStream",
+        sessionId,
+        userId,
+        orgId,
+      });
 
       // Check if sessionId is valid
       const session = await getSession(sessionId);
@@ -86,13 +94,13 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         const backendMessages: SQLMessage[] = msgs.map(
           (m: CoreMessageExt) =>
             ({
-              id: m.id,
+              id: m.id || uuidv4(),
               role: m.role,
               metadata: m.metadata,
               createdAt: new Date(),
               updatedAt: null,
               sessionId: sessionId,
-              parts: [],
+              parts: m.parts,
               userId: userId,
             }) as SQLMessage,
         );
@@ -111,7 +119,13 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         }
       };
 
-      const llm = getLLM(MODELS.GEMINI_2_5_PRO);
+      // Persist user input before invoking the agent stream.
+      const incomingUserMessages = messages.filter((m) => m.role === "user");
+      if (incomingUserMessages.length > 0) {
+        await saveMessage(incomingUserMessages);
+      }
+
+      const llm = getLLM(MODELS.GEMINI_3_FLASH);
       if (deepSearch === "agentSearch") {
         const steps: StepMessage[] = [];
         const stream = await observe({ name: "deepSearchAgent" }, () =>
@@ -132,20 +146,30 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                         ),
                     }),
                     execute: async ({ query }: { query: string }) => {
-                      return await processDeepSearchQuery({
-                        query,
-                        userId,
-                        orgId,
-                        callback: (step) => {
-                          const index = steps.findIndex((s) => s.id === step.id);
-                          if (index !== -1) steps[index] = step;
-                          else steps.push(step);
-                          writer.write(
-                            // @ts-expect-error - Ignore type error
-                            step,
-                          );
-                        },
-                      });
+                      try {
+                        return await processDeepSearchQuery({
+                          query,
+                          userId,
+                          orgId,
+                          callback: (step) => {
+                            const index = steps.findIndex((s) => s.id === step.id);
+                            if (index !== -1) steps[index] = step;
+                            else steps.push(step);
+                            writer.write(
+                              // @ts-expect-error - Ignore type error
+                              step,
+                            );
+                          },
+                        });
+                      } catch (error) {
+                        agentLogger.error("Tool call failed", {
+                          toolName: "deepSearchTool",
+                          toolInput: { query },
+                          error: error instanceof Error ? error.message : String(error),
+                          stack: error instanceof Error ? error.stack : undefined,
+                        });
+                        throw error;
+                      }
                     },
                   },
                 },
@@ -157,6 +181,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                   isEnabled: true,
                   tracer: getTracer(),
                 },
+                stopWhen: stepCountIs(50),
               });
               writer.merge(
                 result.toUIMessageStream({
@@ -166,7 +191,13 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                 }),
               );
             },
-            onError: (error) => String(error),
+            onError: (error) => {
+              agentLogger.error("Chat stream execution failed", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+              });
+              return String(error);
+            },
           }),
         );
         // createDataStreamResponse returns a Response-like. We stream it as raw payload
@@ -178,6 +209,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         streamText({
           model: llm,
           system: SYSTEM_PROMPT,
+          stopWhen: stepCountIs(50),
           tools: {
             knowledgeBaseTool: {
               description: "Use this tool to answer questions about the user's documents.",
@@ -188,26 +220,28 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                     "The query to search the knowledge base for, should be fully formulated question with all relevant context",
                   ),
               }),
-              execute: async ({ query }: { query: string }) =>
-                await similaritySearchChunksWithObserver({
-                  query,
-                  limit: 5,
-                  includeChunkId: false,
-                  page: 1,
-                  userId,
-                  orgId,
-                }),
+              execute: async ({ query }: { query: string }) => {
+                try {
+                  return await similaritySearchChunksWithObserver({
+                    query,
+                    limit: 5,
+                    includeChunkId: false,
+                    page: 1,
+                    userId,
+                    orgId,
+                  });
+                } catch (error) {
+                  agentLogger.error("Tool call failed", {
+                    toolName: "knowledgeBaseTool",
+                    toolInput: { query },
+                    error: error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                  });
+                  throw error;
+                }
+              },
             },
           },
-          //   onFinish: async (res) => {
-          //     const updated = appendResponseMessages({
-          //       messages,
-          //       responseMessages: res.response.messages,
-          //     });
-          //     const last = updated[updated.length - 1];
-          //     if (last) last.metadata = { agent: "knowledgeBase", model } as { agent: "deepResearch" | "knowledgeBase"; model?: MODELS };
-          //     await saveMessage(updated as CoreMessageExt[]);
-          //   },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             ...convertToModelMessages(messages),

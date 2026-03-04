@@ -94,13 +94,24 @@ export const updateOutline = async ({
           if (!newChapter) throw new Error("Failed to create chapter");
 
           logger.info(`Creating sections for chapter ${index + 1} for file ${fileId}`);
+          const chapterSections = Array.isArray(chapter.sections) ? chapter.sections : [];
+          if (chapterSections.length === 0) {
+            logger.info("No sections found for chapter; skipping section insert", {
+              fileId,
+              chapterIndex: index,
+              chapterTitle: chapter.title,
+              spanId: span.id,
+            });
+            continue;
+          }
+
           const sectionEmbeddings = await getEmbeddings(
-            chapter.sections.map(
+            chapterSections.map(
               (section: Section) =>
                 `Section ${section.start_page}-${section.end_page}: ${section.section_summary}`,
             ),
           );
-          const sectionData = chapter.sections.map((section: Section, i: number) => ({
+          const sectionData = chapterSections.map((section: Section, i: number) => ({
             fileId,
             userId: file.userId,
             orgId: file.orgId,
@@ -161,15 +172,22 @@ export const updateParsedPages = async (fileId: string, parsedData: ParsedPDF) =
         await getDb().delete(chunks).where(eq(chunks.documentId, fileId));
 
         // Create new pages
-        await getDb()
-          .insert(userFilePage)
-          .values(
-            parsedData.pages.map((page) => ({
-              fileId,
-              pageNumber: page.page_number,
-              content: page.content,
-            })),
-          );
+        if (parsedData.pages.length > 0) {
+          await getDb()
+            .insert(userFilePage)
+            .values(
+              parsedData.pages.map((page) => ({
+                fileId,
+                pageNumber: page.page_number,
+                content: page.content,
+              })),
+            );
+        } else {
+          logger.warn("No parsed pages returned; skipping page and chunk inserts", {
+            fileId,
+            spanId: span.id,
+          });
+        }
 
         logger.info("Pages inserted, creating chunks", {
           fileId,
@@ -191,25 +209,27 @@ export const updateParsedPages = async (fileId: string, parsedData: ParsedPDF) =
         }
 
         // Generate embeddings for chunks
-        const embeddings = await timed(
-          "generateEmbeddings",
-          async () => {
-            return getEmbeddings(chunkInputs.map((c) => c.content));
-          },
-          { fileId, chunkCount: chunkInputs.length },
-        );
-
-        await getDb()
-          .insert(chunks)
-          .values(
-            chunkInputs.map((c, i) => ({
-              content: c.content,
-              documentId: fileId,
-              startPage: c.start,
-              endPage: c.end,
-              embedding: embeddings[i],
-            })),
+        if (chunkInputs.length > 0) {
+          const embeddings = await timed(
+            "generateEmbeddings",
+            async () => {
+              return getEmbeddings(chunkInputs.map((c) => c.content));
+            },
+            { fileId, chunkCount: chunkInputs.length },
           );
+
+          await getDb()
+            .insert(chunks)
+            .values(
+              chunkInputs.map((c, i) => ({
+                content: c.content,
+                documentId: fileId,
+                startPage: c.start,
+                endPage: c.end,
+                embedding: embeddings[i],
+              })),
+            );
+        }
 
         logger.info("Chunks created, updating chapter associations", {
           fileId,
@@ -276,26 +296,33 @@ export const updateParsedMetadata = async (fileId: string, parsedData: DocumentM
           ),
         }));
 
-        const embeddings = await getEmbeddings(
-          clusterDocs.map(
-            (c) =>
-              `Cluster ${c.startPage}-${c.endPage}: ${c.summary}\n${c.pageSummaries
-                .map((p) => p.summary)
-                .join("\n")}`,
-          ),
-        );
-
         await getDb().delete(userFileCluster).where(eq(userFileCluster.fileId, fileId));
-        await getDb()
-          .insert(userFileCluster)
-          .values(
-            clusterDocs.map((c, i) => ({
-              ...c,
-              embedding: embeddings[i],
-              userId: file.userId,
-              orgId: file.orgId,
-            })),
+        if (clusterDocs.length > 0) {
+          const embeddings = await getEmbeddings(
+            clusterDocs.map(
+              (c) =>
+                `Cluster ${c.startPage}-${c.endPage}: ${c.summary}\n${c.pageSummaries
+                  .map((p) => p.summary)
+                  .join("\n")}`,
+            ),
           );
+
+          await getDb()
+            .insert(userFileCluster)
+            .values(
+              clusterDocs.map((c, i) => ({
+                ...c,
+                embedding: embeddings[i],
+                userId: file.userId,
+                orgId: file.orgId,
+              })),
+            );
+        } else {
+          logger.info("No metadata clusters found; skipping cluster insert", {
+            fileId,
+            spanId: span.id,
+          });
+        }
 
         logger.info("Clusters processed, updating file metadata", {
           fileId,
@@ -419,28 +446,35 @@ export const updateHeirarchialIndex = async (fileId: string, data: HeirarchialIn
           spanId: span.id,
         });
 
-        const embeddings = await getEmbeddings(
-          levelData.map(
-            (level) =>
-              `\nLevel ${level.startPage}-${level.endPage}: ${
-                level.summary
-              }\n${level.children.map((child) => child.summary).join("\n")}`,
-          ),
-        );
-
         await getDb()
           .delete(userFileHeirarchialIndex)
           .where(eq(userFileHeirarchialIndex.fileId, fileId));
-        await getDb()
-          .insert(userFileHeirarchialIndex)
-          .values(
-            levelData.map((level, index) => ({
-              ...level,
-              userId: file.userId,
-              orgId: file.orgId,
-              embedding: embeddings[index],
-            })),
+        if (levelData.length > 0) {
+          const embeddings = await getEmbeddings(
+            levelData.map(
+              (level) =>
+                `\nLevel ${level.startPage}-${level.endPage}: ${
+                  level.summary
+                }\n${level.children.map((child) => child.summary).join("\n")}`,
+            ),
           );
+
+          await getDb()
+            .insert(userFileHeirarchialIndex)
+            .values(
+              levelData.map((level, index) => ({
+                ...level,
+                userId: file.userId,
+                orgId: file.orgId,
+                embedding: embeddings[index],
+              })),
+            );
+        } else {
+          logger.info("No hierarchical index levels found; skipping insert", {
+            fileId,
+            spanId: span.id,
+          });
+        }
 
         logger.info("Hierarchical index updated successfully", {
           fileId,

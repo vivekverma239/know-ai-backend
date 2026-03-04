@@ -8,7 +8,7 @@ import {
   type CoreMessage,
   type LanguageModelUsage,
   type StepResult,
-  ToolSet,
+  type ToolSet,
   type UIMessage,
   convertToModelMessages,
   stepCountIs,
@@ -21,9 +21,9 @@ import { getFinAgentPrompt } from "./prompts";
 import { getBulkFileIndexingTool, getFileStatusTool } from "./tools/bulkFileIndexing";
 import { getChapterSearchTool, getChunkSearchTool } from "./tools/chunkSearch";
 import { getFileAnswerTool } from "./tools/fileAnswerTableOfContent";
+import { getTeamContextTool } from "./tools/teamContext";
 import { type Todo, getTodoListTools } from "./tools/todoListTool";
 import type { ToolContext } from "./tools/toolContext";
-import { getTeamContextTool } from "./tools/teamContext";
 import { getWebDocSearchTool } from "./tools/webDocSearchTool";
 import { getWebSearchTool, getWebsiteContentTool } from "./tools/websearch";
 
@@ -64,13 +64,54 @@ export type FinAgentUIMessage = UIMessage & {
   timestamp?: number;
 };
 
+type ExecutableTool = {
+  execute?: (...args: unknown[]) => unknown;
+};
+
+const wrapToolsWithFailureLogging = ({
+  tools,
+  agentLogger,
+  context,
+}: {
+  tools: ToolSet;
+  agentLogger: ReturnType<typeof createContextLogger>;
+  context: FinAgentContext;
+}): ToolSet => {
+  for (const [toolName, toolDefinition] of Object.entries(tools)) {
+    const executableTool = toolDefinition as unknown as ExecutableTool;
+    if (typeof executableTool.execute !== "function") {
+      continue;
+    }
+
+    const originalExecute = executableTool.execute;
+    executableTool.execute = async (...args: unknown[]) => {
+      try {
+        return await originalExecute(...args);
+      } catch (error) {
+        agentLogger.error("Tool call failed", {
+          toolName,
+          toolInput: args[0],
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          sessionId: context.sessionId,
+          userId: context.userId,
+          orgId: context.orgId,
+        });
+        throw error;
+      }
+    };
+  }
+
+  return tools;
+};
+
 export const finAgent = async ({
   context,
   messages,
   saveMessage,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GEMINI_2_5_FLASH,
   webSearch = false,
-  fileAnswerModel = MODELS.GROK_CODE_FAST_1,
+  fileAnswerModel = MODELS.GEMINI_2_5_FLASH,
 }: {
   context: FinAgentContext;
   messages: FinAgentUIMessage[];
@@ -104,28 +145,29 @@ export const finAgent = async ({
   };
 
   const systemPrompt = getFinAgentPrompt({ webSearchEnabled: webSearch });
+  const tools: ToolSet = {
+    fileSearchAgent: fileSearchAgentAsTool({ context: toolContext }),
+    fileAnswerTool: getFileAnswerTool({ context: toolContext, model: fileAnswerModel }),
+    chunkSearchTool: getChunkSearchTool({ context: toolContext }),
+    chapterSearchTool: getChapterSearchTool({ context: toolContext }),
+    ...(webSearch
+      ? {
+          webDocSearchTool: getWebDocSearchTool({ context: toolContext }),
+          bulkFileIndexingTool: getBulkFileIndexingTool({ context: toolContext }),
+          webSearchTool: getWebSearchTool({ context: toolContext }),
+          webPageScrapeTool: getWebsiteContentTool({ context: toolContext }),
+        }
+      : {}),
+    fileStatusTool: getFileStatusTool({ context: toolContext }),
+    teamContextTool: getTeamContextTool({ context: toolContext }),
+    ...getTodoListTools({ context: toolContext }),
+  };
 
   const stream = streamText({
     model: getLLM(model),
     messages: convertToModelMessages(messages),
     system: systemPrompt,
-    tools: {
-      fileSearchAgent: fileSearchAgentAsTool({ context: toolContext }),
-      fileAnswerTool: getFileAnswerTool({ context: toolContext, model: fileAnswerModel }),
-      chunkSearchTool: getChunkSearchTool({ context: toolContext }),
-      chapterSearchTool: getChapterSearchTool({ context: toolContext }),
-      ...(webSearch
-        ? {
-            webDocSearchTool: getWebDocSearchTool({ context: toolContext }),
-            bulkFileIndexingTool: getBulkFileIndexingTool({ context: toolContext }),
-            webSearchTool: getWebSearchTool({ context: toolContext }),
-            webPageScrapeTool: getWebsiteContentTool({ context: toolContext }),
-          }
-        : {}),
-      fileStatusTool: getFileStatusTool({ context: toolContext }),
-      teamContextTool: getTeamContextTool({ context: toolContext }),
-      ...getTodoListTools({ context: toolContext }),
-    },
+    tools: wrapToolsWithFailureLogging({ tools, agentLogger, context }),
     stopWhen: stepCountIs(15),
     experimental_telemetry: {
       isEnabled: true,

@@ -92,6 +92,7 @@ function JsonValue({ value, depth = 0 }: { value: unknown; depth?: number }) {
   return <span>{String(value)}</span>;
 }
 const PARSED_PAGE_BATCH_SIZE = 20;
+const SOURCE_PDF_BATCH_SIZE = 6;
 
 
 // --- Interactive TOC rendering ---
@@ -181,11 +182,16 @@ export function DocumentDetailPage() {
   const [pendingScrollPage, setPendingScrollPage] = useState<number | null>(null);
   const parsedScrollRef = useRef<HTMLDivElement | null>(null);
   const parsedPageNodesRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const sourcePdfScrollRef = useRef<HTMLDivElement | null>(null);
+  const sourcePdfPageNodesRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const [sourceRenderedPdfPages, setSourceRenderedPdfPages] = useState(SOURCE_PDF_BATCH_SIZE);
 
   const detailQuery = useQuery({
     queryKey: ["admin-document-detail", accessToken, id],
     queryFn: () => getAdminDocumentDetail(accessToken ?? "", id ?? ""),
     enabled: Boolean(accessToken && id),
+    staleTime: 30 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const sectionsQuery = useQuery({
@@ -239,6 +245,12 @@ export function DocumentDetailPage() {
     () => Math.max(1, detailQuery.data?.numPages ?? 0, parsedPagesTotal, pdfPageCount ?? 0),
     [detailQuery.data?.numPages, parsedPagesTotal, pdfPageCount],
   );
+  const sourcePdfTotalPages = pdfPageCount ?? detailQuery.data?.numPages ?? 1;
+  const sourceVisiblePdfPages = useMemo(
+    () => Math.min(Math.max(1, sourcePdfTotalPages), Math.max(1, sourceRenderedPdfPages)),
+    [sourcePdfTotalPages, sourceRenderedPdfPages],
+  );
+  const pdfDocumentOptions = useMemo(() => ({ withCredentials: false }), []);
 
   const orgName = useMemo(() => {
     const orgId = detailQuery.data?.orgId;
@@ -254,6 +266,31 @@ export function DocumentDetailPage() {
       return;
     }
     parsedPageNodesRef.current.delete(pageNumber);
+  }, []);
+
+  const registerSourcePdfPageNode = useCallback((pageNumber: number, node: HTMLDivElement | null) => {
+    if (node) {
+      sourcePdfPageNodesRef.current.set(pageNumber, node);
+      return;
+    }
+    sourcePdfPageNodesRef.current.delete(pageNumber);
+  }, []);
+
+  const ensureSourcePdfPageRendered = useCallback(
+    (pageNumber: number) => {
+      const target = clamp(pageNumber + 2, 1, sourcePdfTotalPages);
+      setSourceRenderedPdfPages((prev) => Math.max(prev, target));
+    },
+    [sourcePdfTotalPages],
+  );
+
+  const scrollToSourcePdfPage = useCallback((pageNumber: number) => {
+    const node = sourcePdfPageNodesRef.current.get(pageNumber);
+    if (!node) return;
+    node.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, []);
 
   const ensureParsedPageLoaded = useCallback(
@@ -287,10 +324,14 @@ export function DocumentDetailPage() {
     (pageNumber: number) => {
       const nextPage = clamp(pageNumber, 1, totalPages);
       setCurrentPage(nextPage);
+      ensureSourcePdfPageRendered(nextPage);
+      requestAnimationFrame(() => {
+        scrollToSourcePdfPage(nextPage);
+      });
       setActiveTab("parsed");
       setPendingScrollPage(nextPage);
     },
-    [totalPages],
+    [ensureSourcePdfPageRendered, scrollToSourcePdfPage, totalPages],
   );
 
   const handleParsedScroll = useCallback(() => {
@@ -319,6 +360,29 @@ export function DocumentDetailPage() {
       setCurrentPage(nearestPage);
     }
   }, [currentPage, parsedPagesQuery]);
+
+  const handleSourcePdfScroll = useCallback(() => {
+    const container = sourcePdfScrollRef.current;
+    if (!container) return;
+
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 320) {
+      setSourceRenderedPdfPages((prev) => Math.min(sourcePdfTotalPages, prev + SOURCE_PDF_BATCH_SIZE));
+    }
+
+    let nearestPage = currentPage;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const [pageNumber, node] of sourcePdfPageNodesRef.current.entries()) {
+      const distance = Math.abs(node.offsetTop - container.scrollTop);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestPage = pageNumber;
+      }
+    }
+
+    if (nearestPage !== currentPage) {
+      setCurrentPage(nearestPage);
+    }
+  }, [currentPage, sourcePdfTotalPages]);
 
   useEffect(() => {
     setCurrentPage((value) => clamp(value, 1, totalPages));
@@ -352,6 +416,8 @@ export function DocumentDetailPage() {
 
   useEffect(() => {
     setPdfLoadError(false);
+    setSourceRenderedPdfPages(SOURCE_PDF_BATCH_SIZE);
+    sourcePdfPageNodesRef.current.clear();
   }, [detailQuery.data?.signedUrl, id]);
 
   useEffect(() => {
@@ -446,14 +512,20 @@ export function DocumentDetailPage() {
           </CardHeader>
           <CardContent>
             {document.type === "pdf" && document.signedUrl && !pdfLoadError ? (
-              <div className="overflow-auto rounded-lg border border-border bg-muted/30 grid place-items-center max-h-[760px]">
+              <div
+                className="overflow-auto rounded-lg border border-border bg-muted/30 max-h-[760px] p-2"
+                ref={sourcePdfScrollRef}
+                onScroll={handleSourcePdfScroll}
+              >
                 <Document
+                  key={document.signedUrl}
                   file={document.signedUrl}
                   loading={<p className="text-muted-foreground p-4">Loading PDF...</p>}
-                  options={{ withCredentials: false }}
+                  options={pdfDocumentOptions}
                   onLoadSuccess={({ numPages }) => {
                     setPdfPageCount(numPages);
                     setPdfLoadError(false);
+                    setSourceRenderedPdfPages(Math.min(Math.max(1, numPages), SOURCE_PDF_BATCH_SIZE));
                   }}
                   onLoadError={(error) => {
                     console.error("[PDF] Load error:", error);
@@ -462,13 +534,53 @@ export function DocumentDetailPage() {
                     setPdfLoadError(true);
                   }}
                 >
-                  <Page
-                    pageNumber={currentPage}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={false}
-                    width={700}
-                  />
+                  <div className="space-y-3">
+                    {Array.from({ length: sourceVisiblePdfPages }, (_, index) => index + 1).map(
+                      (pageNumber) => (
+                        <div
+                          key={pageNumber}
+                          ref={(node) => registerSourcePdfPageNode(pageNumber, node)}
+                          className={`rounded-md border p-2 ${
+                            pageNumber === currentPage ? "border-primary" : "border-border"
+                          }`}
+                        >
+                          <Page
+                            pageNumber={pageNumber}
+                            renderAnnotationLayer={false}
+                            renderTextLayer={false}
+                            width={700}
+                          />
+                        </div>
+                      ),
+                    )}
+                    {sourceVisiblePdfPages < sourcePdfTotalPages ? (
+                      <div className="flex justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSourceRenderedPdfPages((prev) =>
+                              Math.min(sourcePdfTotalPages, prev + SOURCE_PDF_BATCH_SIZE),
+                            )
+                          }
+                        >
+                          Load More Pages
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </Document>
+              </div>
+            ) : document.type === "pdf" && document.signedUrl && pdfLoadError ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  PDF.js preview failed (likely CORS). Showing browser PDF fallback.
+                </p>
+                <iframe
+                  src={document.signedUrl}
+                  title={`PDF preview for ${document.name}`}
+                  className="w-full h-[760px] rounded-lg border border-border bg-muted/30"
+                />
               </div>
             ) : (
               <div className="border border-dashed border-border rounded-lg bg-muted/30 p-6">

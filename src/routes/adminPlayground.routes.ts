@@ -1,21 +1,25 @@
 import type { Message as SQLMessage } from "@/@types";
-import { MODELS } from "@/@types/llm";
 import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getDb } from "@/db";
-import { organizationMembers } from "@/db/external_schema";
+import { accounts, accountsMemberships } from "@/db/external_schema";
 import { getSessionWithMessages, syncMessages } from "@/db/queries/message";
 import {
   type ModelConfig,
   structuredReportTemplate,
   structuredReports,
+  userFile,
 } from "@/db/schema";
 import { sendQstashMessage } from "@/service/qstash";
 import { getUserTeamIds } from "@/service/userTeams";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
+
+const isUuidLike = (value: string) => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+};
 
 const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
   // 1. GET /members — List org members for user picker
@@ -31,28 +35,91 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const { orgId } = request.query as { orgId: string };
 
-      const members = await getDb()
-        .select({
-          id: organizationMembers.id,
-          name: organizationMembers.name,
-          email: organizationMembers.email,
-          teams: organizationMembers.teams,
-        })
-        .from(organizationMembers)
-        .where(eq(organizationMembers.organizationId, orgId));
-
-      // Deduplicate by member id (there can be multiple rows per member)
-      const uniqueMembers = new Map<
+      // Org scope in admin UI is based on userFile.orgId (team account id), so
+      // derive users from userFile first and enrich with team memberships when available.
+      const userMap = new Map<
         string,
-        { id: string; name: string | null; email: string | null; teams: unknown }
+        { id: string; name: string | null; teams: { id: string; name: string | null }[] }
       >();
-      for (const m of members) {
-        if (!uniqueMembers.has(m.id)) {
-          uniqueMembers.set(m.id, m);
+
+      const usersFromFiles = await getDb()
+        .select({
+          userId: userFile.userId,
+        })
+        .from(userFile)
+        .where(eq(userFile.orgId, orgId))
+        .groupBy(userFile.userId);
+
+      for (const row of usersFromFiles) {
+        userMap.set(row.userId, { id: row.userId, name: null, teams: [] });
+      }
+
+      const allMemberships = await getDb()
+        .select({
+          userId: accountsMemberships.userId,
+          teamId: accountsMemberships.accountId,
+          teamName: accounts.name,
+        })
+        .from(accountsMemberships)
+        .innerJoin(accounts, eq(accountsMemberships.accountId, accounts.id))
+        // orgId from admin scope can be either:
+        // - a team account id (accounts.id), or
+        // - an organization id (accounts.organizationId)
+        .where(or(eq(accounts.id, orgId), eq(accounts.organizationId, orgId)));
+
+      for (const m of allMemberships) {
+        const existingUser = userMap.get(m.userId);
+        if (existingUser) {
+          existingUser.teams.push({ id: m.teamId, name: m.teamName });
+          continue;
+        }
+        userMap.set(m.userId, {
+          id: m.userId,
+          name: null,
+          teams: [{ id: m.teamId, name: m.teamName }],
+        });
+      }
+
+      const uuidUserIds = Array.from(userMap.keys()).filter(isUuidLike);
+      if (uuidUserIds.length > 0) {
+        const userProfiles = await getDb()
+          .select({
+            id: accounts.id,
+            primaryOwnerUserId: accounts.primaryOwnerUserId,
+            name: accounts.name,
+          })
+          .from(accounts)
+          .where(
+            and(
+              eq(accounts.isPersonalAccount, true),
+              or(
+                inArray(accounts.id, uuidUserIds),
+                inArray(accounts.primaryOwnerUserId, uuidUserIds),
+              ),
+            ),
+          );
+
+        for (const profile of userProfiles) {
+          const directMatch = userMap.get(profile.id);
+          if (directMatch && !directMatch.name) {
+            directMatch.name = profile.name ?? null;
+          }
+
+          const ownerUserId = profile.primaryOwnerUserId;
+          if (ownerUserId) {
+            const ownerMatch = userMap.get(ownerUserId);
+            if (ownerMatch && !ownerMatch.name) {
+              ownerMatch.name = profile.name ?? null;
+            }
+          }
         }
       }
 
-      return reply.send({ items: Array.from(uniqueMembers.values()) });
+      return reply.send({
+        items: Array.from(userMap.values()).sort((a, b) =>
+          (a.name ?? a.id).localeCompare(b.name ?? b.id),
+        ),
+      });
     },
   });
 
@@ -67,20 +134,23 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         userId: Type.String(),
         orgId: Type.String(),
         sessionId: Type.Optional(Type.String()),
-        model: Type.Optional(Type.String()),
         webSearch: Type.Optional(Type.Boolean()),
       }),
     },
     handler: async (request, reply) => {
-      const { messages, userId, orgId, sessionId: requestSessionId, model, webSearch } =
-        request.body as {
-          messages: FinAgentUIMessage[];
-          userId: string;
-          orgId: string;
-          sessionId?: string;
-          model?: string;
-          webSearch?: boolean;
-        };
+      const {
+        messages,
+        userId,
+        orgId,
+        sessionId: requestSessionId,
+        webSearch,
+      } = request.body as {
+        messages: FinAgentUIMessage[];
+        userId: string;
+        orgId: string;
+        sessionId?: string;
+        webSearch?: boolean;
+      };
 
       // Resolve or create session
       const sessionId = requestSessionId || uuidv4();
@@ -89,27 +159,34 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       // Resolve team IDs for the impersonated user
       const teamIds = await getUserTeamIds(userId, orgId);
 
-      const modelEnum = (model as MODELS) || MODELS.GROK_CODE_FAST_1;
-
-      const saveMessage = async (message: FinAgentUIMessage) => {
-        const sqlMsg: SQLMessage = {
-          id: message.id || "",
-          role: message.role,
-          parts: [],
-          metadata: message.data,
-          createdAt: new Date(),
-          updatedAt: null,
-          sessionId: sessionId,
-          userId: userId,
-        } as unknown as SQLMessage;
-        await syncMessages([sqlMsg]);
+      const saveMessages = async (messagesToSave: FinAgentUIMessage[]) => {
+        const sqlMessages: SQLMessage[] = messagesToSave.map((message) => {
+          return {
+            id: message.id || uuidv4(),
+            role: message.role,
+            parts: message.parts,
+            metadata: message.data,
+            createdAt: new Date(),
+            updatedAt: null,
+            sessionId,
+            userId,
+          } as unknown as SQLMessage;
+        });
+        if (sqlMessages.length > 0) {
+          await syncMessages(sqlMessages);
+        }
       };
+
+      // Persist user input before invoking the agent stream.
+      const incomingUserMessages = messages.filter((message) => message.role === "user");
+      await saveMessages(incomingUserMessages);
 
       const result = await finAgent({
         context: { userId, sessionId, orgId, teamIds },
         messages,
-        saveMessage,
-        model: modelEnum,
+        saveMessage: async (message: FinAgentUIMessage) => {
+          await saveMessages([message]);
+        },
         webSearch: webSearch ?? false,
       });
 
@@ -117,10 +194,7 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         result.toUIMessageStreamResponse({
           originalMessages: messages,
           onFinish: async ({ messages: finishedMessages }) => {
-            const lastMessage = finishedMessages[finishedMessages.length - 1];
-            if (lastMessage) {
-              await saveMessage(lastMessage);
-            }
+            await saveMessages(finishedMessages as FinAgentUIMessage[]);
           },
         }),
       );

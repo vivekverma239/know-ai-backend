@@ -29,14 +29,14 @@ const chatRoutes = async (fastify: FastifyInstance) => {
 
   // Create a new chat session
   fastify.post<{
-    Body: { id: string; title: string };
+    Body: { id?: string; title: string };
   }>("/", {
     preHandler: fastify.authenticate,
     schema: {
       description: "Create a new chat session",
       tags: ["Chat"],
       body: Type.Object({
-        id: Type.String(),
+        id: Type.Optional(Type.String()),
         title: Type.String(),
       }),
       response: {
@@ -55,8 +55,8 @@ const chatRoutes = async (fastify: FastifyInstance) => {
         return reply.code(401).send({ error: "Unauthorized" });
       }
       const userId: string = user.id;
-      const { id, title } = request.body as { id: string; title: string };
-      const session = await createSession(userId, id, title);
+      const { id, title } = request.body as { id?: string; title: string };
+      const session = await createSession(userId, title, id);
       return reply.code(201).send(session);
     },
   });

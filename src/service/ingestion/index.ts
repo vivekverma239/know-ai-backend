@@ -10,7 +10,6 @@ import {
   highlights,
   highlightsEntitiesRel,
   highlightsTagsRel,
-  organizationMembers,
   organizations,
   scenarioRemarks,
   scenarios,
@@ -58,7 +57,6 @@ type ExternalTable =
   | typeof highlightsTagsRel
   | typeof documents
   | typeof organizations
-  | typeof organizationMembers
   | typeof accounts
   | typeof accountsMemberships;
 
@@ -77,7 +75,6 @@ const tableMap: Record<string, ExternalTable> = {
   highlight_tag: highlightsTagsRel,
   document: documents,
   organization: organizations,
-  organization_member: organizationMembers,
   account: accounts,
   accounts_membership: accountsMemberships,
 };
@@ -272,15 +269,6 @@ const validateExternalReferences = async (
       );
       pushIfPresent(
         await validateNumericReference("entity_id", internalData.entityId, entityExists),
-      );
-      break;
-    case "organization_member":
-      pushIfPresent(
-        await validateUuidReference(
-          "organization_id",
-          internalData.organizationId,
-          organizationExists,
-        ),
       );
       break;
     case "accounts_membership":
@@ -566,30 +554,6 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                     set: internalData as typeof organizations.$inferInsert,
                   });
                 break;
-              case "organization_member": {
-                // No unique constraint on (id, organizationId, teamType), so delete+insert
-                const memberId = internalData.id as string;
-                const memberOrgId = internalData.organizationId as string;
-                const memberTeamType = internalData.teamType as string | undefined;
-                if (memberId && memberOrgId) {
-                  const conditions = [
-                    eq(organizationMembers.id, memberId),
-                    eq(organizationMembers.organizationId, memberOrgId),
-                  ];
-                  if (memberTeamType) {
-                    conditions.push(eq(organizationMembers.teamType, memberTeamType));
-                  }
-                  await getDb()
-                    .delete(organizationMembers)
-                    .where(and(...conditions));
-                }
-                // Strip rowId since it's auto-generated
-                const { rowId: _rowId, ...memberValues } = internalData;
-                await getDb()
-                  .insert(organizationMembers)
-                  .values(memberValues as typeof organizationMembers.$inferInsert);
-                break;
-              }
               case "account":
                 await getDb()
                   .insert(accounts)
@@ -671,6 +635,7 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                 await getDb().delete(documents).where(eq(documents.id, id));
                 await deleteUserFileForDocument({
                   id: (data.id as string | number | undefined) ?? undefined,
+                  teamId: (internalData.teamId as string | undefined) ?? undefined,
                 });
                 break;
               case "accounts_membership": {
@@ -685,25 +650,6 @@ export const processIngestionEvent = async (event: IngestionPayload) => {
                         eq(accountsMemberships.accountId, delAccountId),
                       ),
                     );
-                }
-                break;
-              }
-              case "organization_member": {
-                // Delete by user UUID + org, not by numeric id
-                const delMemberId = internalData.id as string;
-                const delMemberOrgId = internalData.organizationId as string;
-                const delMemberTeamType = internalData.teamType as string | undefined;
-                if (delMemberId && delMemberOrgId) {
-                  const conditions = [
-                    eq(organizationMembers.id, delMemberId),
-                    eq(organizationMembers.organizationId, delMemberOrgId),
-                  ];
-                  if (delMemberTeamType) {
-                    conditions.push(eq(organizationMembers.teamType, delMemberTeamType));
-                  }
-                  await getDb()
-                    .delete(organizationMembers)
-                    .where(and(...conditions));
                 }
                 break;
               }

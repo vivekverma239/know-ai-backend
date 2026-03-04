@@ -267,21 +267,6 @@ export const organizations = createExternalTable("organizations", (t) => ({
     .$onUpdate(() => new Date()),
 }));
 
-export const organizationMembers = createExternalTable("organization_members", (t) => ({
-  rowId: bigint("row_id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
-  id: uuid("id").notNull(),
-  name: text("name"),
-  email: text("email"),
-  teamType: text("team_type"),
-  organizationId: uuid("organization_id").references(() => organizations.id),
-  orgOwnerId: uuid("org_owner_id"),
-  teams: jsonb("teams").$type<{ id: string; name: string; team_type: string }[]>(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-}));
-
 export const accountsMemberships = createExternalTable(
   "accounts_memberships",
   (t) => ({
