@@ -1,4 +1,3 @@
-"use server";
 import { type StepMessage, StepType } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";

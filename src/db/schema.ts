@@ -336,6 +336,6 @@ export const tokenUsageLog = createTable(
   }),
 );
 
-export const UserFileChapter = userFileChapter.$inferSelect;
+export type UserFileChapter = typeof userFileChapter.$inferSelect;
 
 export * from "./external_schema";

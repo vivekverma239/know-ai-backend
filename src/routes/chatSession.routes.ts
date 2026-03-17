@@ -2,7 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 import { createSession, getSessionWithMessages, listSessions } from "../db/queries/message";
 import { ListSessionsResponse, SessionWithMessagesResponse } from "../schemas/chat.schema";
-import { AuthenticationError } from "../utils/errorHandler";
+import { AuthenticationError, NotFoundError } from "../utils/errorHandler";
 
 const chatRoutes = async (fastify: FastifyInstance) => {
   // Get a chat session with its messages
@@ -23,8 +23,11 @@ const chatRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const { id } = request.params as { id: string };
-      const session = await getSessionWithMessages(id, userId);
-      return reply.send(session);
+      const result = await getSessionWithMessages(id, userId);
+      if (!result) {
+        throw new NotFoundError("Session not found");
+      }
+      return reply.send(result);
     },
   });
 

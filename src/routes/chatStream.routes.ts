@@ -8,7 +8,7 @@ import { updateSession } from "@/db/mutation/session";
 import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
 import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errorHandler";
-import { createContextLogger } from "@/utils/logger";
+import { createContextLogger, logger } from "@/utils/logger";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
 import {
@@ -107,7 +107,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         );
         await syncMessages(backendMessages);
         if (backendMessages.length === 2) {
-          const title = await summarizeChat(
+          summarizeChat(
             sessionId,
             msgs.map((m: CoreMessageExt) => ({
               role: m.role as "user" | "assistant",
@@ -115,8 +115,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                 .map((p: CoreMessageExt["parts"][number]) => (p.type === "text" ? p.text : ""))
                 .join("\n"),
             })),
-          );
-          await updateSession(sessionId, { title });
+          )
+            .then((title) => updateSession(sessionId, { title }))
+            .catch((err) => logger.warn("Title summarization failed", { error: err instanceof Error ? err.message : String(err), sessionId }));
         }
       };
 
@@ -186,8 +187,15 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
               });
               writer.merge(
                 result.toUIMessageStream({
-                  onFinish: async ({ messages, responseMessage }) => {
-                    await saveMessage(messages as CoreMessageExt[]);
+                  onFinish: async ({ messages: finishedMessages }) => {
+                    try {
+                      await saveMessage(finishedMessages as CoreMessageExt[]);
+                    } catch (error) {
+                      logger.error("Failed to persist messages on stream finish", {
+                        error: error instanceof Error ? error.message : String(error),
+                        sessionId,
+                      });
+                    }
                   },
                 }),
               );
@@ -254,8 +262,15 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       return reply.send(
         stream.toUIMessageStreamResponse({
           originalMessages: messages,
-          onFinish: async ({ messages, responseMessage }) => {
-            await saveMessage(messages as CoreMessageExt[]);
+          onFinish: async ({ messages: finishedMessages }) => {
+            try {
+              await saveMessage(finishedMessages as CoreMessageExt[]);
+            } catch (error) {
+              logger.error("Failed to persist messages on stream finish", {
+                error: error instanceof Error ? error.message : String(error),
+                sessionId,
+              });
+            }
           },
         }),
       );

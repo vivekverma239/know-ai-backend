@@ -96,8 +96,15 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
       return reply.send(
         result.toUIMessageStreamResponse({
           originalMessages: messages as FinAgentUIMessage[],
-          onFinish: async ({ messages, responseMessage }) => {
-            await saveMessages(messages as FinAgentUIMessage[]);
+          onFinish: async ({ messages: finishedMessages }) => {
+            try {
+              await saveMessages(finishedMessages as FinAgentUIMessage[]);
+            } catch (error) {
+              logger.error("Failed to persist messages on stream finish", {
+                error: error instanceof Error ? error.message : String(error),
+                sessionId,
+              });
+            }
           },
         }),
       );

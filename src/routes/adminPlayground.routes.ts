@@ -2,7 +2,7 @@ import type { Message as SQLMessage } from "@/@types";
 import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getDb } from "@/db";
 import { accounts, accountsMemberships } from "@/db/external_schema";
-import { getSessionWithMessages, syncMessages } from "@/db/queries/message";
+import { createSession, getSessionWithMessages, syncMessages } from "@/db/queries/message";
 import {
   type ModelConfig,
   structuredReportTemplate,
@@ -155,7 +155,10 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
 
       // Resolve or create session
       const sessionId = requestSessionId || uuidv4();
-      const { session } = await getSessionWithMessages(sessionId, userId);
+      const existing = await getSessionWithMessages(sessionId, userId);
+      if (!existing) {
+        await createSession(userId, "New Session", sessionId);
+      }
 
       // Resolve team IDs for the impersonated user
       const teamIds = await getUserTeamIds(userId, orgId);
@@ -195,7 +198,14 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         result.toUIMessageStreamResponse({
           originalMessages: messages,
           onFinish: async ({ messages: finishedMessages }) => {
-            await saveMessages(finishedMessages as FinAgentUIMessage[]);
+            try {
+              await saveMessages(finishedMessages as FinAgentUIMessage[]);
+            } catch (error) {
+              logger.error("Failed to persist messages on stream finish", {
+                error: error instanceof Error ? error.message : String(error),
+                sessionId,
+              });
+            }
           },
         }),
       );

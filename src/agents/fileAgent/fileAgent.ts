@@ -1,4 +1,3 @@
-"use server";
 import type { StepMessage } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
 import { getEmbeddings } from "@/ai-backend/embeddings";

@@ -25,13 +25,8 @@ import {
   UserFileSchema,
   UserFileWithMetaSchema,
 } from "../schemas/file.schema";
-import {
-  parsePDF,
-  parsePDFChapters,
-  parsePDFHeirarchialIndex,
-  parsePDFMetadata,
-} from "../service/file/triggerParsing";
-import { resolveExistingPdfStoragePath } from "../service/file/storagePath";
+import { parsePDF } from "../service/file/triggerParsing";
+import { invalidateStoragePathCache, resolveExistingPdfStoragePath } from "../service/file/storagePath";
 import { getStorage } from "../service/googleStorage";
 import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "../utils/errorHandler";
 import { logger } from "../utils/logger";
@@ -459,6 +454,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         ? `files/admin/${file.orgId}/${file.id}/document.pdf`
         : `files/${file.userId}/${file.id}/${file.id}.pdf`;
       const storageService = getStorage();
+      invalidateStoragePathCache(id);
       try {
         await storageService.deleteFile(filePath);
       } catch (error) {

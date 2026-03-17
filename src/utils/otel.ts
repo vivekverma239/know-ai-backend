@@ -232,6 +232,17 @@ export function initializeOpenTelemetry(): NodeSDK | undefined {
       }
     });
 
+    process.on("SIGINT", async () => {
+      try {
+        await sdk?.shutdown();
+        logger.info("OpenTelemetry SDK shut down successfully (SIGINT)");
+      } catch (error) {
+        logger.error("Error shutting down OpenTelemetry SDK", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+
     return sdk;
   } catch (error) {
     logger.error("Failed to initialize OpenTelemetry", {

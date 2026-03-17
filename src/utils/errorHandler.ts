@@ -192,7 +192,7 @@ export function createErrorResponse(
  * This should be registered with fastify.setErrorHandler()
  */
 export function createErrorHandler(fastify: FastifyInstance): void {
-  const isDevelopment = process.env.NODE_ENV !== "production";
+  const isDevelopment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
   fastify.setErrorHandler(
     async (

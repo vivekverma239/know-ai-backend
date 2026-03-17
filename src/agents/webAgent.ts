@@ -134,9 +134,9 @@ export const webAgent = async (query: string, context: ToolContext) => {
       { role: "user", content: query },
     ],
     tools: {
-      webSearchTool: getWebSearchTool({ context }),
+      exaSearch: getWebSearchTool({ context }),
       // webPageScrapeTool: getWebsiteContentTool({ context }),
-      webPageScrapeTool: getFirecrawlScrapeTool({ context }),
+      exaWebsiteContent: getFirecrawlScrapeTool({ context }),
     },
     onStepFinish: (step) => {
       agentLogger.debug("🤔 Step finished", {
@@ -167,24 +167,7 @@ export const webAgent = async (query: string, context: ToolContext) => {
   });
 
   // Try loading json from the response
-  let sources: SourcesType | null = null;
-  try {
-    sources = parseJson(response.text) as SourcesType | null;
-  } catch (error) {
-    agentLogger.error("Failed to parse JSON response from web search", {
-      error: error instanceof Error ? error.message : String(error),
-      responsePreview: response.text.substring(0, 200),
-      operation: "webAgent:parseJson",
-    });
-    // sources remains null, will try alternative parsing below
-  }
-
-  if (!sources) {
-    const res = (parseJson(response.text) as SourcesType) ?? null;
-    if (res) {
-      sources = res;
-    }
-  }
+  const sources = parseJson(response.text) as SourcesType | null;
 
   if (!sources) {
     return {
@@ -212,98 +195,3 @@ export const webAgent = async (query: string, context: ToolContext) => {
   };
 };
 
-const SYSTEM_PROMPT_COMPLEX = `
-You are an expert web research analyst your job is to divide the user query into small subtasks which may require 2-3 steps
-max to find the relevant document links. Return the subtasks in the following JSON format:
-
-\`\`\`json
-{
-    "subtasks": [
-        "subtask1",
-        "subtask2",
-        "subtask3"
-    ]
-}
-\`\`\`
-
-Todays date: ${new Date().toISOString().split("T")[0]}
-
-Guidelines:
- - Each subtask should be as such that it doesn't focus on more than a year or an entity like company
- - Do not create overlapping subtasks, for example if one task can easily find info about other subtask alos combine those
- - All the subtasks should be independed of each other and should be able to be executed in parallel
- - If the query is straightforward, you can create only one subtask
- - You must keep the search process like a real human wo do, withougt complex keywords
- - We want to prefer pdf documents than html pages
-`;
-
-export const webAgentComplex = async (query: string, context: ToolContext) => {
-  const agentLogger = createContextLogger({
-    agent: "webAgent",
-    phase: "complexSearch",
-  });
-
-  const modelToUse = MODELS.GEMINI_2_5_FLASH_LITE;
-
-  agentLogger.info("🔬 Starting complex web search", {
-    query: query.substring(0, 100),
-    model: modelToUse,
-  });
-
-  const llm = getLLM(modelToUse);
-  const response = await generateText({
-    model: llm,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT_COMPLEX },
-      { role: "user", content: query },
-    ],
-    temperature: 1,
-  });
-
-  let subtasks: { subtasks: string[] } | null = null;
-  try {
-    subtasks = JSON.parse(response.text) as { subtasks: string[] };
-  } catch (error) {}
-
-  if (!subtasks) {
-    const res = parseJson(response.text) as { subtasks: string[] };
-    if (res) {
-      subtasks = res;
-    }
-  }
-
-  agentLogger.debug("🤔 Reasoning", {
-    reasoning: response.reasoning,
-  });
-
-  if (!subtasks) {
-    agentLogger.warn("⚠️  No subtasks identified", {
-      query: query.substring(0, 100),
-      responsePreview: response.text.substring(0, 200),
-    });
-    return {
-      resources: [],
-      subtasks: [],
-    };
-  }
-
-  agentLogger.info("📋 Subtasks identified", {
-    subtaskCount: subtasks.subtasks.length,
-    subtasks: subtasks.subtasks,
-  });
-
-  const allResources = (
-    await Promise.all(subtasks.subtasks.map((subtask) => webAgent(subtask, context)))
-  ).flatMap((resource) => resource.sources);
-
-  agentLogger.info("✅ Complex web search completed", {
-    query: query.substring(0, 100),
-    subtaskCount: subtasks.subtasks.length,
-    totalResources: allResources.length,
-  });
-
-  return {
-    resources: allResources,
-    subtasks,
-  };
-};

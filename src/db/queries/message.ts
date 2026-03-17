@@ -73,12 +73,7 @@ export const getSessionWithMessages = async (sessionId: string, userId: string) 
     .then((sessions) => sessions[0]);
 
   if (!session) {
-    // Only create new session if user is requesting their own session
-    const newSession = await getDb()
-      .insert(chatSession)
-      .values({ id: sessionId, userId: userId, title: "New Session" })
-      .returning();
-    session = newSession[0];
+    return null;
   }
   const messages = await getMessages(sessionId);
   return {
