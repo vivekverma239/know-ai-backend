@@ -2,7 +2,7 @@ import type { Message as SQLMessage } from "@/@types";
 import type { Message } from "@/@types/message";
 
 import type { ChatSession } from "@/@types";
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import { getDb } from "..";
 import { chatSession, messages } from "../schema";
 
@@ -25,24 +25,18 @@ export const createMessage = async (message: Message, chatSessionId: string) => 
 };
 
 export const syncMessages = async (sqlMessages: SQLMessage[]) => {
-  const newMessages = await getDb().transaction(async (tx) => {
-    return await Promise.all(
-      sqlMessages.map(async (message) => {
-        return await tx
-          .insert(messages)
-          .values(message)
-          .onConflictDoUpdate({
-            target: [messages.id],
-            set: {
-              parts: message.parts,
-              role: message.role,
-              updatedAt: new Date(),
-            },
-          });
-      }),
-    );
-  });
-  return newMessages;
+  if (sqlMessages.length === 0) return [];
+  return await getDb()
+    .insert(messages)
+    .values(sqlMessages)
+    .onConflictDoUpdate({
+      target: [messages.id],
+      set: {
+        parts: sql`excluded.parts`,
+        role: sql`excluded.role`,
+        updatedAt: new Date(),
+      },
+    });
 };
 
 /**
@@ -54,16 +48,15 @@ export const getMessages = async (chatSessionId: string) => {
   const sessionMessages = await getDb()
     .select()
     .from(messages)
-    .where(eq(messages.sessionId, chatSessionId));
-  return sessionMessages
-    .map((sessionMessage) => ({
-      id: sessionMessage.id,
-      role: sessionMessage.role,
-      parts: sessionMessage.parts,
-      metadata: sessionMessage.metadata,
-      createdAt: sessionMessage.createdAt,
-    }))
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()) as Message[];
+    .where(eq(messages.sessionId, chatSessionId))
+    .orderBy(asc(messages.createdAt));
+  return sessionMessages.map((sessionMessage) => ({
+    id: sessionMessage.id,
+    role: sessionMessage.role,
+    parts: sessionMessage.parts,
+    metadata: sessionMessage.metadata,
+    createdAt: sessionMessage.createdAt,
+  })) as Message[];
 };
 
 export const getSessionWithMessages = async (sessionId: string, userId: string) => {

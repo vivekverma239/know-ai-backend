@@ -16,29 +16,22 @@ import {
 import { logError, logger } from "@/utils/logger";
 import { timed } from "@/utils/performance";
 import { traceManager } from "@/utils/tracing";
-import { and, count, eq, gte, lte } from "drizzle-orm";
+import { and, count, eq, gte, lte, sql } from "drizzle-orm";
 
 /**
  * Update the chapters for the chunks
  * @param fileId - The id of the file to update the chapters for
  */
 export const updateChapterForChunks = async (fileId: string) => {
-  const chapters = await getDb()
-    .select()
-    .from(userFileChapter)
-    .where(eq(userFileChapter.fileId, fileId));
-  for (const chapter of chapters) {
-    await getDb()
-      .update(chunks)
-      .set({ chapterId: chapter.id })
-      .where(
-        and(
-          eq(chunks.documentId, fileId),
-          gte(chunks.startPage, chapter.startPage),
-          lte(chunks.endPage, chapter.endPage),
-        ),
-      );
-  }
+  await getDb().execute(sql`
+    UPDATE "chunk" c
+    SET "chapterId" = fc.id
+    FROM "file_chapter" fc
+    WHERE c."documentId" = ${fileId}
+      AND fc."fileId" = ${fileId}
+      AND c."startPage" >= fc."startPage"
+      AND c."endPage" <= fc."endPage"
+  `);
 };
 
 export const updateOutline = async ({

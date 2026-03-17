@@ -1,5 +1,9 @@
 import type { GoogleStorageService } from "@/service/googleStorage";
 
+// In-memory cache for resolved storage paths (TTL: 5 minutes)
+const pathCache = new Map<string, { path: string; expiresAt: number }>();
+const PATH_CACHE_TTL_MS = 5 * 60 * 1000;
+
 type PdfStorageTarget = {
   id: string;
   userId: string;
@@ -71,9 +75,16 @@ export const resolveExistingPdfStoragePath = async (
   storage: GoogleStorageService,
   target: PdfStorageTarget,
 ): Promise<string | null> => {
+  // Check cache first
+  const cached = pathCache.get(target.id);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.path;
+  }
+
   const candidates = getPdfStoragePathCandidates(target);
   for (const candidate of candidates) {
     if (await storage.exists(candidate)) {
+      pathCache.set(target.id, { path: candidate, expiresAt: Date.now() + PATH_CACHE_TTL_MS });
       return candidate;
     }
   }
@@ -86,9 +97,14 @@ export const resolveExistingPdfStoragePath = async (
   for (const prefix of prefixes) {
     const discoveredPath = await discoverPdfPathByPrefix(storage, prefix, target.id);
     if (discoveredPath) {
+      pathCache.set(target.id, { path: discoveredPath, expiresAt: Date.now() + PATH_CACHE_TTL_MS });
       return discoveredPath;
     }
   }
 
   return null;
+};
+
+export const invalidateStoragePathCache = (fileId: string) => {
+  pathCache.delete(fileId);
 };
