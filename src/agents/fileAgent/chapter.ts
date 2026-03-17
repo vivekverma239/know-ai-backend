@@ -40,7 +40,7 @@ You will need to use the chunks to answer the user query.
 
 Keep in mind curent year is ${new Date().getFullYear()}
 
-- **Citations**: Use inline citations in this format: "The company reported $50B revenue [1](/doc/{documentId}/page/{pageNumber})"
+- **Citations**: Use inline citations in this format: "The company reported $50B revenue [file_{documentId}/page={pageNumber}]"
 - If the exact requested information is not found, extract any information that can be relevant to the user query
 `,
       },
@@ -109,7 +109,7 @@ You are an expert financial research assistant. Your task is to help user with t
 ## Response Requirements
 - **Accuracy**: Only use information found in the documents. If information is not available, clearly state this
 - **Completeness**: Search thoroughly across multiple relevant sections and chapters
-- **Citations**: Use inline citations in this format: "The company reported $50B revenue [1](/doc/{documentId}/page/{pageNumber})"
+- **Citations**: Use inline citations in this format: "The company reported $50B revenue [file_{documentId}/page={pageNumber}]"
 - **Language**: Answer in the same language as the query (typically English)
 - **Structure**: Organize your response with clear headings and logical flow
 - **Comprehensive**: YOU MUST provide a comprehensive and detailed answer to the query, so you must try to extract as much information as possible from the documents, with multiple calls to make sure you have all the information.
@@ -131,9 +131,9 @@ You are an expert financial research assistant. Your task is to help user with t
 **Query**: "What were Apple's financial results in 2023?"
 
 **Response**:
-Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [1](/doc/apple-2023/page/15). The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [2](/doc/apple-2023/page/18). Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [3](/doc/apple-2023/page/22).
+Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [file_apple-2023/page=15]. The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [file_apple-2023/page=18]. Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [file_apple-2023/page=22].
 
-The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [4](/doc/apple-2023/page/25). International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [5](/doc/apple-2023/page/28).
+The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [file_apple-2023/page=25]. International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [file_apple-2023/page=28].
 
 Current date: ${new Date().toISOString()}
 `;

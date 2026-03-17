@@ -34,6 +34,12 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       }),
     },
     handler: async (request, reply) => {
+      logger.info("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "list_members",
+        ip: request.ip,
+      });
+
       const { orgId } = request.query as { orgId: string };
 
       // Org scope in admin UI is based on userFile.orgId (team account id), so
@@ -153,6 +159,14 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         webSearch?: boolean;
       };
 
+      logger.warn("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "impersonation_chat",
+        impersonatedUserId: userId,
+        orgId,
+        ip: request.ip,
+      });
+
       // Resolve or create session
       const sessionId = requestSessionId || uuidv4();
       const existing = await getSessionWithMessages(sessionId, userId);
@@ -251,6 +265,13 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         modelConfig?: ModelConfig;
       };
 
+      logger.info("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "create_report",
+        impersonatedUserId: body.userId,
+        ip: request.ip,
+      });
+
       const [report] = await getDb()
         .insert(structuredReports)
         .values({
@@ -291,6 +312,12 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       }),
     },
     handler: async (request, reply) => {
+      logger.info("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "list_reports",
+        ip: request.ip,
+      });
+
       const { userId } = request.query as { userId: string };
 
       const reports = await getDb()
@@ -326,6 +353,14 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       const { id } = request.params as { id: string };
+
+      logger.info("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "view_report",
+        resourceId: id,
+        ip: request.ip,
+      });
+
       const report = await getDb().query.structuredReports.findFirst({
         where: eq(structuredReports.id, id),
       });

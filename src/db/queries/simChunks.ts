@@ -7,13 +7,13 @@ import {
   gte,
   inArray,
   notInArray,
-  or,
   sql,
   type SQL,
 } from "drizzle-orm";
 import { getDb } from "..";
 import { chunks, userFile, userFileChapter, userFileCluster } from "../schema";
 import { logger } from "@/utils/logger";
+import { buildFileAccessFilter } from "./accessControl";
 
 export type SimilarChunk = Omit<
   Chunk,
@@ -52,12 +52,7 @@ export const getSimilarChunks = async ({
     const authorizedDocIds = db
       .select({ id: userFile.id })
       .from(userFile)
-      .where(
-        or(
-          and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)),
-          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)),
-        ),
-      );
+      .where(buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId));
     conditions.push(inArray(chunks.documentId, authorizedDocIds));
   }
 
@@ -118,12 +113,7 @@ export const getSimilarClusters = async ({
     const authorizedDocIds = db
       .select({ id: userFile.id })
       .from(userFile)
-      .where(
-        or(
-          and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)),
-          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)),
-        ),
-      );
+      .where(buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId));
     conditions.push(inArray(userFileCluster.fileId, authorizedDocIds));
   }
 
@@ -171,12 +161,7 @@ export const getSimilarDocuments = async ({
 
   // Access control directly on the userFile table
   if (userId && orgId) {
-    conditions.push(
-      or(
-        and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)),
-        and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)),
-      ),
-    );
+    conditions.push(buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId));
   }
 
   const similarDocuments = await db
@@ -220,12 +205,7 @@ export const getSimilarChapters = async ({
     const authorizedDocIds = db
       .select({ id: userFile.id })
       .from(userFile)
-      .where(
-        or(
-          and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)),
-          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)),
-        ),
-      );
+      .where(buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId));
     conditions.push(inArray(userFileChapter.fileId, authorizedDocIds));
   }
 
