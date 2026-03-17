@@ -7,6 +7,7 @@ import {
   userFile,
 } from "@/db/schema";
 import { sendQstashMessage } from "@/service/qstash";
+import { AuthenticationError, NotFoundError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
 import { and, count, desc, eq, getTableColumns } from "drizzle-orm";
@@ -31,7 +32,7 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+      if (!userId) throw new AuthenticationError("Unauthorized");
       const body = request.body as {
         title: string;
         taskDescription: string;
@@ -87,7 +88,7 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+      if (!userId) throw new AuthenticationError("Unauthorized");
       const body = request.body as {
         templateId: string;
         topic: string;
@@ -138,7 +139,7 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
       const report = await getDb().query.structuredReports.findFirst({
         where: eq(structuredReports.id, id),
       });
-      if (!report) return reply.code(404).send({ error: "Not found" });
+      if (!report) throw new NotFoundError("Report not found");
       return report;
     },
   });
@@ -152,7 +153,7 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
     },
     handler: async (request, reply) => {
       const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+      if (!userId) throw new AuthenticationError("Unauthorized");
       const reports = await getDb()
         .select({
           ...getTableColumns(structuredReports),

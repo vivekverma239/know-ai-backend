@@ -30,6 +30,7 @@ import {
 } from "@/schemas/admin.schema";
 import { getPdfStoragePathCandidates, resolveExistingPdfStoragePath } from "@/service/file/storagePath";
 import { getStorage } from "@/service/googleStorage";
+import { NotFoundError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
 import {
@@ -118,7 +119,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       tags: ["Admin"],
       response: {
         200: AdminOrgListResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (_request, reply) => {
@@ -207,7 +207,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminDocumentListResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -342,8 +341,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       params: Type.Object({ id: Type.String() }),
       response: {
         200: AdminDocumentDetailResponseSchema,
-        401: Type.Object({ error: Type.String() }),
-        404: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -351,7 +348,7 @@ const adminRoutes = async (fastify: FastifyInstance) => {
         where: eq(userFile.id, request.params.id),
       });
       if (!file) {
-        return reply.code(404).send({ error: "Document not found" });
+        throw new NotFoundError("Document not found");
       }
 
       const [pagesCount, chunksCount, chaptersCount, sectionsCount, signedUrl] = await Promise.all([
@@ -412,7 +409,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminDocumentPagesResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -459,8 +455,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminDocumentPageSchema,
-        401: Type.Object({ error: Type.String() }),
-        404: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -471,7 +465,7 @@ const adminRoutes = async (fastify: FastifyInstance) => {
         ),
       });
       if (!page) {
-        return reply.code(404).send({ error: "Page not found" });
+        throw new NotFoundError("Page not found");
       }
       return reply.send({
         id: page.id,
@@ -497,7 +491,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminDocumentSectionsResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -547,7 +540,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       params: Type.Object({ id: Type.String() }),
       response: {
         200: AdminDocumentChaptersResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -582,8 +574,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       params: Type.Object({ id: Type.String() }),
       response: {
         200: AdminDocumentTocMetadataResponseSchema,
-        401: Type.Object({ error: Type.String() }),
-        404: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -599,9 +589,7 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       ]);
 
       if (!file) {
-        return reply.code(404).send({
-          error: "Document not found",
-        });
+        throw new NotFoundError("Document not found");
       }
 
       return reply.send({
@@ -633,7 +621,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminEntityListResponseSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -725,8 +712,6 @@ const adminRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: AdminEntityDetailResponseSchema,
-        401: Type.Object({ error: Type.String() }),
-        404: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
@@ -740,7 +725,7 @@ const adminRoutes = async (fastify: FastifyInstance) => {
         where: eq(entities.id, entityId),
       });
       if (!entity) {
-        return reply.code(404).send({ error: "Entity not found" });
+        throw new NotFoundError("Entity not found");
       }
 
       if (!isUuidLike(orgId)) {

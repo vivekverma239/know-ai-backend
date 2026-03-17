@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { sendQstashMessage } from "@/service/qstash";
 import { getUserTeamIds } from "@/service/userTeams";
+import { NotFoundError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
@@ -318,7 +319,7 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       const report = await getDb().query.structuredReports.findFirst({
         where: eq(structuredReports.id, id),
       });
-      if (!report) return reply.code(404).send({ error: "Not found" });
+      if (!report) throw new NotFoundError("Report not found");
       return reply.send(report);
     },
   });

@@ -92,7 +92,7 @@ export const userFilePage = createTable("file_page", (d) => ({
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id),
+    .references(() => userFile.id, { onDelete: "cascade" }),
   pageNumber: d.integer().notNull(),
   content: d.text().notNull(),
 }));
@@ -102,7 +102,7 @@ export const userFileToCMeta = createTable("user_file_to_c_meta", (d) => ({
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id)
+    .references(() => userFile.id, { onDelete: "cascade" })
     .unique(),
   toc: d.jsonb().$type<Toc>(),
   metadata: d.jsonb().$type<DocumentMetadata>(),
@@ -117,7 +117,7 @@ export const userFileCluster = createTable("file_cluster", (d) => ({
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id),
+    .references(() => userFile.id, { onDelete: "cascade" }),
   userId: d.varchar({ length: 255 }).notNull(),
   orgId: d.varchar({ length: 255 }).notNull(),
   startPage: d.integer().notNull(),
@@ -137,7 +137,7 @@ export const userFileChapter = createTable("file_chapter", (d) => ({
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id),
+    .references(() => userFile.id, { onDelete: "cascade" }),
   title: d.text().notNull(),
   summary: d.text().notNull(),
   startPage: d.integer().notNull(),
@@ -153,7 +153,7 @@ export const userFileSection = createTable("file_section", (d) => ({
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id),
+    .references(() => userFile.id, { onDelete: "cascade" }),
   chapterId: d.uuid().references(() => userFileChapter.id),
   startPage: d.integer().notNull(),
   endPage: d.integer().notNull(),
@@ -173,7 +173,7 @@ export const userFileHeirarchialIndex = createTable("file_heirarchial_index", (d
   fileId: d
     .uuid()
     .notNull()
-    .references(() => userFile.id),
+    .references(() => userFile.id, { onDelete: "cascade" }),
   title: d.text().notNull(),
   summary: d.text().notNull(),
   level: d.integer().notNull(),
@@ -198,7 +198,7 @@ export const chunks = createTable(
   "chunk",
   (d) => ({
     id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
-    documentId: d.uuid().notNull(),
+    documentId: d.uuid().notNull().references(() => userFile.id, { onDelete: "cascade" }),
     chapterId: d.uuid(),
     startPage: d.integer(),
     endPage: d.integer(),

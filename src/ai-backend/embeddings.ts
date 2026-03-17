@@ -29,31 +29,30 @@ export const getEmbeddings = async (
         : google.textEmbedding("text-embedding-004");
   const embeddings: number[][] = [];
   for (let i = 0; i < values.length; i += 100) {
+    let retries = 0;
     while (true) {
-      let retries = 0;
       try {
         const { embeddings: embeddingsBatch } = await embedMany({
-          // model: openai.embedding('text-embedding-3-small'),
           model: embeddingModel,
           values: values.slice(i, i + 100),
           providerOptions: {
-            openai: {
-              dimensions: 768, // Reduce embedding dimensions
-            },
-            google: {
-              outputDimensionality: 768,
-            },
+            openai: { dimensions: 768 },
+            google: { outputDimensionality: 768 },
           },
         });
         embeddings.push(...embeddingsBatch);
         break;
       } catch (error) {
-        logger.error(`Error embedding values: ${(error as Error).message}`);
         retries++;
-        if (retries > 3) {
+        logger.error(`Embedding batch ${Math.floor(i / 100) + 1} failed (attempt ${retries}/3)`, {
+          error: (error as Error).message,
+          batchStart: i,
+          batchSize: Math.min(100, values.length - i),
+        });
+        if (retries >= 3) {
           throw error;
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
       }
     }
   }

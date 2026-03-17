@@ -69,29 +69,39 @@ export const updateOutline = async ({
         if (!files[0]) throw new Error("File not found");
 
         const file = files[0];
+
+        // Generate all chapter embeddings in one batch
+        const chapterEmbeddingTexts = chapters.map(
+          (chapter, index) =>
+            `Document Title: ${title}\nChapter ${index + 1} Title: ${chapter.title}\nChapter Summary: ${chapter.summary}`,
+        );
+        const chapterEmbeddings = chapterEmbeddingTexts.length > 0
+          ? await getEmbeddings(chapterEmbeddingTexts)
+          : [];
+
+        // Bulk insert all chapters
+        const insertedChapters = chapters.length > 0
+          ? await getDb()
+              .insert(userFileChapter)
+              .values(
+                chapters.map((chapter, index) => ({
+                  fileId,
+                  userId: file.userId,
+                  orgId: file.orgId,
+                  startPage: chapter.start_page,
+                  endPage: chapter.end_page,
+                  summary: chapter.summary ?? "No summary",
+                  title: chapter.title,
+                  embedding: chapterEmbeddings[index],
+                })),
+              )
+              .returning()
+          : [];
+
+        // Insert sections for each chapter
         for (const [index, chapter] of chapters.entries()) {
-          logger.info(`Creating chapter ${index + 1} for file ${fileId}`);
-          const chapterEmbedding = (
-            await getEmbeddings([
-              `Document Title: ${title}\nChapter ${index + 1} Title: ${
-                chapter.title
-              }\nChapter Summary: ${chapter.summary}`,
-            ])
-          )[0];
-          const [newChapter] = await getDb()
-            .insert(userFileChapter)
-            .values({
-              fileId,
-              userId: file.userId,
-              orgId: file.orgId,
-              startPage: chapter.start_page,
-              endPage: chapter.end_page,
-              summary: chapter.summary ?? "No summary",
-              title: chapter.title,
-              embedding: chapterEmbedding,
-            })
-            .returning();
-          if (!newChapter) throw new Error("Failed to create chapter");
+          const newChapter = insertedChapters[index];
+          if (!newChapter) continue;
 
           logger.info(`Creating sections for chapter ${index + 1} for file ${fileId}`);
           const chapterSections = Array.isArray(chapter.sections) ? chapter.sections : [];
@@ -117,8 +127,8 @@ export const updateOutline = async ({
             orgId: file.orgId,
             startPage: section.start_page,
             endPage: section.end_page,
-            summary: section.section_summary,
             title: section.title,
+            summary: section.section_summary ?? "",
             chapterId: newChapter.id,
             embedding: sectionEmbeddings[i],
             subsections: section.subsections?.map((sub: SubsectionAPI) => ({
@@ -361,7 +371,6 @@ export const updateParsedMetadata = async (fileId: string, parsedData: DocumentM
               })),
             },
             embedding: fileEmbedding,
-            status: "completed",
             updatedAt: new Date(),
           })
           .where(eq(userFile.id, fileId));
