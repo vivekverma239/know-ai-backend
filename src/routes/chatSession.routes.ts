@@ -2,6 +2,7 @@ import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 import { createSession, getSessionWithMessages, listSessions } from "../db/queries/message";
 import { ListSessionsResponse, SessionWithMessagesResponse } from "../schemas/chat.schema";
+import { AuthenticationError } from "../utils/errorHandler";
 
 const chatRoutes = async (fastify: FastifyInstance) => {
   // Get a chat session with its messages
@@ -18,7 +19,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const { id } = request.params as { id: string };
@@ -52,7 +53,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const { id, title } = request.body as { id?: string; title: string };
@@ -81,7 +82,7 @@ const chatRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const { cursor, limit = 10 } =

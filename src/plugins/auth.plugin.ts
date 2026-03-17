@@ -1,5 +1,6 @@
 import { getUserTeamIds } from "@/service/userTeams";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 
 // We'll use type assertion instead of extending FastifyRequest
 // since Fastify's type system is complex and doesn't easily support custom request types
@@ -65,7 +66,7 @@ const authPlugin = async (fastify: FastifyInstance) => {
   fastify.decorate("authenticate", authFn);
 };
 
-export default authPlugin;
+export default fp(authPlugin, { name: "auth-plugin", fastify: "5.x" });
 
 // TS augmentation
 declare module "fastify" {

@@ -14,6 +14,23 @@ import type { FastifyInstance } from "fastify";
 import { SignJWT, jwtVerify } from "jose";
 import { verify } from "otplib";
 
+// Simple in-memory rate limiter for auth endpoints
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+const checkRateLimit = (key: string): boolean => {
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+};
+
 type AdminUserConfig = {
   userId: string;
   passwordHash: string;
@@ -103,12 +120,17 @@ const adminAuthRoutes = async (fastify: FastifyInstance) => {
       response: {
         200: AdminLoginResponseSchema,
         401: Type.Object({ error: Type.String() }),
+        429: Type.Object({ error: Type.String() }),
         500: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       try {
         const config = await getAdminConfig();
+        const clientIp = request.ip;
+        if (!checkRateLimit(`login:${clientIp}`)) {
+          return reply.code(429).send({ error: "Too many login attempts. Try again later." });
+        }
         const userId = request.body.userId.trim();
         const password = request.body.password;
 
@@ -161,12 +183,17 @@ const adminAuthRoutes = async (fastify: FastifyInstance) => {
       response: {
         200: AdminVerifyTotpResponseSchema,
         401: Type.Object({ error: Type.String() }),
+        429: Type.Object({ error: Type.String() }),
         500: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       try {
         const config = await getAdminConfig();
+        const clientIp = request.ip;
+        if (!checkRateLimit(`totp:${clientIp}`)) {
+          return reply.code(429).send({ error: "Too many verification attempts. Try again later." });
+        }
         const { challengeToken, totpCode } = request.body;
 
         let challengePayload: { userId: string } | null = null;

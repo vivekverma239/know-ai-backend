@@ -198,7 +198,7 @@ const andWhere = (...clauses: Array<SQL | undefined>) => {
 const buildTeamFilter = (filters: ExternalContextFilters, column: Column): SQL | undefined => {
   if (filters.teamIds?.length) return inArray(column, filters.teamIds);
   if (filters.teamId) return eq(column, filters.teamId);
-  return undefined;
+  return sql`false`;
 };
 
 const intersectIds = (left: number[] | undefined, right: number[]) => {

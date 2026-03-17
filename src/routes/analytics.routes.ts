@@ -10,6 +10,9 @@ import type { FastifyInstance } from "fastify";
  * Analytics routes for token usage and cost tracking
  */
 const analyticsRoutes = async (fastify: FastifyInstance) => {
+  // Add auth to all analytics routes
+  fastify.addHook("onRequest", fastify.authenticate);
+
   /**
    * Get token usage summary
    * Returns aggregated token usage and cost data

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import "@/config/env"; // Validate env vars at startup — exits if invalid
 
 // Initialize OpenTelemetry FIRST before any other imports
 // This ensures auto-instrumentation works properly
@@ -15,7 +16,7 @@ import rawBody from "fastify-raw-body";
 import swaggerUI from "@fastify/swagger-ui";
 // import multipartPlugin from "./plugins/multipart.plugin";
 import adminAuthPlugin from "./plugins/adminAuth.plugin";
-import authPlugin, { authFn } from "./plugins/auth.plugin";
+import authPlugin from "./plugins/auth.plugin";
 import corsPlugin from "./plugins/cors.plugin";
 import loggingPlugin from "./plugins/logging.plugin";
 import { createErrorHandler } from "./utils/errorHandler";
@@ -107,8 +108,7 @@ const start = async () => {
   });
   await fastify.register(swaggerUI, { routePrefix: "/docs" });
   //   await fastify.register(fastifyAuth);
-  //   await fastify.register(authPlugin);
-  fastify.decorate("authenticate", authFn);
+  await fastify.register(authPlugin);
   await fastify.register(adminAuthPlugin);
 
   logger.debug("Authenticate plugin registered", { authenticate: !!fastify.authenticate });

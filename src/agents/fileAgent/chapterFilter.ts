@@ -118,7 +118,7 @@ The company's net income for 2023 was $97 billion, with a gross margin of 44.5% 
 Current date: ${new Date().toISOString()}
 `;
 
-export const chapterFilter = async (query: string) => {
+export const chapterFilter = async (query: string, userId?: string, orgId?: string) => {
   const fn = async () =>
     observe(
       { name: "chapterFilter" },
@@ -159,6 +159,8 @@ export const chapterFilter = async (query: string) => {
                   embedding,
                   limit: 25,
                   page,
+                  userId,
+                  orgId,
                 });
                 allChapters.push(...chapters);
                 remainingTries--;
@@ -223,7 +225,7 @@ export const chapterAgentV2 = async ({
     status: "processing",
     message: "Searching for relevant documents",
   };
-  const filteredChapters = await chapterFilter(query);
+  const filteredChapters = await chapterFilter(query, userId, orgId);
   documentSearchStep.message = "Chapters found";
   documentSearchStep.status = "done";
   documentSearchStep.metadata = {

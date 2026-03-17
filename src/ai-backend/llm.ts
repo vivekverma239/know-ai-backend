@@ -2,6 +2,7 @@ import { MODELS } from "@/@types/llm";
 import { logger as appLogger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
+import { recordTokenUsage as persistTokenUsageRecord } from "@/utils/asyncHook";
 import { traceManager, withActiveSpan } from "@/utils/tracing";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
@@ -287,6 +288,18 @@ export const generateTextWrapper = async ({
         operationName: functionName || "generateText",
       });
 
+      // Also persist to database via asyncHook
+      try {
+        persistTokenUsageRecord({
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          model,
+        });
+      } catch {
+        // Non-blocking — token tracking context may not be available
+      }
+
       // Calculate and log cost using tokenlens
       try {
         const cost = await calculateUsageCost(model, promptTokens, completionTokens);
@@ -412,6 +425,18 @@ export const generateObjectWrapper = async <T>({
           operationName: "generateObject",
         });
 
+        // Also persist to database via asyncHook
+        try {
+          persistTokenUsageRecord({
+            promptTokens,
+            completionTokens,
+            totalTokens,
+            model,
+          });
+        } catch {
+          // Non-blocking — token tracking context may not be available
+        }
+
         // Calculate and log cost using tokenlens
         try {
           const cost = await calculateUsageCost(model, promptTokens, completionTokens);
@@ -533,6 +558,18 @@ export const streamTextWrapper = async ({
               operationId: span.id,
               operationName: "streamText",
             });
+
+            // Also persist to database via asyncHook
+            try {
+              persistTokenUsageRecord({
+                promptTokens,
+                completionTokens,
+                totalTokens,
+                model,
+              });
+            } catch {
+              // Non-blocking — token tracking context may not be available
+            }
 
             try {
               const cost = await calculateUsageCost(model, promptTokens, completionTokens);

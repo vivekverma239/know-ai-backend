@@ -7,6 +7,7 @@ import { Type } from "@sinclair/typebox";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { AgentResultSchema, WebSearchTaskSchema } from "../schemas/webSearch.schema";
+import { AuthenticationError, NotFoundError, ValidationError } from "../utils/errorHandler";
 
 const webSearchRoutes = async (fastify: FastifyInstance) => {
   // Create task and enqueue background processing
@@ -24,7 +25,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const { query } = request.body;
       const requestedUserId = request.user?.id;
       if (!requestedUserId) {
-        return reply.code(401).send({ message: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
 
       const task = await getDb()
@@ -74,13 +75,13 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const { id } = request.params;
       const requestedUserId = request.user?.id;
       if (!requestedUserId) {
-        return reply.code(401).send({ message: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const task = await getDb().query.webSearchTask.findFirst({
         where: eq(webSearchTask.id, id),
       });
       if (!task || task.userId !== requestedUserId) {
-        return reply.code(404).send({ message: "Task not found" });
+        throw new NotFoundError("Task not found");
       }
       return reply.send(task);
     },
@@ -94,13 +95,12 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       tags: ["Web Search"],
       response: {
         200: Type.Array(WebSearchTaskSchema),
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const requestedUserId = request.user?.id;
       if (!requestedUserId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const tasks = await getDb().query.webSearchTask.findMany({
         where: eq(webSearchTask.userId, requestedUserId),
@@ -125,13 +125,13 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const { taskId } = request.body;
       const requestedUserId = request.user?.id;
       if (!requestedUserId) {
-        return reply.code(401).send({ message: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const task = await getDb().query.webSearchTask.findFirst({
         where: eq(webSearchTask.id, taskId),
       });
       if (!task || task.userId !== requestedUserId || task.status !== "failed") {
-        return reply.code(400).send({ message: "Task not eligible for retry" });
+        throw new ValidationError("Task not eligible for retry");
       }
       await getDb()
         .update(webSearchTask)
@@ -161,7 +161,7 @@ const webSearchRoutes = async (fastify: FastifyInstance) => {
       const requestedUserId = request.user?.id;
       const requestedOrgId = request.user?.orgId;
       if (!requestedUserId || !requestedOrgId) {
-        return reply.code(401).send({ message: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const result = await webAgent(query, {
         userId: requestedUserId,

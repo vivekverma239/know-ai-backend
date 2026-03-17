@@ -471,21 +471,13 @@ export const processStructuredReport = async ({
                 });
 
           aggregateUsage(answer.usage);
-
-          if (stepOutputs.subQuestionAnswer === undefined) {
-            stepOutputs.subQuestionAnswer = { subQuestions: [] };
-          }
-
-          stepOutputs.subQuestionAnswer.subQuestions = [
-            ...(stepOutputs.subQuestionAnswer.subQuestions ?? []),
-            answer,
-          ];
-          await persistStepOutput(reportId, stepOutputs, usage);
           return answer;
         }),
     );
 
-    await Promise.all(tasks);
+    const answers = await Promise.all(tasks);
+    stepOutputs.subQuestionAnswer = { subQuestions: answers };
+    await persistStepOutput(reportId, stepOutputs, usage);
 
     // Step 4: Final report
     let finalReportOutput: FinalReportOutput & { usage?: Record<string, LanguageModelUsage> };

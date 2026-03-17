@@ -176,7 +176,7 @@ export const chapterAgentV3 = async ({
     status: "processing",
     message: "Searching for relevant documents",
   };
-  const filteredChapters = await chapterFilter(query);
+  const filteredChapters = await chapterFilter(query, userId, orgId);
   documentSearchStep.message = "Chapters found";
   documentSearchStep.status = "done";
   documentSearchStep.metadata = {

@@ -2,6 +2,7 @@ import type { Message as SQLMessage } from "@/@types";
 import { MODELS } from "@/@types/llm";
 import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getSession, syncMessages } from "@/db/queries/message";
+import { AuthenticationError, NotFoundError, ValidationError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
@@ -40,7 +41,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
     async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
@@ -48,8 +49,11 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
 
       // Check if sessionId is valid
       const session = await getSession(sessionId);
-      if (!session || session.userId !== userId) {
-        return reply.code(400).send({ error: "Invalid sessionId" });
+      if (!session) {
+        throw new NotFoundError("Invalid sessionId");
+      }
+      if (session.userId !== userId) {
+        throw new ValidationError("Invalid sessionId");
       }
 
       const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GEMINI_2_5_FLASH;

@@ -253,36 +253,3 @@ export function createErrorHandler(fastify: FastifyInstance): void {
     }
   });
 }
-
-/**
- * Async error wrapper for route handlers
- * Use this to wrap async route handlers to ensure errors are caught
- */
-export function asyncHandler<T>(
-  handler: (request: FastifyRequest, reply: FastifyReply) => Promise<T>,
-) {
-  return async (request: FastifyRequest, reply: FastifyReply): Promise<T> => {
-    return await handler(request, reply);
-  };
-}
-
-/**
- * Try-catch wrapper that logs and rethrows errors
- * Use this for critical operations where you want to log but not handle the error
- */
-export async function tryWithLogging<T>(
-  operation: string,
-  fn: () => Promise<T>,
-  context?: Record<string, unknown>,
-): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    logError(error, {
-      ...context,
-      operation,
-      requestId: resolveRequestId(),
-    });
-    throw error;
-  }
-}

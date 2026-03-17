@@ -7,6 +7,7 @@ import { getLLM } from "@/ai-backend/llm";
 import { updateSession } from "@/db/mutation/session";
 import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
+import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errorHandler";
 import { createContextLogger } from "@/utils/logger";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
@@ -66,7 +67,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
     async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
@@ -81,11 +82,11 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       // Check if sessionId is valid
       const session = await getSession(sessionId);
       if (!session) {
-        return reply.code(400).send({ error: "Invalid sessionId" });
+        throw new NotFoundError("Session not found");
       }
 
       if (session.userId !== userId) {
-        return reply.code(400).send({ error: "Invalid sessionId" });
+        throw new AuthorizationError("Session access denied");
       }
 
       // Handle invalid model
@@ -108,7 +109,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         if (backendMessages.length === 2) {
           const title = await summarizeChat(
             sessionId,
-            messages.map((m: CoreMessageExt) => ({
+            msgs.map((m: CoreMessageExt) => ({
               role: m.role as "user" | "assistant",
               content: m.parts
                 .map((p: CoreMessageExt["parts"][number]) => (p.type === "text" ? p.text : ""))

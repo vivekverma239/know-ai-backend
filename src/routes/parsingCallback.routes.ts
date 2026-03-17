@@ -34,6 +34,24 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         }),
         response: { 200: Type.Object({ success: Type.Boolean() }) },
       },
+      preHandler: async (request, reply) => {
+        const expectedToken = process.env.BACKEND_TOKEN;
+        if (!expectedToken) {
+          request.log.error("BACKEND_TOKEN is not configured on the server");
+          return reply.code(401).send({ success: false, error: "Unauthorized" });
+        }
+
+        const callbackToken = request.headers["x-callback-token"] as string | undefined;
+        const authHeader = request.headers["authorization"] as string | undefined;
+        const token =
+          callbackToken ??
+          (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
+
+        if (!token || token !== expectedToken) {
+          request.log.warn("Invalid or missing callback token on parsing callback");
+          return reply.code(401).send({ success: false, error: "Unauthorized" });
+        }
+      },
     },
     async (request, reply) => {
       const requestId = resolveRequestId(request);
