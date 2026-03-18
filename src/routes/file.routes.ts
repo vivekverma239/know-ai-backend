@@ -32,6 +32,7 @@ import {
 } from "../service/file/triggerParsing";
 import { resolveExistingPdfStoragePath } from "../service/file/storagePath";
 import { getStorage } from "../service/googleStorage";
+import { enqueueToCMetaParsing } from "../service/tocMetaQueue";
 import { logger } from "../utils/logger";
 
 // Helper function to check if user has access to a file
@@ -563,6 +564,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         orgId: orgId,
       });
       await parsePDF(fileId);
+      await enqueueToCMetaParsing(fileId);
       return reply.code(201).send(file);
     },
   });
@@ -651,6 +653,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
               );
             });
         });
+        await enqueueToCMetaParsing(fileId);
 
         return reply.code(201).send({
           fileId,
@@ -750,6 +753,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
               );
             });
         });
+        await enqueueToCMetaParsing(fileId);
 
         return reply.code(201).send({
           fileId,
