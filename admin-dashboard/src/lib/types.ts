@@ -51,6 +51,14 @@ export type AdminDocumentPage = {
   content: string;
 };
 
+export type AdminDocumentSubsection = {
+  id: string;
+  title: string;
+  startPage: number;
+  endPage: number;
+  summary: string;
+};
+
 export type AdminDocumentSection = {
   id: string;
   fileId: string;
@@ -59,6 +67,7 @@ export type AdminDocumentSection = {
   endPage: number;
   title: string;
   summary: string;
+  subsections: AdminDocumentSubsection[] | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string | null;

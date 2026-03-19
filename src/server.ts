@@ -1,7 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-import "@/config/env"; // Validate env vars at startup — exits if invalid
-
 // Initialize OpenTelemetry FIRST before any other imports
 // This ensures auto-instrumentation works properly
 import { initializeOpenTelemetry } from "@/utils/otel";
@@ -38,7 +36,7 @@ import webSearchRoutes from "./routes/webSearch.routes";
 import tocMetaCallbackRoutes from "./routes/tocMetaCallback.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
-const fastify = Fastify({ logger: false });
+const fastify = Fastify({ logger: false, ignoreTrailingSlash: true });
 
 const start = async () => {
   // Register logging plugin FIRST to ensure all requests are logged

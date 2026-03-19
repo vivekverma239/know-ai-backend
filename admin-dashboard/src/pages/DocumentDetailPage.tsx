@@ -95,79 +95,258 @@ const PARSED_PAGE_BATCH_SIZE = 20;
 const SOURCE_PDF_BATCH_SIZE = 6;
 
 
-// --- Interactive TOC rendering ---
+// --- Interactive TOC rendering with accordion ---
 type TocEntry = {
   title?: string;
   page?: number;
   pageNumber?: number;
+  pageStart?: number;
+  pageEnd?: number;
+  summary?: string;
   children?: TocEntry[];
   items?: TocEntry[];
+  subsections?: TocEntry[];
   [key: string]: unknown;
 };
 
-function TocTree({
-  entries,
+function TocNode({
+  entry,
   depth,
   onGoToPage,
 }: {
-  entries: TocEntry[];
+  entry: TocEntry;
   depth: number;
+  onGoToPage: (page: number) => void;
+}) {
+  const children = entry.children ?? entry.items ?? entry.subsections ?? [];
+  const hasChildren = Array.isArray(children) && children.length > 0;
+  const [open, setOpen] = useState(false);
+  const title = entry.title ?? (typeof entry === "string" ? entry : "Untitled");
+  const page = entry.page ?? entry.pageNumber ?? entry.pageStart;
+  const pageEnd = entry.pageEnd;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => {
+          if (hasChildren) setOpen(!open);
+          else if (typeof page === "number") onGoToPage(page);
+        }}
+        className={`w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors flex items-center gap-2 group ${
+          hasChildren ? "cursor-pointer" : typeof page === "number" ? "cursor-pointer" : "cursor-default"
+        }`}
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+      >
+        {hasChildren && (
+          <span className="text-muted-foreground text-xs font-mono shrink-0 w-3">
+            {open ? "▼" : "▶"}
+          </span>
+        )}
+        {!hasChildren && <span className="w-3 shrink-0" />}
+        <span className="flex-1 min-w-0">
+          <span className="truncate block font-medium">{String(title)}</span>
+          {entry.summary && (
+            <span className="text-xs text-muted-foreground line-clamp-1 block mt-0.5">
+              {entry.summary}
+            </span>
+          )}
+        </span>
+        {typeof page === "number" && (
+          <span
+            className="text-xs text-primary shrink-0 hover:underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGoToPage(page);
+            }}
+          >
+            {pageEnd && pageEnd !== page ? `p.${page}–${pageEnd}` : `p.${page}`}
+          </span>
+        )}
+      </button>
+      {open && hasChildren && (
+        <div className={depth === 0 ? "border-l border-border/50 ml-4" : ""}>
+          {(children as TocEntry[]).map((child, i) => (
+            <TocNode key={i} entry={child} depth={depth + 1} onGoToPage={onGoToPage} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TocTree({
+  entries,
+  onGoToPage,
+}: {
+  entries: TocEntry[];
   onGoToPage: (page: number) => void;
 }) {
   return (
     <div className="space-y-0.5">
-      {entries.map((entry, i) => {
-        const title = entry.title ?? (typeof entry === "string" ? entry : `Item ${i + 1}`);
-        const page = entry.page ?? entry.pageNumber;
-        const children = entry.children ?? entry.items ?? [];
-
-        return (
-          <div key={i}>
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof page === "number") onGoToPage(page);
-              }}
-              className={`w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-muted transition-colors flex items-center justify-between gap-2 ${
-                typeof page === "number" ? "cursor-pointer" : "cursor-default"
-              }`}
-              style={{ paddingLeft: `${depth * 16 + 8}px` }}
-            >
-              <span className="truncate">{String(title)}</span>
-              {typeof page === "number" ? (
-                <span className="text-xs text-muted-foreground shrink-0">p.{page}</span>
-              ) : null}
-            </button>
-            {Array.isArray(children) && children.length > 0 ? (
-              <TocTree entries={children as TocEntry[]} depth={depth + 1} onGoToPage={onGoToPage} />
-            ) : null}
-          </div>
-        );
-      })}
+      {entries.map((entry, i) => (
+        <TocNode key={i} entry={entry} depth={0} onGoToPage={onGoToPage} />
+      ))}
     </div>
   );
 }
 
 function renderToc(toc: unknown, onGoToPage: (page: number) => void) {
   if (Array.isArray(toc)) {
-    return <TocTree entries={toc as TocEntry[]} depth={0} onGoToPage={onGoToPage} />;
+    return <TocTree entries={toc as TocEntry[]} onGoToPage={onGoToPage} />;
   }
   if (toc && typeof toc === "object") {
-    // Try to find an array property
     const obj = toc as Record<string, unknown>;
     for (const key of Object.keys(obj)) {
       if (Array.isArray(obj[key])) {
-        return <TocTree entries={obj[key] as TocEntry[]} depth={0} onGoToPage={onGoToPage} />;
+        return <TocTree entries={obj[key] as TocEntry[]} onGoToPage={onGoToPage} />;
       }
     }
-    // Render as a single-level list from object keys
     const entries = Object.entries(obj).map(([key, val]) => ({
       title: key,
       page: typeof val === "number" ? val : undefined,
     }));
-    return <TocTree entries={entries} depth={0} onGoToPage={onGoToPage} />;
+    return <TocTree entries={entries} onGoToPage={onGoToPage} />;
   }
   return <p className="text-muted-foreground text-sm">No structured table of contents data.</p>;
+}
+
+// --- Chapter → Section → Subsection accordion ---
+function ChapterAccordion({
+  chapter,
+  sections,
+  onGoToPage,
+}: {
+  chapter: { id: string; title: string; summary: string; startPage: number; endPage: number };
+  sections: { id: string; title: string; summary: string; startPage: number; endPage: number; subsections?: { id: string; title: string; startPage: number; endPage: number; summary: string }[] | null }[];
+  onGoToPage: (page: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-border bg-popover">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left p-3 flex items-start justify-between gap-3 hover:bg-muted/50 transition-colors rounded-lg"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground text-xs font-mono shrink-0">
+              {open ? "▼" : "▶"}
+            </span>
+            <h4 className="m-0 text-sm font-bold truncate">{chapter.title}</h4>
+          </div>
+          <p className="m-0 mt-1 text-sm text-muted-foreground line-clamp-2 ml-5">
+            {chapter.summary}
+          </p>
+          <small className="text-xs text-muted-foreground ml-5">
+            Pages {chapter.startPage} – {chapter.endPage}
+            {sections.length > 0 && ` · ${sections.length} section${sections.length !== 1 ? "s" : ""}`}
+          </small>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onGoToPage(chapter.startPage);
+          }}
+        >
+          Go to page
+        </Button>
+      </button>
+
+      {open && sections.length > 0 && (
+        <div className="border-t border-border px-3 pb-3 space-y-1.5 pt-2">
+          {sections.map((section) => (
+            <SectionAccordion
+              key={section.id}
+              section={section}
+              onGoToPage={onGoToPage}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionAccordion({
+  section,
+  onGoToPage,
+}: {
+  section: {
+    id: string;
+    title: string;
+    summary: string;
+    startPage: number;
+    endPage: number;
+    subsections?: { id: string; title: string; startPage: number; endPage: number; summary: string }[] | null;
+  };
+  onGoToPage: (page: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const subsections = section.subsections ?? [];
+
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/20">
+      <button
+        type="button"
+        onClick={() => subsections.length > 0 && setOpen(!open)}
+        className={`w-full text-left px-3 py-2 flex items-start justify-between gap-2 transition-colors rounded-md ${
+          subsections.length > 0 ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"
+        }`}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {subsections.length > 0 && (
+              <span className="text-muted-foreground text-xs font-mono shrink-0">
+                {open ? "▼" : "▶"}
+              </span>
+            )}
+            <span className="text-sm font-medium">{section.title}</span>
+          </div>
+          <p className="m-0 mt-0.5 text-xs text-muted-foreground line-clamp-1 ml-5">
+            {section.summary}
+          </p>
+        </div>
+        <span
+          className="text-xs text-primary shrink-0 cursor-pointer hover:underline"
+          onClick={(e) => {
+            e.stopPropagation();
+            onGoToPage(section.startPage);
+          }}
+        >
+          p.{section.startPage}–{section.endPage}
+        </span>
+      </button>
+
+      {open && subsections.length > 0 && (
+        <div className="border-t border-border/40 px-3 pb-2 pt-1.5 ml-5 space-y-1">
+          {subsections.map((sub) => (
+            <button
+              key={sub.id}
+              type="button"
+              onClick={() => onGoToPage(sub.startPage)}
+              className="w-full text-left px-2 py-1 rounded text-xs hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+            >
+              <div className="min-w-0">
+                <span className="font-medium">{sub.title}</span>
+                {sub.summary && (
+                  <span className="text-muted-foreground ml-1">– {sub.summary}</span>
+                )}
+              </div>
+              <span className="text-muted-foreground shrink-0">
+                p.{sub.startPage}–{sub.endPage}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function DocumentDetailPage() {
@@ -667,7 +846,7 @@ export function DocumentDetailPage() {
               </TabsContent>
 
               <TabsContent value="chapters">
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[560px] overflow-auto">
                   {chaptersQuery.isLoading ? <p className="text-muted-foreground">Loading chapters...</p> : null}
                   {chaptersQuery.isError ? (
                     <p className="text-destructive">Could not load chapters.</p>
@@ -675,23 +854,19 @@ export function DocumentDetailPage() {
                   {!chaptersQuery.isLoading && (chaptersQuery.data?.items.length ?? 0) === 0 ? (
                     <p className="text-muted-foreground">No chapters extracted for this document yet.</p>
                   ) : null}
-                  {chaptersQuery.data?.items.map((chapter) => (
-                    <div
-                      key={chapter.id}
-                      className="rounded-lg border border-border bg-popover p-3 flex justify-between items-start gap-3"
-                    >
-                      <div>
-                        <h4 className="m-0 text-sm font-bold">{chapter.title}</h4>
-                        <p className="m-0 mt-1 text-sm text-muted-foreground">{chapter.summary}</p>
-                        <small className="text-xs text-muted-foreground">
-                          Pages {chapter.startPage} - {chapter.endPage}
-                        </small>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => handleGoToPage(chapter.startPage)}>
-                        Go to page
-                      </Button>
-                    </div>
-                  ))}
+                  {chaptersQuery.data?.items.map((chapter) => {
+                    const chapterSections = sectionsQuery.data?.items.filter(
+                      (s) => s.chapterId === chapter.id,
+                    ) ?? [];
+                    return (
+                      <ChapterAccordion
+                        key={chapter.id}
+                        chapter={chapter}
+                        sections={chapterSections}
+                        onGoToPage={handleGoToPage}
+                      />
+                    );
+                  })}
                 </div>
               </TabsContent>
 

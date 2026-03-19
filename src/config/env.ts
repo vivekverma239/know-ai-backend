@@ -51,14 +51,26 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().optional(),
 });
 
-const parsed = envSchema.safeParse(process.env);
+let _env: z.infer<typeof envSchema> | null = null;
 
-if (!parsed.success) {
-  console.error("❌ Invalid environment variables:");
-  for (const issue of parsed.error.issues) {
-    console.error(`  ${issue.path.join(".")}: ${issue.message}`);
+/** Validate and return env vars. Cached after first call. */
+export const getEnv = () => {
+  if (_env) return _env;
+  const parsed = envSchema.safeParse(process.env);
+  if (!parsed.success) {
+    console.error("❌ Invalid environment variables:");
+    for (const issue of parsed.error.issues) {
+      console.error(`  ${issue.path.join(".")}: ${issue.message}`);
+    }
+    process.exit(1);
   }
-  process.exit(1);
-}
+  _env = parsed.data;
+  return _env;
+};
 
-export const env = parsed.data;
+// For backwards compatibility — validates on first access
+export const env = new Proxy({} as z.infer<typeof envSchema>, {
+  get(_, prop: string) {
+    return getEnv()[prop as keyof z.infer<typeof envSchema>];
+  },
+});

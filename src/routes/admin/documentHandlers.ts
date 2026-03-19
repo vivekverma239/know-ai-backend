@@ -422,6 +422,7 @@ export const registerDocumentHandlers = async (fastify: FastifyInstance) => {
           endPage: item.endPage,
           title: item.title,
           summary: item.summary,
+          subsections: item.subsections ?? null,
           metadata: item.metadata as Record<string, unknown> | null,
           createdAt: toIsoOrNull(item.createdAt) ?? new Date().toISOString(),
           updatedAt: toIsoOrNull(item.updatedAt),
