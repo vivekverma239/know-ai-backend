@@ -14,6 +14,7 @@ import { logError, logger } from "@/utils/logger";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { parsePDF } from "../file/triggerParsing";
 import { getStorage } from "../googleStorage";
+import { enqueueToCMetaParsing } from "../tocMetaQueue";
 import { processWebpageContent } from "./webpageProcessing";
 
 type DocumentIngestionData = {
@@ -280,6 +281,7 @@ export const ensureUserFileForDocument = async (
       });
       await getDb().update(userFile).set({ status: "pending" }).where(eq(userFile.id, fileId));
       await parsePDF(fileId);
+      await enqueueToCMetaParsing(fileId);
     }
   } catch (error) {
     logError(error, { operation: "documentIngestion:parse", documentId, fileId });

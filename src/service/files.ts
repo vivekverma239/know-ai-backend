@@ -7,6 +7,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { parsePDF } from "./file/triggerParsing";
 import { getStorage } from "./googleStorage";
+import { enqueueToCMetaParsing } from "./tocMetaQueue";
 
 const db = getDb();
 
@@ -108,6 +109,7 @@ export const bulkAddFiles = async ({
   await Promise.all(
     files.map(async (file) => {
       await parsePDF(file.id);
+      await enqueueToCMetaParsing(file.id);
     }),
   );
 
