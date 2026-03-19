@@ -37,7 +37,7 @@ import structuredReportCallbackRoutes from "./routes/structuredReportCallback.ro
 import webSearchRoutes from "./routes/webSearch.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ logger: false });
 
 const start = async () => {
   // Register logging plugin FIRST to ensure all requests are logged
