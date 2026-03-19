@@ -29,6 +29,7 @@ import { parsePDF } from "../service/file/triggerParsing";
 import { invalidateStoragePathCache, resolveExistingPdfStoragePath } from "../service/file/storagePath";
 import { getStorage } from "../service/googleStorage";
 import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "../utils/errorHandler";
+import { enqueueToCMetaParsing } from "../service/tocMetaQueue";
 import { logger } from "../utils/logger";
 
 // Helper function to check if user has access to a file
@@ -533,6 +534,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         orgId: orgId,
       });
       await parsePDF(fileId);
+      await enqueueToCMetaParsing(fileId);
       return reply.code(201).send(file);
     },
   });
@@ -606,7 +608,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       // Trigger parsing asynchronously
       parsePDF(fileId).catch((error) => {
         logger.error(`Error parsing file ${fileId}:`, error as Record<string, unknown>);
-        // Update file status to error
         getDb()
           .update(userFile)
           .set({ status: "failed" })
@@ -618,6 +619,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             );
           });
       });
+      await enqueueToCMetaParsing(fileId);
 
       return reply.code(201).send({
         fileId,
@@ -685,9 +687,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         .values({
           id: fileId,
           name: fileName,
-          userId: "admin", // Special admin user ID
+          userId: "admin",
           orgId: orgId,
-          isAdminFile: true, // Mark as admin file
+          isAdminFile: true,
           status: "pending",
         })
         .returning();
@@ -695,7 +697,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       // Trigger parsing asynchronously
       parsePDF(fileId).catch((error) => {
         logger.error(`Error parsing admin file ${fileId}:`, error as Record<string, unknown>);
-        // Update file status to error
         getDb()
           .update(userFile)
           .set({ status: "failed" })
@@ -707,6 +708,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             );
           });
       });
+      await enqueueToCMetaParsing(fileId);
 
       return reply.code(201).send({
         fileId,
