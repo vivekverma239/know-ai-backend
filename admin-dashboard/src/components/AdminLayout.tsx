@@ -3,24 +3,10 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { getAdminOrgs, getAdminSession } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { useOrgStore } from "../store/orgStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxContent,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxEmpty,
-} from "@/components/ui/combobox";
-import type { AdminOrgItem } from "@/lib/types";
-
-function formatOrgLabel(org: AdminOrgItem) {
-  if (org.name) return org.name;
-  const id = org.orgId;
-  return `Org (${id.slice(0, 4)}...${id.slice(-4)})`;
-}
+import { ArrowLeftRight } from "lucide-react";
+import { OrgSwitcherModal, formatOrgLabel } from "./OrgSwitcherModal";
 
 export function AdminLayout() {
   const navigate = useNavigate();
@@ -30,6 +16,8 @@ export function AdminLayout() {
 
   const selectedOrgId = useOrgStore((state) => state.selectedOrgId);
   const setSelectedOrgId = useOrgStore((state) => state.setSelectedOrgId);
+
+  const [orgModalOpen, setOrgModalOpen] = useState(false);
 
   const sessionQuery = useQuery({
     queryKey: ["admin-session", accessToken],
@@ -62,19 +50,6 @@ export function AdminLayout() {
   }, [orgsQuery.data, selectedOrgId, setSelectedOrgId]);
 
   const selectedOrg = orgsQuery.data?.items.find((org) => org.orgId === selectedOrgId);
-  const triggerLabel = selectedOrg ? formatOrgLabel(selectedOrg) : "All Orgs";
-
-  const orgOptions = [
-    { value: "", label: "All Orgs", count: null },
-    ...(orgsQuery.data?.items.map((org) => ({
-      value: org.orgId,
-      label: formatOrgLabel(org),
-      count: org.documentCount,
-    })) ?? []),
-  ];
-
-  const orgLabelMap = new Map(orgOptions.map((o) => [o.value, o.label]));
-  const valueToLabel = (value: string) => orgLabelMap.get(value) ?? value;
 
   return (
     <div className="min-h-screen flex p-3 md:p-4 gap-3">
@@ -120,39 +95,23 @@ export function AdminLayout() {
           </NavLink>
         </nav>
 
-        {/* Org Scope Picker */}
-        <div className="space-y-1">
-          <span className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-medium px-1">Org Scope</span>
-          <Combobox
-            value={selectedOrgId}
-            onValueChange={(val) => setSelectedOrgId(val ?? "")}
-            itemToStringLabel={valueToLabel}
-          >
-            <ComboboxInput
-              placeholder={triggerLabel}
-              disabled={orgsQuery.isLoading}
-              className="w-full"
-            />
-            <ComboboxContent>
-              <ComboboxList>
-                <ComboboxEmpty>No org found.</ComboboxEmpty>
-                {orgOptions.map((org) => (
-                  <ComboboxItem key={org.value} value={org.value}>
-                    <span className="flex-1 truncate">{org.label}</span>
-                    {org.count !== null ? (
-                      <Badge variant="secondary" className="ml-auto text-[10px]">
-                        {org.count}
-                      </Badge>
-                    ) : null}
-                  </ComboboxItem>
-                ))}
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
-        </div>
-
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Org Switcher Trigger */}
+        <div className="border-t border-border pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between text-left h-auto py-2"
+            onClick={() => setOrgModalOpen(true)}
+          >
+            <span className="truncate text-xs">
+              {selectedOrg ? formatOrgLabel(selectedOrg) : "Select Org"}
+            </span>
+            <ArrowLeftRight className="size-3.5 shrink-0 opacity-60" />
+          </Button>
+        </div>
 
         {/* Profile / Sign out */}
         <div className="border-t border-border pt-3 space-y-2">
@@ -175,8 +134,14 @@ export function AdminLayout() {
 
       {/* Main content */}
       <main className="flex-1 border border-border rounded-xl bg-card p-4 min-w-0">
-        <Outlet />
+        <Outlet key={selectedOrgId} />
       </main>
+
+      <OrgSwitcherModal
+        open={orgModalOpen || !selectedOrgId}
+        onOpenChange={setOrgModalOpen}
+        mandatory={!selectedOrgId}
+      />
     </div>
   );
 }
