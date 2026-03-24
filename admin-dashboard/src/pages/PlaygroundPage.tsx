@@ -445,7 +445,8 @@ export function PlaygroundPage() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const selectedOrgId = useOrgStore((s) => s.selectedOrgId);
 
-  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const selectedMemberId = useOrgStore((s) => s.selectedMemberId);
+  const setSelectedMemberId = useOrgStore((s) => s.setSelectedMemberId);
 
   const membersQuery = useQuery({
     queryKey: ["playground-members", selectedOrgId],
