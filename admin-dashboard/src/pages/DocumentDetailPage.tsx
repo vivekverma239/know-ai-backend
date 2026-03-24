@@ -10,7 +10,6 @@ import {
   getAdminDocumentPages,
   getAdminDocumentSections,
   getAdminDocumentTocMetadata,
-  getAdminOrgs,
 } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { Button } from "@/components/ui/button";
@@ -391,12 +390,6 @@ export function DocumentDetailPage() {
     enabled: Boolean(accessToken && id),
   });
 
-  const orgsQuery = useQuery({
-    queryKey: ["admin-orgs", accessToken],
-    queryFn: () => getAdminOrgs(accessToken ?? ""),
-    enabled: Boolean(accessToken),
-  });
-
   const parsedPagesQuery = useInfiniteQuery({
     queryKey: ["admin-document-pages", accessToken, id],
     enabled: Boolean(accessToken && id),
@@ -430,14 +423,6 @@ export function DocumentDetailPage() {
     [sourcePdfTotalPages, sourceRenderedPdfPages],
   );
   const pdfDocumentOptions = useMemo(() => ({ withCredentials: false }), []);
-
-  const orgName = useMemo(() => {
-    const orgId = detailQuery.data?.orgId;
-    if (!orgId) return null;
-    const org = orgsQuery.data?.items.find((o) => o.orgId === orgId);
-    if (!org) return orgId;
-    return org.name ?? `Org (${orgId.slice(0, 4)}...${orgId.slice(-4)})`;
-  }, [detailQuery.data?.orgId, orgsQuery.data]);
 
   const registerParsedPageNode = useCallback((pageNumber: number, node: HTMLDivElement | null) => {
     if (node) {
@@ -638,7 +623,7 @@ export function DocumentDetailPage() {
             {document.status}
           </Badge>
           <span className="text-muted-foreground">{document.type}</span>
-          <span className="text-muted-foreground">{orgName ?? document.orgId}</span>
+          <span className="text-muted-foreground">{document.orgId}</span>
           <span className="text-muted-foreground">{document.numPages} pages</span>
         </div>
       </div>
