@@ -1,12 +1,7 @@
-import { CloudTasksClient, protos } from "@google-cloud/tasks";
-import {
-  type TaskQueueConfig,
-  type TaskOptions,
-  type TaskStatus,
-  type QueueStats,
-} from "@/@types/taskQueue";
-import { err, ok, Result } from "neverthrow";
+import type { QueueStats, TaskOptions, TaskQueueConfig, TaskStatus } from "@/@types/taskQueue";
 import { logger } from "@/utils/logger";
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
+import { type Result, err, ok } from "neverthrow";
 
 type ITask = protos.google.cloud.tasks.v2.ITask;
 
@@ -56,9 +51,7 @@ export class GoogleCloudTasksProvider {
       // If queue doesn't exist (404), create it
       if (
         (error instanceof Error && "code" in error && error.code === 5) ||
-        (error instanceof Error &&
-          "message" in error &&
-          error.message?.includes("not found"))
+        (error instanceof Error && "message" in error && error.message?.includes("not found"))
       ) {
         logger.info("creating", {
           queueName: this.config.queueName,
@@ -103,7 +96,7 @@ export class GoogleCloudTasksProvider {
           headers: {
             "Content-Type": "application/json",
             "User-Agent": "TrainFit-TaskQueue/1.0",
-            "X-API-Key": process.env.ASYNC_QUEUE_AUTH_KEY!,
+            "X-API-Key": process.env.ASYNC_QUEUE_AUTH_KEY ?? "",
           },
           body: Buffer.from(JSON.stringify(options.payload)).toString("base64"),
         },
@@ -236,18 +229,14 @@ export class GoogleCloudTasksProvider {
         state: String(response.state ?? "UNKNOWN"),
         rateLimits: response.rateLimits
           ? {
-              maxConcurrentDispatches:
-                response.rateLimits.maxConcurrentDispatches ?? 0,
-              maxDispatchesPerSecond:
-                response.rateLimits.maxDispatchesPerSecond ?? 0,
+              maxConcurrentDispatches: response.rateLimits.maxConcurrentDispatches ?? 0,
+              maxDispatchesPerSecond: response.rateLimits.maxDispatchesPerSecond ?? 0,
             }
           : undefined,
         retryConfig: response.retryConfig
           ? {
               maxAttempts: response.retryConfig.maxAttempts ?? 0,
-              maxRetryDuration: Number(
-                response.retryConfig.maxRetryDuration?.seconds ?? 0
-              ),
+              maxRetryDuration: Number(response.retryConfig.maxRetryDuration?.seconds ?? 0),
             }
           : undefined,
       });

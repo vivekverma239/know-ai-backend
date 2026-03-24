@@ -1,6 +1,6 @@
-import { Storage, Bucket, File } from "@google-cloud/storage";
-import fs from "fs";
+import fs from "node:fs";
 import { logger } from "@/utils/logger";
+import { type Bucket, type File, Storage } from "@google-cloud/storage";
 
 interface JWTInput {
   type?: string;
@@ -19,21 +19,27 @@ export class GoogleStorageService {
   private readonly storage: Storage;
 
   constructor() {
-    const credentialsRaw = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64!;
+    const credentialsRaw = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
     let credentials: JWTInput;
     if (credentialsRaw) {
-      credentials = JSON.parse(
-        Buffer.from(credentialsRaw, "base64").toString("utf-8")
-      ) as JWTInput;
+      credentials = JSON.parse(Buffer.from(credentialsRaw, "base64").toString("utf-8")) as JWTInput;
     } else {
-      credentials = JSON.parse(
-        fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS!, "utf-8")
-      ) as JWTInput;
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        credentials = JSON.parse(
+          fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, "utf-8"),
+        ) as JWTInput;
+      } else {
+        throw new Error("GOOGLE_APPLICATION_CREDENTIALS is not set");
+      }
     }
     this.storage = new Storage({
       credentials: credentials,
     });
-    this.bucket = this.storage.bucket(process.env.GOOGLE_CLOUD_BUCKET_NAME!);
+    if (process.env.GOOGLE_CLOUD_BUCKET_NAME) {
+      this.bucket = this.storage.bucket(process.env.GOOGLE_CLOUD_BUCKET_NAME);
+    } else {
+      throw new Error("GOOGLE_CLOUD_BUCKET_NAME is not set");
+    }
   }
 
   /**
@@ -47,9 +53,7 @@ export class GoogleStorageService {
     const { data, contentType, path } = params;
     const file = this.bucket.file(path);
 
-    const buffer =
-      typeof data === "string" ? Buffer.from(data, "base64") : data;
-
+    const buffer = typeof data === "string" ? Buffer.from(data, "base64") : data;
 
     try {
       await file.save(buffer, {

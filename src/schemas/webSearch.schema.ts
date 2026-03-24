@@ -25,7 +25,4 @@ export const WebSearchTaskSchema = Type.Object({
   completedAt: Type.Optional(Type.String()),
 });
 
-export const AgentResultSchema = Type.Object(
-  {},
-  { additionalProperties: true }
-);
+export const AgentResultSchema = Type.Object({}, { additionalProperties: true });

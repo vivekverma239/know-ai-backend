@@ -1,17 +1,16 @@
-"use server";
-import { getLLM } from "@/ai-backend/llm";
-import { and, asc, inArray } from "drizzle-orm";
-import { getDb } from "@/db";
-import { eq } from "drizzle-orm";
-import { userFileChapter, userFilePage, userFileSection } from "@/db/schema";
-import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
-import { logger } from "@/utils/logger";
-import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { getSimilarChapters } from "@/db/queries/simChunks";
+import { MODELS } from "@/@types/llm";
 import { getEmbeddings } from "@/ai-backend/embeddings";
+import { getLLM } from "@/ai-backend/llm";
+import { getDb } from "@/db";
+import { getSimilarChapters } from "@/db/queries/simChunks";
+import { userFileChapter, userFilePage, userFileSection } from "@/db/schema";
+import { logger } from "@/utils/logger";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { generateText, stepCountIs, tool } from "ai";
+import { and, asc, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 const SYSTEM_PROMPT = `
 You are an expert financial research assistant. Your task is to provide comprehensive, accurate answers based on the document content provided to you.
@@ -31,7 +30,7 @@ You are an expert financial research assistant. Your task is to provide comprehe
 ## Response Requirements
 - **Accuracy**: Only use information found in the document. If information is not available, clearly state this
 - **Completeness**: Search thoroughly across multiple relevant sections
-- **Citations**: Use inline citations in this format: lorem ipsum [1](/doc/{documentId}/page/{pageNumber})
+- **Citations**: Use inline citations in this format: lorem ipsum [file_{documentId}/page={pageNumber}]
 - **Page list**: At the end of your response, include a "Pages referenced: [list of page numbers]"
 
 ## Important Guidelines
@@ -50,14 +49,9 @@ You are an expert financial research assistant. Your task is to provide comprehe
 const pageTool = async (pages: number[], fileId: string) => {
   logger.info(`Getting page content for ${pages.join(", ")}`);
   const pageContent = await getDb().query.userFilePage.findMany({
-    where: and(
-      eq(userFilePage.fileId, fileId),
-      inArray(userFilePage.pageNumber, pages)
-    ),
+    where: and(eq(userFilePage.fileId, fileId), inArray(userFilePage.pageNumber, pages)),
   });
-  return pageContent
-    ?.map((page) => `Page ${page.pageNumber}: ${page.content}`)
-    .join("\n");
+  return pageContent?.map((page) => `Page ${page.pageNumber}: ${page.content}`).join("\n");
 };
 
 export const fileAgent = async ({
@@ -104,7 +98,7 @@ export const fileAgent = async ({
       Subsection Title: ${subsection.title}
       Page Range: ${subsection.startPage} - ${subsection.endPage}
       Summary: ${subsection.summary}
-      `
+      `,
       )
       .join("\n")}
     `;
@@ -135,7 +129,7 @@ export const fileAgent = async ({
         execute: async ({ pages }) => {
           const pageContent = await pageTool(
             pages.map((page) => page - 1),
-            fileId
+            fileId,
           );
           return pageContent;
         },
@@ -195,8 +189,8 @@ export const fileAgentWithChapters = async ({
         userId,
         orgId,
         callback,
-      })
-    )
+      }),
+    ),
   );
   return responses;
 };
@@ -219,9 +213,7 @@ export const indexSearch = async ({
 }) => {
   // Sequentially run file agent for each document
   const responses = await Promise.all(
-    documents.map((document) =>
-      fileAgent({ query, fileId: document.id, userId, orgId, callback })
-    )
+    documents.map((document) => fileAgent({ query, fileId: document.id, userId, orgId, callback })),
   );
 
   const fileResponses = documents.map((document, index) => ({

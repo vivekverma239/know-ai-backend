@@ -1,5 +1,5 @@
-import path from "path";
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
 import AdmZip from "adm-zip";
 import { logger } from "./logger";
 
@@ -13,7 +13,6 @@ export const downloadPDF = async (urls: string[]) => {
       "Content-Type": "application/json",
     },
   });
-
 
   // Response blob is a zip file containing the pdfs, unzip and store in data/files/pdfs
   const zip = await response.blob();
@@ -58,9 +57,7 @@ export const downloadFileFromUrl = async (url: string): Promise<Buffer> => {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to download file: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get("content-type");
@@ -73,9 +70,7 @@ export const downloadFileFromUrl = async (url: string): Promise<Buffer> => {
   } catch (error) {
     logger.error(`Error downloading file from URL ${url}:`, { error });
     throw new Error(
-      `Failed to download file: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      `Failed to download file: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -83,10 +78,7 @@ export const downloadFileFromUrl = async (url: string): Promise<Buffer> => {
 /**
  * Extract filename from URL or use a default name
  */
-export const extractFilenameFromUrl = (
-  url: string,
-  defaultName?: string
-): string => {
+export const extractFilenameFromUrl = (url: string, defaultName?: string): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;

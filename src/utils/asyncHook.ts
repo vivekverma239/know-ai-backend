@@ -1,8 +1,8 @@
-import { AsyncLocalStorage } from "async_hooks";
-import { logger, logError } from "@/utils/logger";
-import { v4 as uuidv4 } from "uuid";
-import { getRequestId, getRequestContext } from "@/utils/requestContext";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { logError, logger } from "@/utils/logger";
+import { getRequestContext, getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost } from "@/utils/tokenlens";
+import { v4 as uuidv4 } from "uuid";
 
 // Types for token tracking
 export interface TokenUsage {
@@ -43,7 +43,7 @@ class TokenUsageAggregator {
     if (!this.totalUsage.has(operationId)) {
       this.totalUsage.set(operationId, []);
     }
-    this.totalUsage.get(operationId)!.push(usage);
+    this.totalUsage.get(operationId)?.push(usage);
   }
 
   getUsage(operationId: string): TokenUsage[] {
@@ -70,7 +70,7 @@ class TokenUsageAggregator {
         timestamp: new Date(),
         operationId,
         operationName: "",
-      }
+      },
     );
   }
 
@@ -87,7 +87,7 @@ class TokenUsageAggregator {
 export function withTokenTracking<T>(
   operationName: string,
   fn: () => Promise<T>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<T> {
   const operationId = uuidv4();
   const context: TokenTrackingContext = {
@@ -99,20 +99,19 @@ export function withTokenTracking<T>(
   };
 
   return tokenTrackingStorage.run(context, async () => {
-    try {
-      const result = await fn();
-      return result;
-    } catch (error) {
-      // Log error with token context
-      throw error;
-    }
+    const result = await fn();
+    return result;
   });
 }
 
 /**
  * Calculate cost estimate for token usage using tokenlens
  */
-async function calculateCost(model: string, promptTokens: number, completionTokens: number): Promise<number> {
+async function calculateCost(
+  model: string,
+  promptTokens: number,
+  completionTokens: number,
+): Promise<number> {
   try {
     return await calculateUsageCost(model, promptTokens, completionTokens);
   } catch (error) {
@@ -132,30 +131,36 @@ async function calculateCost(model: string, promptTokens: number, completionToke
 async function persistTokenUsage(usage: TokenUsage): Promise<void> {
   try {
     // Dynamically import to avoid circular dependencies
-    const { getDb } = await import("@/db");
-    const { tokenUsageLog } = await import("@/db/schema");
+    const { getDb } = await import("../db/index.js");
+    const { tokenUsageLog } = await import("../db/schema.js");
 
     const requestId = getRequestId();
     const requestContext = getRequestContext();
 
     // Calculate cost using tokenlens
-    const costEstimate = await calculateCost(usage.model, usage.promptTokens, usage.completionTokens);
+    const costEstimate = await calculateCost(
+      usage.model,
+      usage.promptTokens,
+      usage.completionTokens,
+    );
 
-    await getDb().insert(tokenUsageLog).values({
-      requestId: requestId || "unknown",
-      operationId: usage.operationId,
-      operationName: usage.operationName,
-      userId: requestContext?.userId,
-      sessionId: requestContext?.sessionId,
-      orgId: requestContext?.orgId,
-      model: usage.model,
-      promptTokens: usage.promptTokens,
-      completionTokens: usage.completionTokens,
-      totalTokens: usage.totalTokens,
-      costEstimate: costEstimate.toFixed(6),
-      timestamp: usage.timestamp,
-      metadata: {},
-    });
+    await getDb()
+      .insert(tokenUsageLog)
+      .values({
+        requestId: requestId || "unknown",
+        operationId: usage.operationId,
+        operationName: usage.operationName,
+        userId: requestContext?.userId,
+        sessionId: requestContext?.sessionId,
+        orgId: requestContext?.orgId,
+        model: usage.model,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
+        costEstimate: costEstimate.toFixed(6),
+        timestamp: usage.timestamp,
+        metadata: {},
+      });
 
     logger.debug("Token usage persisted to database with tokenlens cost", {
       operationId: usage.operationId,
@@ -174,7 +179,7 @@ async function persistTokenUsage(usage: TokenUsage): Promise<void> {
 
 // Function to record token usage for a specific LLM call
 export function recordTokenUsage(
-  usage: Omit<TokenUsage, "operationId" | "operationName" | "timestamp">
+  usage: Omit<TokenUsage, "operationId" | "operationName" | "timestamp">,
 ): void {
   const context = tokenTrackingStorage.getStore();
   if (!context) {
@@ -252,7 +257,7 @@ export function getCurrentTotalTokenUsage(): TokenUsage | null {
       timestamp: new Date(),
       operationId: context.operationId,
       operationName: context.operationName,
-    }
+    },
   );
 }
 
@@ -262,9 +267,7 @@ export function getTokenUsageByOperationId(operationId: string): TokenUsage[] {
 }
 
 // Function to get total token usage by operation ID
-export function getTotalTokenUsageByOperationId(
-  operationId: string
-): TokenUsage {
+export function getTotalTokenUsageByOperationId(operationId: string): TokenUsage {
   return TokenUsageAggregator.getInstance().getTotalUsage(operationId);
 }
 
@@ -281,22 +284,22 @@ export function getAllTokenUsage(): Map<string, TokenUsage[]> {
 // Type for AI SDK response with usage information
 interface AIResponseWithUsage {
   usage?: {
-    promptTokens?: number;
-    completionTokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
     totalTokens?: number;
   };
   telemetry?: {
     usage?: {
-      promptTokens?: number;
-      completionTokens?: number;
+      inputTokens?: number;
+      outputTokens?: number;
       totalTokens?: number;
     };
     model?: string;
   };
   data?: {
     usage?: {
-      promptTokens?: number;
-      completionTokens?: number;
+      inputTokens?: number;
+      outputTokens?: number;
       totalTokens?: number;
     };
     model?: string;
@@ -305,9 +308,11 @@ interface AIResponseWithUsage {
 }
 
 // Higher-order function to wrap AI SDK calls with token tracking
-export function withTokenTrackingForAI<
-  T extends (...args: unknown[]) => Promise<unknown>
->(operationName: string, aiFunction: T, metadata?: Record<string, unknown>): T {
+export function withTokenTrackingForAI<T extends (...args: unknown[]) => Promise<unknown>>(
+  operationName: string,
+  aiFunction: T,
+  metadata?: Record<string, unknown>,
+): T {
   return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     return withTokenTracking(
       operationName,
@@ -316,9 +321,7 @@ export function withTokenTrackingForAI<
 
         // Try to extract token usage from AI SDK response
         if (result && typeof result === "object") {
-          const usage = extractTokenUsageFromAIResponse(
-            result as AIResponseWithUsage
-          );
+          const usage = extractTokenUsageFromAIResponse(result as AIResponseWithUsage);
           if (usage) {
             recordTokenUsage(usage);
           }
@@ -326,41 +329,57 @@ export function withTokenTrackingForAI<
 
         return result as ReturnType<T>;
       },
-      metadata
+      metadata,
     );
   }) as T;
 }
 
 // Function to extract token usage from AI SDK response
 function extractTokenUsageFromAIResponse(
-  response: AIResponseWithUsage
+  response: AIResponseWithUsage,
 ): Omit<TokenUsage, "operationId" | "operationName" | "timestamp"> | null {
+  const getPromptTokens = (usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  }): { promptTokens: number; completionTokens: number; totalTokens: number } => {
+    const promptTokens = usage?.inputTokens ?? 0;
+    const completionTokens = usage?.outputTokens ?? 0;
+    const totalTokens = usage?.totalTokens ?? promptTokens + completionTokens;
+    return { promptTokens, completionTokens, totalTokens };
+  };
+
   // Check for common AI SDK response patterns
   if (response?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.usage);
     return {
-      promptTokens: response.usage.promptTokens ?? 0,
-      completionTokens: response.usage.completionTokens ?? 0,
-      totalTokens: response.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.model ?? "unknown",
     };
   }
 
   // Check for Braintrust telemetry data
   if (response?.telemetry?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(
+      response.telemetry.usage,
+    );
     return {
-      promptTokens: response.telemetry.usage.promptTokens ?? 0,
-      completionTokens: response.telemetry.usage.completionTokens ?? 0,
-      totalTokens: response.telemetry.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.telemetry.model ?? "unknown",
     };
   }
 
   // Check for other common patterns
   if (response?.data?.usage) {
+    const { promptTokens, completionTokens, totalTokens } = getPromptTokens(response.data.usage);
     return {
-      promptTokens: response.data.usage.promptTokens ?? 0,
-      completionTokens: response.data.usage.completionTokens ?? 0,
-      totalTokens: response.data.usage.totalTokens ?? 0,
+      promptTokens,
+      completionTokens,
+      totalTokens,
       model: response.data.model ?? "unknown",
     };
   }
@@ -413,7 +432,7 @@ export function withCustomTokenTracking<T>(
   operationId: string,
   operationName: string,
   fn: () => Promise<T>,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<T> {
   const context: TokenTrackingContext = {
     operationId,
@@ -424,12 +443,8 @@ export function withCustomTokenTracking<T>(
   };
 
   return tokenTrackingStorage.run(context, async () => {
-    try {
-      const result = await fn();
-      return result;
-    } catch (error) {
-      throw error;
-    }
+    const result = await fn();
+    return result;
   });
 }
 

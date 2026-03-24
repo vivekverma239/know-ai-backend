@@ -1,7 +1,7 @@
-import { logger, logError } from "@/utils/logger";
-import { computeCostUSD, type TokenCosts } from "tokenlens";
-import type { LanguageModelUsage } from "ai";
 import { MODELS } from "@/@types/llm";
+import { logError, logger } from "@/utils/logger";
+import type { LanguageModelUsage } from "ai";
+import { type TokenCosts, computeCostUSD } from "tokenlens";
 
 /**
  * Model mapping for tokenlens
@@ -62,7 +62,7 @@ export interface StepUsage extends LanguageModelUsage {
  */
 export async function calculateModelCost(
   model: string,
-  usage: LanguageModelUsage
+  usage: LanguageModelUsage,
 ): Promise<number> {
   // Map model to tokenlens identifier
   const tokenlensModel = TOKENLENS_MODEL_MAPPING[model] || model;
@@ -81,8 +81,8 @@ export async function calculateModelCost(
         tokenlensModel,
         provider,
         cost: tokenCosts.totalTokenCostUSD,
-        inputTokens: usage.promptTokens,
-        outputTokens: usage.completionTokens,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
       });
 
       return tokenCosts.totalTokenCostUSD ?? 0;
@@ -94,7 +94,6 @@ export async function calculateModelCost(
         provider,
         error: error instanceof Error ? error.message : String(error),
       });
-      continue;
     }
   }
 
@@ -112,9 +111,7 @@ export async function calculateModelCost(
  * Calculate total usage details from multiple step usages
  * This is the main function to use for calculating costs
  */
-export async function getUsageDetails(
-  allStepUsage: StepUsage[]
-): Promise<UsageDetails> {
+export async function getUsageDetails(allStepUsage: StepUsage[]): Promise<UsageDetails> {
   let totalCost = 0;
   const totalTokens = {
     inputTokens: 0,
@@ -125,8 +122,8 @@ export async function getUsageDetails(
 
   for (const stepUsage of allStepUsage) {
     // Aggregate tokens
-    totalTokens.inputTokens += stepUsage.promptTokens ?? 0;
-    totalTokens.outputTokens += stepUsage.completionTokens ?? 0;
+    totalTokens.inputTokens += stepUsage.inputTokens ?? 0;
+    totalTokens.outputTokens += stepUsage.outputTokens ?? 0;
     totalTokens.totalTokens += stepUsage.totalTokens ?? 0;
 
     // Calculate cost for this step
@@ -138,8 +135,8 @@ export async function getUsageDetails(
       costBreakdown.push({
         model: stepUsage.model,
         cost: stepCost,
-        inputTokens: stepUsage.promptTokens ?? 0,
-        outputTokens: stepUsage.completionTokens ?? 0,
+        inputTokens: stepUsage.inputTokens ?? 0,
+        outputTokens: stepUsage.outputTokens ?? 0,
       });
     }
   }
@@ -157,11 +154,11 @@ export async function getUsageDetails(
 export async function calculateUsageCost(
   model: string,
   promptTokens: number,
-  completionTokens: number
+  completionTokens: number,
 ): Promise<number> {
   const usage: LanguageModelUsage = {
-    promptTokens,
-    completionTokens,
+    inputTokens: promptTokens,
+    outputTokens: completionTokens,
     totalTokens: promptTokens + completionTokens,
   };
 
@@ -175,7 +172,7 @@ export async function calculateUsageCost(
 export async function calculateCostWithFallback(
   model: string,
   promptTokens: number,
-  completionTokens: number
+  completionTokens: number,
 ): Promise<number> {
   try {
     return await calculateUsageCost(model, promptTokens, completionTokens);
@@ -199,15 +196,15 @@ export async function calculateCostWithFallback(
 function calculateFallbackCost(
   model: string,
   promptTokens: number,
-  completionTokens: number
+  completionTokens: number,
 ): number {
   // Approximate pricing per million tokens (in USD)
   const FALLBACK_PRICING: Record<string, { input: number; output: number }> = {
     // Google Gemini
-    "gemini-2.5-flash": { input: 0.15, output: 0.60 },
+    "gemini-2.5-flash": { input: 0.15, output: 0.6 },
     "gemini-2.5-pro": { input: 1.25, output: 5.0 },
-    "gemini-2.0-flash": { input: 0.15, output: 0.60 },
-    "gemini-1.5-flash": { input: 0.075, output: 0.30 },
+    "gemini-2.0-flash": { input: 0.15, output: 0.6 },
+    "gemini-1.5-flash": { input: 0.075, output: 0.3 },
     // OpenAI
     "gpt-4o": { input: 2.5, output: 10.0 },
     "gpt-5": { input: 5.0, output: 15.0 },

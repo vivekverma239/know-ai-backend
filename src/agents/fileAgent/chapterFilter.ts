@@ -1,16 +1,16 @@
-import { getLLM } from "@/ai-backend/llm";
-import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
-import { logger } from "@/utils/logger";
-import { MODELS } from "@/@types/llm";
 import type { StepMessage } from "@/@types/agents";
-import { getSimilarChapters } from "@/db/queries/simChunks";
-import { getEmbeddings } from "@/ai-backend/embeddings";
-import { parseJson } from "@/utils/parseJson";
-import { similaritySearchChunks } from "@/service/simSearch";
-import { v4 as uuidv4 } from "uuid";
 import { StepType } from "@/@types/agents";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
+import { MODELS } from "@/@types/llm";
+import { getEmbeddings } from "@/ai-backend/embeddings";
+import { getLLM } from "@/ai-backend/llm";
+import { getSimilarChapters } from "@/db/queries/simChunks";
+import { similaritySearchChunks } from "@/service/simSearch";
+import { logger } from "@/utils/logger";
+import { parseJson } from "@/utils/parseJson";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { generateText, stepCountIs, tool } from "ai";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 
 const CHAPTER_FILTER_SYSTEM_PROMPT = `
 You are an expert financial research assistant. Your task is to figure out relevant chapters for the user query from repository of chapters.
@@ -86,7 +86,7 @@ if fully formed queries don't bring relevant chunks, try with the keyword only q
 ## Response Requirements
 - **Accuracy**: Only use information found in the documents. If information is not available, clearly state this
 - **Completeness**: Search thoroughly across multiple relevant sections and chapters
-- **Citations**: Use inline citations in this format: "The company reported $50B revenue [1](/doc/{documentId}/page/{pageNumber})"
+- **Citations**: Use inline citations in this format: "The company reported $50B revenue [file_{documentId}/page={pageNumber}]"
 - **Page list**: At the end of your response, include a "Pages referenced: [list of page numbers]"
 - **Language**: Answer in the same language as the query (typically English)
 - **Structure**: Organize your response with clear headings and logical flow
@@ -109,16 +109,16 @@ if fully formed queries don't bring relevant chunks, try with the keyword only q
 **Query**: "What were Apple's financial results in 2023?"
 
 **Response**:
-Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [1](/doc/apple-2023/page/15). The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [2](/doc/apple-2023/page/18). Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [3](/doc/apple-2023/page/22).
+Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [file_apple-2023/page=15]. The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [file_apple-2023/page=18]. Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [file_apple-2023/page=22].
 
-The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [4](/doc/apple-2023/page/25). International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [5](/doc/apple-2023/page/28).
+The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [file_apple-2023/page=25]. International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [file_apple-2023/page=28].
 
 **Pages referenced:** [15, 18, 22, 25, 28]
 
 Current date: ${new Date().toISOString()}
 `;
 
-export const chapterFilter = async (query: string) => {
+export const chapterFilter = async (query: string, userId?: string, orgId?: string) => {
   const fn = async () =>
     observe(
       { name: "chapterFilter" },
@@ -159,6 +159,8 @@ export const chapterFilter = async (query: string) => {
                   embedding,
                   limit: 25,
                   page,
+                  userId,
+                  orgId,
                 });
                 allChapters.push(...chapters);
                 remainingTries--;
@@ -194,7 +196,7 @@ export const chapterFilter = async (query: string) => {
           chapters: items.filter((chapter) => chapter !== null),
         };
       },
-      query
+      query,
     );
   return await fn();
 };
@@ -223,7 +225,7 @@ export const chapterAgentV2 = async ({
     status: "processing",
     message: "Searching for relevant documents",
   };
-  const filteredChapters = await chapterFilter(query);
+  const filteredChapters = await chapterFilter(query, userId, orgId);
   documentSearchStep.message = "Chapters found";
   documentSearchStep.status = "done";
   documentSearchStep.metadata = {
@@ -231,7 +233,6 @@ export const chapterAgentV2 = async ({
     chapters: filteredChapters.chapters,
   };
   callback?.(documentSearchStep);
-
 
   const chapters = filteredChapters.chapters;
 
@@ -257,9 +258,7 @@ export const chapterAgentV2 = async ({
               description: "Search for chunks",
               inputSchema: z.object({
                 query: z.string(),
-                page: z
-                  .number()
-                  .describe("Page number of paginate results, start from 1"),
+                page: z.number().describe("Page number of paginate results, start from 1"),
               }),
               execute: async ({ query, page = 1 }) => {
                 const chunkSearchStep: StepMessage = {
@@ -283,9 +282,7 @@ export const chapterAgentV2 = async ({
                   orgId,
                 });
                 alreadyLookedAtChunks.push(
-                  ...chunks
-                    .map((chunk) => chunk.id)
-                    .filter((id) => id !== undefined)
+                  ...chunks.map((chunk) => chunk.id).filter((id) => id !== undefined),
                 );
                 // logger.info(`Chunks: ${JSON.stringify(chunks, null, 2)}`);
                 chunkSearchStep.message = "Chunks found";
@@ -300,7 +297,7 @@ export const chapterAgentV2 = async ({
                   .map(
                     (chunk) => `<doc id="${chunk.documentId}" >
           ${chunk.content}
-          </doc>`
+          </doc>`,
                   )
                   .join("\n\n");
               },
@@ -316,7 +313,7 @@ export const chapterAgentV2 = async ({
         return response.text;
       },
       query,
-      chapters
+      chapters,
     );
   return await fn();
 };

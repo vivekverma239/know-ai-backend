@@ -15,6 +15,8 @@ export enum MODELS {
   GEMINI_2_5_PRO = "gemini-2.5-pro",
   GEMINI_2_0_FLASH_LITE = "gemini-2.0-flash-lite",
   GEMINI_2_5_FLASH_LITE = "gemini-2.5-flash-lite-preview-06-17",
+  GEMINI_3_FLASH = "gemini-3-flash-preview",
+
   GEMINI_2_0_PRO = "gemini-2.0-pro-exp-02-05",
   DEEPSEEK_LLAMA_8B = "deepseek/deepseek-r1-distill-llama-8b",
   DEEPSEEK_QWEN_2_5_SMALL = "deepseek/deepseek-r1-distill-qwen-1.5b",

@@ -1,7 +1,7 @@
+import { MODELS } from "@/@types/llm";
 import type { LanguageModel, ModelMessage } from "ai";
 import { generateText } from "ai";
 import { getLLM } from "./llm";
-import { MODELS } from "@/@types/llm";
 
 const PROMPT = `
 You are a helpful assistant that summarizes conversations. Given a chat hitory
@@ -12,18 +12,13 @@ Conversation history:
 {{conversationHistory}}
 `;
 
-export const summarizeChat = async (
-  sessionId: string,
-  messages: ModelMessage[]
-) => {
+export const summarizeChat = async (sessionId: string, messages: ModelMessage[]) => {
   const llm = getLLM(MODELS.GEMINI_2_0_FLASH);
   const result = await generateText({
     model: llm as LanguageModel,
     prompt: PROMPT.replace(
       "{{conversationHistory}}",
-      messages
-        .map((m: ModelMessage) => `${m.role}: ${JSON.stringify(m.content)}`)
-        .join("\n")
+      messages.map((m: ModelMessage) => `${m.role}: ${JSON.stringify(m.content)}`).join("\n"),
     ),
   });
 

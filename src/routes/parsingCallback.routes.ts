@@ -1,21 +1,21 @@
+import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
+import type { ParsedPDF } from "@/@types/parsedData";
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
-import type { ParsedPDF } from "@/@types/parsedData";
-import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
 
+import type { SectionCallbackData } from "@/@types/fileIndex";
 import type { DocumentMetadata } from "@/@types/metadata";
-import { mapCallbackTokenUsage } from "@/utils/tokenUsage";
-import { logger, logError } from "@/utils/logger";
-import { getRequestId } from "@/utils/requestContext";
+import type { CallbackTokenUsage } from "@/@types/tokenUsage";
 import {
-  updateOutline,
   updateHeirarchialIndex,
+  updateOutline,
   updateParsedMetadata,
   updateParsedPages,
 } from "@/service/file/parsing";
 import { updateUsage } from "@/service/file/usage";
-import type { CallbackTokenUsage } from "@/@types/tokenUsage";
-import type { SectionCallbackData } from "@/@types/fileIndex";
+import { logError, logger } from "@/utils/logger";
+import { resolveRequestId } from "@/utils/requestContext";
+import { mapCallbackTokenUsage } from "@/utils/tokenUsage";
 
 const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
   // Global dispatcher for parsing callbacks
@@ -34,19 +34,33 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         }),
         response: { 200: Type.Object({ success: Type.Boolean() }) },
       },
+      preHandler: async (request, reply) => {
+        const expectedToken = process.env.BACKEND_TOKEN;
+        if (!expectedToken) {
+          request.log.error("BACKEND_TOKEN is not configured on the server");
+          return reply.code(401).send({ success: false, error: "Unauthorized" });
+        }
+
+        const callbackToken = request.headers["x-callback-token"] as string | undefined;
+        const authHeader = request.headers["authorization"] as string | undefined;
+        const token =
+          callbackToken ??
+          (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
+
+        if (!token || token !== expectedToken) {
+          request.log.warn("Invalid or missing callback token on parsing callback");
+          return reply.code(401).send({ success: false, error: "Unauthorized" });
+        }
+      },
     },
     async (request, reply) => {
-      const requestId = getRequestId();
+      const requestId = resolveRequestId(request);
 
       try {
         const { fileId } = request.params as { fileId: string };
         const { status, data, task_type, usage_metadata } = request.body as {
           status: string;
-          data:
-            | HeirarchialIndexData
-            | ParsedPDF
-            | DocumentMetadata
-            | SectionCallbackData;
+          data: HeirarchialIndexData | ParsedPDF | DocumentMetadata | SectionCallbackData;
           task_type: string;
           usage_metadata: CallbackTokenUsage;
         };
@@ -108,7 +122,7 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
           requestId,
         });
       }
-    }
+    },
   );
 };
 

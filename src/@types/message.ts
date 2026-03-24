@@ -6,9 +6,7 @@ export enum Role {
   ASSISTANT = "assistant",
 }
 
-export type MessageParts = Array<
-  UIMessagePart<Record<string, unknown>, UITools>
->;
+export type MessageParts = Array<UIMessagePart<Record<string, unknown>, UITools>>;
 export type Message = {
   id: string;
   userId: string;

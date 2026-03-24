@@ -7,7 +7,11 @@ export type WebSearchProcessingData = {
   taskId: string;
 };
 
+export type ToCMetaProcessingData = {
+  fileId: string;
+};
+
 export type QstashMessage<T> = {
-  type: "file_processing" | "web_search_processing" | "structured_report_processing";
+  type: "file_processing" | "web_search_processing" | "structured_report_processing" | "toc_meta_processing";
   data: T;
 };

@@ -5,22 +5,50 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1759303311364,
-      "tag": "0000_init",
+      "when": 1769880339201,
+      "tag": "0000_sweet_silk_fever",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1759305674634,
-      "tag": "0001_access_control",
+      "when": 1769880592679,
+      "tag": "0001_funny_marrow",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1759311855881,
-      "tag": "0002_creator_id_removed",
+      "when": 1771355427794,
+      "tag": "0002_warm_manta",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771388062902,
+      "tag": "0003_yellow_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771400000000,
+      "tag": "0004_add_vector_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771410000000,
+      "tag": "0005_add_cascade_deletes",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771420000000,
+      "tag": "0006_add_btree_indexes",
       "breakpoints": true
     }
   ]

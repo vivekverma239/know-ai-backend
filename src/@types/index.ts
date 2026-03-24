@@ -1,13 +1,13 @@
 import type {
-  userFilePage,
   chatSession,
+  chunks,
+  messages,
   textNote,
   userFile,
-  messages,
-  chunks,
-  userFileCluster,
-  userFileSection,
   userFileChapter,
+  userFileCluster,
+  userFilePage,
+  userFileSection,
 } from "@/db/schema";
 
 export type UserFile = typeof userFile.$inferSelect;

@@ -1,30 +1,42 @@
 import dotenv from "dotenv";
 dotenv.config();
-import Fastify from "fastify";
+// Initialize OpenTelemetry FIRST before any other imports
+// This ensures auto-instrumentation works properly
+import { initializeOpenTelemetry } from "@/utils/otel";
+initializeOpenTelemetry();
+
+import { logger } from "@/utils/logger";
 import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
-import { logger } from "@/utils/logger";
+import Fastify from "fastify";
+import rawBody from "fastify-raw-body";
 
 import swaggerUI from "@fastify/swagger-ui";
+// import multipartPlugin from "./plugins/multipart.plugin";
+import adminAuthPlugin from "./plugins/adminAuth.plugin";
+import authPlugin from "./plugins/auth.plugin";
 import corsPlugin from "./plugins/cors.plugin";
 import loggingPlugin from "./plugins/logging.plugin";
 import { createErrorHandler } from "./utils/errorHandler";
-// import multipartPlugin from "./plugins/multipart.plugin";
-import authPlugin, { authFn } from "./plugins/auth.plugin";
 
-import healthRoutes from "./routes/health.routes";
+import adminAuthRoutes from "./routes/adminAuth.routes";
+import adminRoutes from "./routes/admin.routes";
+import adminPlaygroundRoutes from "./routes/adminPlayground.routes";
+import analyticsRoutes from "./routes/analytics.routes";
 import chatRoutes from "./routes/chatSession.routes";
-import webSearchRoutes from "./routes/webSearch.routes";
-import fileRoutes from "./routes/file.routes";
-import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
-import parsingCallbackRoutes from "./routes/parsingCallback.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
+import fileRoutes from "./routes/file.routes";
 import finAgentRoutes from "./routes/finAgent.routes";
+import healthRoutes from "./routes/health.routes";
+import ingestionRoutes from "./routes/ingestion.routes";
+import parsingCallbackRoutes from "./routes/parsingCallback.routes";
 import structuredReportRoutes from "./routes/structuredReport.routes";
 import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
-import analyticsRoutes from "./routes/analytics.routes";
+import webSearchRoutes from "./routes/webSearch.routes";
+import tocMetaCallbackRoutes from "./routes/tocMetaCallback.routes";
+import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ logger: false, ignoreTrailingSlash: true });
 
 const start = async () => {
   // Register logging plugin FIRST to ensure all requests are logged
@@ -32,7 +44,7 @@ const start = async () => {
   await fastify.register(loggingPlugin, {
     logLevel: logLevel || "info",
     skipPaths: ["/api/v1/health", "/metrics", "/docs"],
-    slowRequestThreshold: parseInt(process.env.SLOW_REQUEST_THRESHOLD_MS || "5000", 10),
+    slowRequestThreshold: Number.parseInt(process.env.SLOW_REQUEST_THRESHOLD_MS || "5000", 10),
   });
 
   // Register global error handler
@@ -43,6 +55,13 @@ const start = async () => {
   await fastify.register(multipart, {
     attachFieldsToBody: false,
     limits: { fileSize: 50 * 1024 * 1024 },
+  });
+  await fastify.register(rawBody, {
+    field: "rawBody",
+    global: false,
+    encoding: "utf8",
+    runFirst: true,
+    routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback", "/api/v1/toc-meta-callback"],
   });
   //   await fastify.register(multipartPlugin);
   // Swagger / OpenAPI
@@ -79,13 +98,17 @@ const start = async () => {
           name: "Callbacks",
           description: "Webhook endpoints for external service callbacks",
         },
+        {
+          name: "Admin",
+          description: "Admin authentication and dashboard read APIs",
+        },
       ],
     },
   });
   await fastify.register(swaggerUI, { routePrefix: "/docs" });
   //   await fastify.register(fastifyAuth);
-  //   await fastify.register(authPlugin);
-  fastify.decorate("authenticate", authFn);
+  await fastify.register(authPlugin);
+  await fastify.register(adminAuthPlugin);
 
   logger.debug("Authenticate plugin registered", { authenticate: !!fastify.authenticate });
   // Routes
@@ -103,8 +126,17 @@ const start = async () => {
   await fastify.register(chatStreamRoutes, { prefix: "/api/v1/chat" });
   await fastify.register(finAgentRoutes, { prefix: "/api/v1/agent/fin" });
   await fastify.register(structuredReportRoutes, { prefix: "/api/v1/report" });
-  await fastify.register(structuredReportCallbackRoutes, { prefix: "/api/structured-report-callback" });
+  await fastify.register(structuredReportCallbackRoutes, {
+    prefix: "/api/structured-report-callback",
+  });
+  await fastify.register(tocMetaCallbackRoutes, {
+    prefix: "/api/v1/toc-meta-callback",
+  });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
+  await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
+  await fastify.register(adminAuthRoutes, { prefix: "/api/v1/admin/auth" });
+  await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
+  await fastify.register(adminPlaygroundRoutes, { prefix: "/api/v1/admin/playground" });
 
   // Start server
   const start = async () => {

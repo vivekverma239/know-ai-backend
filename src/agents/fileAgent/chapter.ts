@@ -1,15 +1,14 @@
-"use server";
-import { getLLM } from "@/ai-backend/llm";
-import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
+import { type StepMessage, StepType } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
-import { StepType, type StepMessage } from "@/@types/agents";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { getLLM } from "@/ai-backend/llm";
 import { similaritySearchChunks } from "@/service/simSearch";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { generateText, stepCountIs, tool } from "ai";
 import { v4 as uuidv4 } from "uuid";
-import { chapterFilter } from "./chapterFilter";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
+import { z } from "zod";
 import { queryExpansion } from "../queryExpansion";
+import { chapterFilter } from "./chapterFilter";
 
 const queryAgent = async (
   searchQuery: string,
@@ -19,7 +18,7 @@ const queryAgent = async (
     documentId: string;
     content: string;
     similarity: number;
-  }[]
+  }[],
 ) => {
   // const llm = getLLM(MODELS.O4_MINI);
   // const llm = getLLM(MODELS.GEMINI_2_5_FLASH);
@@ -41,7 +40,7 @@ You will need to use the chunks to answer the user query.
 
 Keep in mind curent year is ${new Date().getFullYear()}
 
-- **Citations**: Use inline citations in this format: "The company reported $50B revenue [1](/doc/{documentId}/page/{pageNumber})"
+- **Citations**: Use inline citations in this format: "The company reported $50B revenue [file_{documentId}/page={pageNumber}]"
 - If the exact requested information is not found, extract any information that can be relevant to the user query
 `,
       },
@@ -51,10 +50,7 @@ Keep in mind curent year is ${new Date().getFullYear()}
         Search query: ${searchQuery}
         User query: ${userQuery}
         Chunks: ${chunks
-          .map(
-            (chunk) =>
-              `<chunk documentId="${chunk.documentId}">${chunk.content}</chunk>`
-          )
+          .map((chunk) => `<chunk documentId="${chunk.documentId}">${chunk.content}</chunk>`)
           .join("\n\n")}
         `,
       },
@@ -113,7 +109,7 @@ You are an expert financial research assistant. Your task is to help user with t
 ## Response Requirements
 - **Accuracy**: Only use information found in the documents. If information is not available, clearly state this
 - **Completeness**: Search thoroughly across multiple relevant sections and chapters
-- **Citations**: Use inline citations in this format: "The company reported $50B revenue [1](/doc/{documentId}/page/{pageNumber})"
+- **Citations**: Use inline citations in this format: "The company reported $50B revenue [file_{documentId}/page={pageNumber}]"
 - **Language**: Answer in the same language as the query (typically English)
 - **Structure**: Organize your response with clear headings and logical flow
 - **Comprehensive**: YOU MUST provide a comprehensive and detailed answer to the query, so you must try to extract as much information as possible from the documents, with multiple calls to make sure you have all the information.
@@ -135,9 +131,9 @@ You are an expert financial research assistant. Your task is to help user with t
 **Query**: "What were Apple's financial results in 2023?"
 
 **Response**:
-Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [1](/doc/apple-2023/page/15). The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [2](/doc/apple-2023/page/18). Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [3](/doc/apple-2023/page/22).
+Apple reported strong financial performance in 2023 with total revenue reaching $383.3 billion [file_apple-2023/page=15]. The company's iPhone segment continued to be the primary revenue driver, contributing $200.6 billion [file_apple-2023/page=18]. Services revenue grew significantly to $85.2 billion, representing a 9% year-over-year increase [file_apple-2023/page=22].
 
-The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [4](/doc/apple-2023/page/25). International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [5](/doc/apple-2023/page/28).
+The company's net income for 2023 was $97 billion, with a gross margin of 44.5% [file_apple-2023/page=25]. International sales accounted for 58% of total revenue, with particularly strong growth in emerging markets [file_apple-2023/page=28].
 
 Current date: ${new Date().toISOString()}
 `;
@@ -179,7 +175,7 @@ export const chapterAgentV3 = async ({
     status: "processing",
     message: "Searching for relevant documents",
   };
-  const filteredChapters = await chapterFilter(query);
+  const filteredChapters = await chapterFilter(query, userId, orgId);
   documentSearchStep.message = "Chapters found";
   documentSearchStep.status = "done";
   documentSearchStep.metadata = {
@@ -187,7 +183,6 @@ export const chapterAgentV3 = async ({
     chapters: filteredChapters.chapters,
   };
   callback?.(documentSearchStep);
-
 
   const chapters = filteredChapters.chapters;
 
@@ -215,12 +210,8 @@ export const chapterAgentV3 = async ({
               inputSchema: z.object({
                 searchQuery: z
                   .string()
-                  .describe(
-                    "Describe the information you are looking for in the documents"
-                  ),
-                page: z
-                  .number()
-                  .describe("Page number of paginate results, start from 1"),
+                  .describe("Describe the information you are looking for in the documents"),
+                page: z.number().describe("Page number of paginate results, start from 1"),
               }),
               execute: async ({ searchQuery, page = 1 }) => {
                 const chunkSearchStep: StepMessage = {
@@ -244,14 +235,10 @@ export const chapterAgentV3 = async ({
                 });
 
                 const validChunks = chunks.filter(
-                  (chunk) => !alreadyLookedAtChunks.includes(chunk.id!)
+                  (chunk) => chunk.id !== undefined && !alreadyLookedAtChunks.includes(chunk.id),
                 );
 
-                const queryAgentResponse = await queryAgent(
-                  searchQuery,
-                  query,
-                  validChunks
-                );
+                const queryAgentResponse = await queryAgent(searchQuery, query, validChunks);
 
                 chunkSearchStep.message = "Chunks analyzed";
                 chunkSearchStep.status = "done";
@@ -263,9 +250,7 @@ export const chapterAgentV3 = async ({
                 callback?.(chunkSearchStep);
 
                 alreadyLookedAtChunks.push(
-                  ...chunks
-                    .map((chunk) => chunk.id)
-                    .filter((id) => id !== undefined)
+                  ...chunks.map((chunk) => chunk.id).filter((id) => id !== undefined),
                 );
 
                 return {
@@ -303,7 +288,7 @@ export const chapterAgentV3 = async ({
         return response.text;
       },
       query,
-      chapters
+      chapters,
     );
   return await fn();
 };

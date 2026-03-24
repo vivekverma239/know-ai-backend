@@ -11,8 +11,10 @@ export const ChatSessionSchema = Type.Object({
 export const MessageSchema = Type.Object({
   id: Type.String(),
   role: Type.String(),
-  sessionId: Type.String(),
-  content: Type.String(),
+  parts: Type.Array(Type.Any()),
+  metadata: Type.Optional(Type.Any()),
+  sessionId: Type.Optional(Type.String()),
+  content: Type.Optional(Type.String()),
   createdAt: Type.String(),
 });
 

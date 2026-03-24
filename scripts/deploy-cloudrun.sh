@@ -45,9 +45,10 @@ echo "Setting gcloud project: ${PROJECT_ID}"
 #   --description "Docker images for ${PROJECT_ID}" >/dev/null
 
 # echo "Building and pushing image via Cloud Build: ${IMAGE_URI}"
-gcloud builds submit --tag "${IMAGE_URI}" --quiet
+gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
 
 DEPLOY_ARGS=(
+  --project "${PROJECT_ID}"
   --image "${IMAGE_URI}"
   --region "${REGION}"
   --platform managed
@@ -74,8 +75,9 @@ DEPLOY_ARGS+=(--set-env-vars REGION="${REGION}")
 DEFAULT_NODE_ENV="${NODE_ENV:-production}"
 
 # Parse and include from .env.prod if present
-if [[ -f ".env.prod" ]]; then
-  echo "Loading environment variables from .env.prod"
+env_vars_file=".env.dev" 
+if [[ -f "${env_vars_file}" ]]; then
+  echo "Loading environment variables from ${env_vars_file}"
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
     line="${line#export }"
@@ -90,7 +92,7 @@ if [[ -f ".env.prod" ]]; then
       value="${value%\'}"; value="${value#\'}"; value="${value%\"}"; value="${value#\"}"
       DEPLOY_ARGS+=(--set-env-vars "${key}=${value}")
     fi
-  done < .env.prod
+  done < "${env_vars_file}"
 else
   if [[ -n "${ENV_VARS_FILE}" ]]; then
     DEPLOY_ARGS+=(--env-vars-file "${ENV_VARS_FILE}")

@@ -1,0 +1,87 @@
+/* Minimal overrides for react-pdf canvas sizing */
+.react-pdf__Page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Prose typography overrides for markdown content */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.prose h1 { font-size: 1.5em; }
+.prose h2 { font-size: 1.3em; }
+.prose h3 { font-size: 1.15em; }
+
+.prose p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-top: 0.25em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  font-size: 0.875em;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+
+.prose th {
+  font-weight: 600;
+  background: var(--muted);
+}
+
+.prose pre {
+  padding: 0.75em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.prose code {
+  font-size: 0.9em;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--border);
+  margin: 0.75em 0;
+  padding: 0.25em 1em;
+  color: var(--muted-foreground);
+}
+
+.prose img {
+  max-width: 100%;
+  border-radius: 0.5em;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}

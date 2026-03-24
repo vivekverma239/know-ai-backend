@@ -1,113 +1,115 @@
-import { Type } from "@sinclair/typebox";
-import type { FastifyInstance } from "fastify";
-import { observe, getTracer } from "@lmnr-ai/lmnr";
-import {
-    createUIMessageStreamResponse,
-    convertToModelMessages,
-} from "ai";
-import { MODELS } from "@/@types/llm";
 import type { Message as SQLMessage } from "@/@types";
-import { syncMessages, getSession } from "@/db/queries/message";
-import { finAgent, type FinAgentUIMessage } from "@/agents/finAgent";
+import { MODELS } from "@/@types/llm";
+import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
+import { getSession, syncMessages } from "@/db/queries/message";
+import { AuthenticationError, NotFoundError, ValidationError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { Type } from "@sinclair/typebox";
+import { convertToModelMessages, createUIMessageStreamResponse } from "ai";
+import type { FastifyInstance } from "fastify";
+import { v4 as uuidv4 } from "uuid";
 
 export interface FinAgentPostBody {
-    messages: FinAgentUIMessage[];
-    sessionId: string;
-    model?: string;
-    webSearch?: boolean;
-    fileAnswerModel?: string;
+  messages: FinAgentUIMessage[];
+  sessionId: string;
+  webSearch?: boolean;
+  fileAnswerModel?: string;
 }
 
 const finAgentRoutes = async (fastify: FastifyInstance) => {
-    fastify.post<{ Body: FinAgentPostBody }>(
-        "/",
-        {
-            preHandler: fastify.authenticate,
-            schema: {
-                description: "Fin Agent streaming chat endpoint",
-                tags: ["Chat"],
-                body: Type.Object({
-                    messages: Type.Array(Type.Any()),
-                    sessionId: Type.String(),
-                    model: Type.Optional(Type.String()),
-                    webSearch: Type.Optional(Type.Boolean()),
-                    fileAnswerModel: Type.Optional(Type.String()),
-                }),
-                response: {
-                    200: Type.Any({
-                        description: "Streaming response from Fin Agent",
-                    }),
-                },
-            },
+  fastify.post<{ Body: FinAgentPostBody }>(
+    "/",
+    {
+      preHandler: fastify.authenticate,
+      schema: {
+        description: "Fin Agent streaming chat endpoint",
+        tags: ["Chat"],
+        body: Type.Object({
+          messages: Type.Array(Type.Any()),
+          sessionId: Type.String(),
+          webSearch: Type.Optional(Type.Boolean()),
+          fileAnswerModel: Type.Optional(Type.String()),
+        }),
+        response: {
+          200: Type.Any({
+            description: "Streaming response from Fin Agent",
+          }),
         },
-        async (request, reply) => {
-            const user = request.user;
-            if (!user) {
-                return reply.code(401).send({ error: "Unauthorized" });
-            }
-            const userId: string = user.id;
-            const orgId: string = user.orgId;
-            const { messages, sessionId, model, webSearch, fileAnswerModel } = request.body;
+      },
+    },
+    async (request, reply) => {
+      const user = request.user;
+      if (!user) {
+        throw new AuthenticationError("Unauthorized");
+      }
+      const userId: string = user.id;
+      const orgId: string = user.orgId;
+      const { messages, sessionId, webSearch, fileAnswerModel } = request.body;
 
-            // Check if sessionId is valid
-            const session = await getSession(sessionId);
-            if (!session || session.userId !== userId) {
-                return reply.code(400).send({ error: "Invalid sessionId" });
-            }
+      // Check if sessionId is valid
+      const session = await getSession(sessionId);
+      if (!session) {
+        throw new NotFoundError("Invalid sessionId");
+      }
+      if (session.userId !== userId) {
+        throw new ValidationError("Invalid sessionId");
+      }
 
-            // Map model string to enum if needed, or use default
-            // For now, using MODELS provided or falling back to default in finAgent
-            const modelEnum = (model as MODELS) || MODELS.GROK_CODE_FAST_1;
-            const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GROK_CODE_FAST_1;
+      const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GEMINI_2_5_FLASH;
 
-            const saveMessage = async (message: FinAgentUIMessage) => {
-                const sqlMsg: SQLMessage = {
-                    id: message.id || "",
-                    role: message.role,
-                    parts: [],
-                    metadata: message.data,
-                    createdAt: new Date(),
-                    updatedAt: null,
-                    sessionId: sessionId,
-                    userId: userId,
-                } as unknown as SQLMessage;
+      const saveMessages = async (messagesToSave: FinAgentUIMessage[]) => {
+        const sqlMessages: SQLMessage[] = messagesToSave.map((message) => {
+          return {
+            id: message.id || uuidv4(),
+            role: message.role,
+            parts: message.parts,
+            metadata: message.data,
+            createdAt: new Date(),
+            updatedAt: null,
+            sessionId,
+            userId,
+          } as unknown as SQLMessage;
+        });
 
-                const msgWithContent = message as any;
-                if (msgWithContent.content) {
-                    // simplified content extraction for syncMessages if needed
-                }
-
-                await syncMessages([sqlMsg]);
-            };
-
-            const result = await observe({ name: "finAgent" }, () =>
-                finAgent({
-                    context: { userId, sessionId, orgId },
-                    messages,
-                    saveMessage,
-                    model: modelEnum,
-                    webSearch: webSearch ?? false,
-                    fileAnswerModel: fileAnswerModelEnum,
-                })
-            );
-
-            return reply.send(
-                result.toUIMessageStreamResponse({
-                    originalMessages: messages as any,
-                    onFinish: async ({ messages, responseMessage }) => {
-                        // Final sync of messages handled in result.toUIMessageStreamResponse?
-                        // Usually we want to save the assistant response.
-                        // The result.toUIMessageStreamResponse handles it via onFinish callback messages.
-                        const lastMessage = messages[messages.length - 1];
-                        if (lastMessage) {
-                            await saveMessage(lastMessage as any);
-                        }
-                    },
-                })
-            );
+        if (sqlMessages.length > 0) {
+          await syncMessages(sqlMessages);
         }
-    );
+      };
+
+      // Persist user input before invoking the agent stream.
+      const incomingUserMessages = messages.filter((message) => message.role === "user");
+      await saveMessages(incomingUserMessages);
+
+      const result = await observe({ name: "finAgent" }, () =>
+        finAgent({
+          context: { userId, sessionId, orgId, teamIds: user.teamIds },
+          messages,
+          saveMessage: async (message: FinAgentUIMessage) => {
+            await saveMessages([message]);
+          },
+          webSearch: webSearch ?? false,
+          fileAnswerModel: fileAnswerModelEnum,
+        }),
+      );
+
+      return reply.send(
+        result.toUIMessageStreamResponse({
+          originalMessages: messages as FinAgentUIMessage[],
+          onFinish: async ({ messages: finishedMessages }) => {
+            try {
+              await saveMessages(finishedMessages as FinAgentUIMessage[]);
+            } catch (error) {
+              logger.error("Failed to persist messages on stream finish", {
+                error: error instanceof Error ? error.message : String(error),
+                sessionId,
+              });
+            }
+          },
+        }),
+      );
+    },
+  );
 };
 
 export default finAgentRoutes;

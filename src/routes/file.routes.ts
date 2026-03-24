@@ -1,51 +1,43 @@
 import { Type } from "@sinclair/typebox";
+import { type SQLWrapper, and, count, desc, eq, or, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
-import { and, count, desc, eq, or, sql, type SQLWrapper } from "drizzle-orm";
-import {
-  userFile,
-  userFilePage,
-  chunks,
-  userFileCluster,
-  userFileSection,
-  userFileHeirarchialIndex,
-  userFileChapter,
-} from "../db/schema";
-import { getStorage } from "../service/googleStorage";
-import {
-  parsePDF,
-  parsePDFChapters,
-  parsePDFHeirarchialIndex,
-  parsePDFMetadata,
-} from "../service/file/triggerParsing";
-import { logger } from "../utils/logger";
+import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";
 import {
-  UserFileWithMetaSchema,
-  SignedUrlResponse,
+  type UserFileStatus,
+  chunks,
+  userFile,
+  userFileChapter,
+  userFileCluster,
+  userFileHeirarchialIndex,
+  userFilePage,
+  userFileSection,
+} from "../db/schema";
+import { buildFileAccessFilter } from "../db/queries/accessControl";
+import {
+  DeleteResponse,
   FilePagesResponse,
   FileSectionsResponse,
-  HierarchicalIndexItems,
-  DeleteResponse,
-  UserFileSchema,
   FileUploadRequest,
   FileUploadResponse,
+  HierarchicalIndexItems,
+  SignedUrlResponse,
+  UserFileSchema,
+  UserFileWithMetaSchema,
 } from "../schemas/file.schema";
-import { v4 as uuidv4 } from "uuid";
+import { parsePDF } from "../service/file/triggerParsing";
+import { invalidateStoragePathCache, resolveExistingPdfStoragePath } from "../service/file/storagePath";
+import { getStorage } from "../service/googleStorage";
+import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "../utils/errorHandler";
+import { enqueueToCMetaParsing } from "../service/tocMetaQueue";
+import { logger } from "../utils/logger";
 
 // Helper function to check if user has access to a file
-const checkFileAccess = async (
-  fileId: string,
-  userId: string,
-  orgId: string
-) => {
+const checkFileAccess = async (fileId: string, userId: string, orgId: string) => {
   const file = await getDb().query.userFile.findFirst({
     where: and(
       eq(userFile.id, fileId),
-      // Users can access their own files OR admin files from the same org
-      or(
-        and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-        and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-      )
+      buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId),
     ),
   });
   return file;
@@ -67,20 +59,19 @@ const fileRoutes = async (fastify: FastifyInstance) => {
           Type.Union([
             Type.Literal("all"),
             Type.Literal("pending"),
-            Type.Literal("processing"),
-            Type.Literal("processed"),
-          ])
+            Type.Literal("in_progress"),
+            Type.Literal("completed"),
+          ]),
         ),
       }),
       response: {
         200: Type.Array(UserFileWithMetaSchema),
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
@@ -93,26 +84,22 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         page?: number;
         pageSize?: number;
         search?: string;
-        status?: "all" | "pending" | "processing" | "processed" | "failed";
+        status?: UserFileStatus | "all";
       };
       const offset = (page - 1) * pageSize;
 
       const whereConditions: SQLWrapper[] = [
-        // Users can access their own files OR admin files from the same org
-        or(
-          and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-          and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-        )!,
+        buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId) as SQLWrapper,
       ];
 
       if (status && status !== "all")
-        whereConditions.push(eq(userFile.status, status));
+        whereConditions.push(eq(userFile.status, status as UserFileStatus));
       if ((search?.trim?.() ?? "") !== "") {
-        const searchTerms = search!
-          .trim()
+        const searchTerms = search
+          ?.trim()
           .split(/\s+/)
           .filter((term) => term.length > 0);
-        if (searchTerms.length > 0) {
+        if (searchTerms && searchTerms.length > 0) {
           const searchConditions = searchTerms.map((term) => {
             const exactMatch = sql`(${userFile.name} ~* ${`\\b${term}\\b`})`;
             const partialMatch = sql`(${userFile.name} ILIKE ${`%${term}%`})`;
@@ -120,12 +107,10 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             const endsWith = sql`(${userFile.name} ILIKE ${`%${term}`})`;
             return sql`(${sql.join(
               [exactMatch, partialMatch, startsWith, endsWith],
-              sql` OR `
+              sql` OR `,
             )})` as SQLWrapper;
           });
-          whereConditions.push(
-            sql`(${sql.join(searchConditions, sql` AND `)})` as SQLWrapper
-          );
+          whereConditions.push(sql`(${sql.join(searchConditions, sql` AND `)})` as SQLWrapper);
         }
       }
 
@@ -197,7 +182,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId = user.id;
       const orgId = user.orgId;
@@ -208,22 +193,20 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         .where(
           and(
             eq(userFile.id, id),
-            // Users can access their own files OR admin files from the same org
-            or(
-              and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-            )
-          )
+            buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId),
+          ),
         );
-      if (!file) return reply.code(404).send({ message: "File not found" });
+      if (!file) throw new NotFoundError("File not found");
       const storageService = getStorage();
-      // Use different path for admin files
-      const filePath = file.isAdminFile
-        ? `files/admin/${file.orgId}/${file.id}/document.pdf`
-        : `files/${file.userId}/${file.id}/${file.id}.pdf`;
+      const filePath = await resolveExistingPdfStoragePath(storageService, {
+        id: file.id,
+        userId: file.userId,
+        orgId: file.orgId,
+        isAdminFile: file.isAdminFile,
+      });
       return reply.send({
         ...file,
-        signedUrl: await storageService.getSignedUrl(filePath),
+        signedUrl: filePath ? await storageService.getSignedUrl(filePath) : null,
       });
     },
   });
@@ -243,13 +226,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: FilePagesResponse,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const {
         fileId,
@@ -264,7 +246,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       // Check if user has access to the file
       const file = await checkFileAccess(fileId, user.id, user.orgId);
       if (!file) {
-        return reply.code(404).send({ message: "File not found" });
+        throw new NotFoundError("File not found");
       }
 
       const [pages, total] = await Promise.all([
@@ -300,21 +282,21 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             summary: Type.String(),
             startPage: Type.Number(),
             endPage: Type.Number(),
-          })
+          }),
         ),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const { fileId } = request.query as { fileId: string };
 
       // Check if user has access to the file
       const file = await checkFileAccess(fileId, user.id, user.orgId);
       if (!file) {
-        return reply.code(404).send({ message: "File not found" });
+        throw new NotFoundError("File not found");
       }
 
       const chapters = await getDb().query.userFileChapter.findMany({
@@ -339,13 +321,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: FileSectionsResponse,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const {
         fileId,
@@ -360,7 +341,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       // Check if user has access to the file
       const file = await checkFileAccess(fileId, user.id, user.orgId);
       if (!file) {
-        return reply.code(404).send({ message: "File not found" });
+        throw new NotFoundError("File not found");
       }
 
       const [sections, total] = await Promise.all([
@@ -401,13 +382,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       }),
       response: {
         200: HierarchicalIndexItems,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const {
         fileId,
@@ -424,15 +404,13 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       // Check if user has access to the file
       const file = await checkFileAccess(fileId, user.id, user.orgId);
       if (!file) {
-        return reply.code(404).send({ message: "File not found" });
+        throw new NotFoundError("File not found");
       }
 
       const items = await getDb().query.userFileHeirarchialIndex.findMany({
         where: and(
           eq(userFileHeirarchialIndex.fileId, fileId),
-          level !== undefined
-            ? eq(userFileHeirarchialIndex.level, level)
-            : undefined
+          level !== undefined ? eq(userFileHeirarchialIndex.level, level) : undefined,
         ),
         limit,
         offset,
@@ -451,69 +429,54 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       params: Type.Object({ id: Type.String() }),
       response: {
         200: DeleteResponse,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId = user.id;
       const orgId = user.orgId;
       const { id } = request.params as { id: string };
-      try {
-        const file = await getDb().query.userFile.findFirst({
-          where: and(
-            eq(userFile.id, id),
-            // Users can access their own files OR admin files from the same org
-            or(
-              and(eq(userFile.userId, userId), eq(userFile.orgId, orgId)), // User's own files
-              and(eq(userFile.isAdminFile, true), eq(userFile.orgId, orgId)) // Admin files in same org
-            )
-          ),
-        });
-        if (!file) return reply.code(404).send({ message: "File not found" });
+      const file = await getDb().query.userFile.findFirst({
+        where: and(
+          eq(userFile.id, id),
+          buildFileAccessFilter(userFile.userId, userFile.orgId, userFile.isAdminFile, userId, orgId),
+        ),
+      });
+      if (!file) throw new NotFoundError("File not found");
 
-        // Only file owner can delete their own files, or admins can delete admin files
-        if (file.userId !== userId && !file.isAdminFile) {
-          return reply.code(403).send({ message: "Forbidden" });
-        }
-        const filePath = file.isAdminFile
-          ? `files/admin/${file.orgId}/${file.id}/document.pdf`
-          : `files/${file.userId}/${file.id}/${file.id}.pdf`;
-        const storageService = getStorage();
-        try {
-          await storageService.deleteFile(filePath);
-        } catch (error) {
-          logger.warn("Failed to delete file from storage (file may not exist)", {
-            error: error instanceof Error ? error.message : String(error),
-            filePath,
-            fileId: file.id,
-            operation: "deleteFile:storage",
-          });
-          // Continue with database cleanup even if storage deletion fails
-        }
-        await getDb()
-          .delete(userFileSection)
-          .where(eq(userFileSection.fileId, id));
-        await getDb().delete(userFilePage).where(eq(userFilePage.fileId, id));
-        await getDb().delete(chunks).where(eq(chunks.documentId, id));
-        await getDb()
-          .delete(userFileCluster)
-          .where(eq(userFileCluster.fileId, id));
-        await getDb()
-          .delete(userFileChapter)
-          .where(eq(userFileChapter.fileId, id));
-        await getDb()
-          .delete(userFileHeirarchialIndex)
-          .where(eq(userFileHeirarchialIndex.fileId, id));
-        await getDb().delete(userFile).where(eq(userFile.id, id));
-        return reply.send({ success: true });
-      } catch (error) {
-        logger.error(`Error deleting file: ${id} ${JSON.stringify(error)}`);
-        return reply.code(500).send({ message: "Error deleting file" });
+      // Only file owner can delete their own files, or admins can delete admin files
+      if (file.userId !== userId && !file.isAdminFile) {
+        throw new AuthorizationError("Forbidden");
       }
+      const filePath = file.isAdminFile
+        ? `files/admin/${file.orgId}/${file.id}/document.pdf`
+        : `files/${file.userId}/${file.id}/${file.id}.pdf`;
+      const storageService = getStorage();
+      invalidateStoragePathCache(id);
+      try {
+        await storageService.deleteFile(filePath);
+      } catch (error) {
+        logger.warn("Failed to delete file from storage (file may not exist)", {
+          error: error instanceof Error ? error.message : String(error),
+          filePath,
+          fileId: file.id,
+          operation: "deleteFile:storage",
+        });
+        // Continue with database cleanup even if storage deletion fails
+      }
+      await getDb().delete(userFileSection).where(eq(userFileSection.fileId, id));
+      await getDb().delete(userFilePage).where(eq(userFilePage.fileId, id));
+      await getDb().delete(chunks).where(eq(chunks.documentId, id));
+      await getDb().delete(userFileCluster).where(eq(userFileCluster.fileId, id));
+      await getDb().delete(userFileChapter).where(eq(userFileChapter.fileId, id));
+      await getDb()
+        .delete(userFileHeirarchialIndex)
+        .where(eq(userFileHeirarchialIndex.fileId, id));
+      await getDb().delete(userFile).where(eq(userFile.id, id));
+      return reply.send({ success: true });
     },
   });
 
@@ -526,19 +489,17 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       body: Type.Object({ fileId: Type.String() }),
       response: {
         200: SignedUrlResponse,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
-      const user = request.user;
-      if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+      const userId = request.user?.id;
+      if (!userId) {
+        throw new AuthenticationError("Unauthorized");
       }
-      const userId: string = request.user!.id;
       const { fileId } = request.body;
       const storageService = getStorage();
       const signedUrl = await storageService.createUploadSignedUrl(
-        `files/${userId}/${fileId}/document.pdf`
+        `files/${userId}/${fileId}/document.pdf`,
       );
       return reply.send({
         signedUrl,
@@ -556,13 +517,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       body: Type.Object({ fileId: Type.String() }),
       response: {
         201: UserFileSchema,
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
@@ -574,6 +534,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         orgId: orgId,
       });
       await parsePDF(fileId);
+      await enqueueToCMetaParsing(fileId);
       return reply.code(201).send(file);
     },
   });
@@ -594,91 +555,78 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       //   },
       response: {
         201: FileUploadResponse,
-        400: Type.Object({ error: Type.String() }),
-        401: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
 
       const userId: string = user.id;
       const orgId: string = user.orgId;
       const fileId = uuidv4();
 
-      try {
-        // Get the uploaded file from the request
-        const data = await request.file();
+      // Get the uploaded file from the request
+      const data = await request.file();
 
-        if (!data) {
-          return reply.code(400).send({ error: "No file uploaded" });
-        }
-
-        // Validate file type
-        if (data.mimetype !== "application/pdf") {
-          return reply.code(400).send({ error: "File must be a PDF document" });
-        }
-
-        // Get file buffer
-        const fileBuffer = await data.toBuffer();
-        const fileName = data.filename || `document-${Date.now()}.pdf`;
-
-        // Upload to Google Cloud Storage
-        const storageService = getStorage();
-        const filePath = `files/${userId}/${fileId}/document.pdf`;
-
-        await storageService.uploadFile({
-          path: filePath,
-          data: fileBuffer,
-          contentType: "application/pdf",
-        });
-
-        // Create file record in database
-        const file = await getDb()
-          .insert(userFile)
-          .values({
-            id: fileId,
-            name: fileName,
-            userId: userId,
-            orgId: orgId,
-            status: "pending",
-          })
-          .returning();
-
-        // Trigger parsing asynchronously
-        parsePDF(fileId).catch((error) => {
-          logger.error(
-            `Error parsing file ${fileId}:`,
-            error as Record<string, unknown>
-          );
-          // Update file status to error
-          getDb()
-            .update(userFile)
-            .set({ status: "failed" })
-            .where(eq(userFile.id, fileId))
-            .catch((updateError) => {
-              logger.error(
-                `Error updating file status for ${fileId}:`,
-                updateError as Record<string, unknown>
-              );
-            });
-        });
-
-        return reply.code(201).send({
-          fileId,
-          name: fileName,
-          status: "pending",
-          message: "File uploaded successfully and parsing started",
-        });
-      } catch (error) {
-        logger.error(`Error uploading file:`, { error });
-        return reply.code(400).send({
-          error:
-            error instanceof Error ? error.message : "Failed to upload file",
-        });
+      if (!data) {
+        throw new ValidationError("No file uploaded");
       }
+
+      // Validate file type
+      if (data.mimetype !== "application/pdf") {
+        throw new ValidationError("File must be a PDF document");
+      }
+
+      // Get file buffer
+      const fileBuffer = await data.toBuffer();
+      const fileName = data.filename || `document-${Date.now()}.pdf`;
+
+      // Upload to Google Cloud Storage
+      const storageService = getStorage();
+      const filePath = `files/${userId}/${fileId}/document.pdf`;
+
+      await storageService.uploadFile({
+        path: filePath,
+        data: fileBuffer,
+        contentType: "application/pdf",
+      });
+
+      // Create file record in database
+      const file = await getDb()
+        .insert(userFile)
+        .values({
+          id: fileId,
+          name: fileName,
+          userId: userId,
+          orgId: orgId,
+          status: "pending",
+        })
+        .returning();
+
+      // Trigger parsing asynchronously
+      parsePDF(fileId).catch((error) => {
+        logger.error(`Error parsing file ${fileId}:`, error as Record<string, unknown>);
+        getDb()
+          .update(userFile)
+          .set({ status: "failed" })
+          .where(eq(userFile.id, fileId))
+          .catch((updateError) => {
+            logger.error(
+              `Error updating file status for ${fileId}:`,
+              updateError as Record<string, unknown>,
+            );
+          });
+      });
+      await enqueueToCMetaParsing(fileId);
+
+      return reply.code(201).send({
+        fileId,
+        name: fileName,
+        status: "pending",
+        message: "File uploaded successfully and parsing started",
+      });
     },
   });
 
@@ -691,15 +639,12 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       consumes: ["multipart/form-data"],
       response: {
         201: FileUploadResponse,
-        400: Type.Object({ error: Type.String() }),
-        401: Type.Object({ error: Type.String() }),
-        403: Type.Object({ error: Type.String() }),
       },
     },
     handler: async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        throw new AuthenticationError("Unauthorized");
       }
 
       // TODO: Add admin role check here
@@ -710,81 +655,68 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       const orgId: string = user.orgId;
       const fileId = uuidv4();
 
-      try {
-        // Get the uploaded file from the request
-        const data = await request.file();
+      // Get the uploaded file from the request
+      const data = await request.file();
 
-        if (!data) {
-          return reply.code(400).send({ error: "No file uploaded" });
-        }
-
-        // Validate file type
-        if (data.mimetype !== "application/pdf") {
-          return reply.code(400).send({ error: "File must be a PDF document" });
-        }
-
-        // Get file buffer
-        const fileBuffer = await data.toBuffer();
-        const fileName = data.filename || `admin-document-${Date.now()}.pdf`;
-
-        // Upload to Google Cloud Storage with admin path
-        const storageService = getStorage();
-        const filePath = `files/admin/${orgId}/${fileId}/document.pdf`;
-
-        await storageService.uploadFile({
-          path: filePath,
-          data: fileBuffer,
-          contentType: "application/pdf",
-        });
-
-        // Create admin file record in database
-        const file = await getDb()
-          .insert(userFile)
-          .values({
-            id: fileId,
-            name: fileName,
-            userId: "admin", // Special admin user ID
-            orgId: orgId,
-            isAdminFile: true, // Mark as admin file
-            status: "pending",
-          })
-          .returning();
-
-        // Trigger parsing asynchronously
-        parsePDF(fileId).catch((error) => {
-          logger.error(
-            `Error parsing admin file ${fileId}:`,
-            error as Record<string, unknown>
-          );
-          // Update file status to error
-          getDb()
-            .update(userFile)
-            .set({ status: "failed" })
-            .where(eq(userFile.id, fileId))
-            .catch((updateError) => {
-              logger.error(
-                `Error updating admin file status for ${fileId}:`,
-                updateError as Record<string, unknown>
-              );
-            });
-        });
-
-        return reply.code(201).send({
-          fileId,
-          name: fileName,
-          status: "pending",
-          isAdminFile: true,
-          message: "Admin file uploaded successfully and parsing started",
-        });
-      } catch (error) {
-        logger.error(`Error uploading admin file:`, { error });
-        return reply.code(400).send({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to upload admin file",
-        });
+      if (!data) {
+        throw new ValidationError("No file uploaded");
       }
+
+      // Validate file type
+      if (data.mimetype !== "application/pdf") {
+        throw new ValidationError("File must be a PDF document");
+      }
+
+      // Get file buffer
+      const fileBuffer = await data.toBuffer();
+      const fileName = data.filename || `admin-document-${Date.now()}.pdf`;
+
+      // Upload to Google Cloud Storage with admin path
+      const storageService = getStorage();
+      const filePath = `files/admin/${orgId}/${fileId}/document.pdf`;
+
+      await storageService.uploadFile({
+        path: filePath,
+        data: fileBuffer,
+        contentType: "application/pdf",
+      });
+
+      // Create admin file record in database
+      const file = await getDb()
+        .insert(userFile)
+        .values({
+          id: fileId,
+          name: fileName,
+          userId: "admin",
+          orgId: orgId,
+          isAdminFile: true,
+          status: "pending",
+        })
+        .returning();
+
+      // Trigger parsing asynchronously
+      parsePDF(fileId).catch((error) => {
+        logger.error(`Error parsing admin file ${fileId}:`, error as Record<string, unknown>);
+        getDb()
+          .update(userFile)
+          .set({ status: "failed" })
+          .where(eq(userFile.id, fileId))
+          .catch((updateError) => {
+            logger.error(
+              `Error updating admin file status for ${fileId}:`,
+              updateError as Record<string, unknown>,
+            );
+          });
+      });
+      await enqueueToCMetaParsing(fileId);
+
+      return reply.code(201).send({
+        fileId,
+        name: fileName,
+        status: "pending",
+        isAdminFile: true,
+        message: "Admin file uploaded successfully and parsing started",
+      });
     },
   });
 };

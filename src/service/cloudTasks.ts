@@ -1,4 +1,4 @@
-import { CloudTasksClient, protos } from "@google-cloud/tasks";
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
 
 type CreateTaskParams = {
   queue: string;
@@ -12,10 +12,12 @@ type CreateTaskParams = {
 };
 
 function getClient(projectId?: string) {
-  const raw = Buffer.from(
-    process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64!,
-    "base64"
-  ).toString("utf-8");
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+    throw new Error("GOOGLE_APPLICATION_CREDENTIALS_BASE64 is not set");
+  }
+  const raw = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64, "base64").toString(
+    "utf-8",
+  );
   if (raw) {
     try {
       const json = JSON.parse(raw) as {
@@ -40,11 +42,7 @@ function getClient(projectId?: string) {
 
 export async function enqueueHttpTask(params: CreateTaskParams) {
   const client = getClient(params.projectId);
-  const parent = client.queuePath(
-    params.projectId,
-    params.location,
-    params.queue
-  );
+  const parent = client.queuePath(params.projectId, params.location, params.queue);
 
   const task: protos.google.cloud.tasks.v2.ITask = {
     httpRequest: {
@@ -62,8 +60,12 @@ export async function enqueueHttpTask(params: CreateTaskParams) {
     };
   }
 
-  if (params.oidcServiceAccountEmail) {
-    task.httpRequest!.oidcToken = {
+  if (
+    params.oidcServiceAccountEmail &&
+    task.httpRequest !== undefined &&
+    task.httpRequest !== null
+  ) {
+    task.httpRequest.oidcToken = {
       serviceAccountEmail: params.oidcServiceAccountEmail,
       audience: params.audience ?? params.url,
     };
