@@ -55,17 +55,6 @@ export function EntitiesPage() {
     enabled: Boolean(accessToken && selectedOrgId && effectiveSelectedEntityId),
   });
 
-  if (!selectedOrgId) {
-    return (
-      <section>
-        <div className="mb-4">
-          <h2 className="m-0 text-lg font-semibold">Entities</h2>
-        </div>
-        <p className="text-muted-foreground">Select an org scope from the sidebar to inspect entities.</p>
-      </section>
-    );
-  }
-
   return (
     <section>
       <div className="mb-4">
