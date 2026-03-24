@@ -55,8 +55,13 @@ export function OrgSwitcherModal({ open, onOpenChange, mandatory = false }: OrgS
     onOpenChange(false);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSearch("");
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={mandatory ? undefined : onOpenChange}>
+    <Dialog open={open} onOpenChange={mandatory ? undefined : handleOpenChange}>
       <DialogContent
         showCloseButton={!mandatory}
         onInteractOutside={mandatory ? (e) => e.preventDefault() : undefined}
