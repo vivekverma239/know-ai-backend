@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAdminDocuments, getAdminOrgs } from "../lib/api";
+import { getAdminDocuments } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { useOrgStore } from "../store/orgStore";
 import { Button } from "@/components/ui/button";
@@ -59,21 +59,6 @@ export function DocumentsPage() {
     queryFn: () => getAdminDocuments(accessToken ?? "", query),
     enabled: Boolean(accessToken),
   });
-
-  const orgsQuery = useQuery({
-    queryKey: ["admin-orgs", accessToken],
-    queryFn: () => getAdminOrgs(accessToken ?? ""),
-    enabled: Boolean(accessToken),
-  });
-
-  const orgMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const org of orgsQuery.data?.items ?? []) {
-      if (org.name) map.set(org.orgId, org.name);
-      else map.set(org.orgId, `Org (${org.orgId.slice(0, 4)}...${org.orgId.slice(-4)})`);
-    }
-    return map;
-  }, [orgsQuery.data]);
 
   const totalPages = Math.max(1, Math.ceil((documentsQuery.data?.total ?? 0) / 25));
 
@@ -154,7 +139,6 @@ export function DocumentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Org</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Pages</TableHead>
@@ -167,7 +151,6 @@ export function DocumentsPage() {
               {documentsQuery.data.items.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium max-w-[300px] truncate">{doc.name}</TableCell>
-                  <TableCell>{orgMap.get(doc.orgId) ?? doc.orgId}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant(doc.status)}>{doc.status}</Badge>
                   </TableCell>
