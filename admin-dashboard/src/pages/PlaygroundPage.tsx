@@ -453,11 +453,6 @@ export function PlaygroundPage() {
     enabled: Boolean(accessToken) && Boolean(selectedOrgId),
   });
 
-  // Reset selected member when org changes
-  useEffect(() => {
-    setSelectedMemberId("");
-  }, [selectedOrgId]);
-
   const selectedMember = membersQuery.data?.items.find((m) => m.id === selectedMemberId);
 
   const memberLabelMap = new Map(
@@ -467,14 +462,6 @@ export function PlaygroundPage() {
     (value: string) => memberLabelMap.get(value) ?? value,
     [memberLabelMap],
   );
-
-  if (!selectedOrgId) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Select an organization from the sidebar to begin.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
