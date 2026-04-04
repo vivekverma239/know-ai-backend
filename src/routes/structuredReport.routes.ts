@@ -7,6 +7,7 @@ import {
   userFile,
 } from "@/db/schema";
 import { sendQstashMessage } from "@/service/qstash";
+import { startIndexingAndWait } from "@/service/reportIndexingWorkflow";
 import { AuthenticationError, NotFoundError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
@@ -167,6 +168,117 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
         )
         .orderBy(desc(structuredReports.id));
       return reports;
+    },
+  });
+
+  // Get preflight result for a report
+  fastify.get("/reports/:id/preflight", {
+    preHandler: fastify.authenticate,
+    schema: {
+      description: "Get preflight readiness assessment for a report",
+      tags: ["Structured Reports"],
+      params: Type.Object({ id: Type.String() }),
+    },
+    handler: async (request, reply) => {
+      const userId = request.user?.id;
+      if (!userId) throw new AuthenticationError("Unauthorized");
+      const { id } = request.params as { id: string };
+
+      const report = await getDb().query.structuredReports.findFirst({
+        where: and(eq(structuredReports.id, id), eq(structuredReports.userId, userId)),
+      });
+      if (!report) throw new NotFoundError("Report not found");
+
+      return reply.send({
+        status: report.status,
+        preflightResult: report.preflightResult ?? null,
+        selectedRecommendations: report.selectedRecommendations ?? null,
+      });
+    },
+  });
+
+  // Continue report after review
+  fastify.post("/reports/:id/continue", {
+    preHandler: fastify.authenticate,
+    schema: {
+      description: "Continue report generation after preflight review",
+      tags: ["Structured Reports"],
+      params: Type.Object({ id: Type.String() }),
+      body: Type.Object({
+        selectedRecommendations: Type.Optional(
+          Type.Array(
+            Type.Object({
+              url: Type.String(),
+              title: Type.String(),
+              type: Type.Union([Type.Literal("pdf"), Type.Literal("web_article")]),
+            }),
+          ),
+        ),
+        skipRecommendations: Type.Optional(Type.Boolean()),
+      }),
+    },
+    handler: async (request, reply) => {
+      const userId = request.user?.id;
+      const orgId = request.user?.orgId ?? "";
+      if (!userId) throw new AuthenticationError("Unauthorized");
+      const { id } = request.params as { id: string };
+
+      const report = await getDb().query.structuredReports.findFirst({
+        where: and(eq(structuredReports.id, id), eq(structuredReports.userId, userId)),
+      });
+      if (!report) throw new NotFoundError("Report not found");
+
+      if (report.status !== "awaiting_review") {
+        return reply.status(400).send({
+          error: `Report is not awaiting review (current status: ${report.status})`,
+        });
+      }
+
+      const body = request.body as {
+        selectedRecommendations?: { url: string; title: string; type: "pdf" | "web_article" }[];
+        skipRecommendations?: boolean;
+      };
+
+      if (body.skipRecommendations || !body.selectedRecommendations?.length) {
+        // Skip recommendations — proceed directly to pipeline
+        try {
+          await sendQstashMessage("api/structured-report-callback", {
+            type: "structured_report_processing",
+            data: { reportId: id, skipPreflight: true },
+          });
+        } catch (error) {
+          logger.error("Failed to queue report continuation", { error });
+          await getDb()
+            .update(structuredReports)
+            .set({ status: "failed" })
+            .where(eq(structuredReports.id, id));
+          return reply.status(500).send({ error: "Failed to queue report" });
+        }
+
+        return reply.send({ status: "processing", message: "Report generation resumed" });
+      }
+
+      // Start indexing workflow in background
+      startIndexingAndWait({
+        reportId: id,
+        recommendations: body.selectedRecommendations,
+        userId,
+        orgId,
+      }).catch((error) => {
+        logger.error("Indexing workflow failed", {
+          reportId: id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        getDb()
+          .update(structuredReports)
+          .set({ status: "failed" })
+          .where(eq(structuredReports.id, id));
+      });
+
+      return reply.send({
+        status: "indexing",
+        message: "Sources are being indexed. Report will resume automatically.",
+      });
     },
   });
 };
