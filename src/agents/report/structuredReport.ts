@@ -388,7 +388,7 @@ export const processStructuredReport = async ({
     }
   };
 
-  if (report.status === "pending" || reprocess) {
+  if (report.status === "pending" || report.status === "indexing" || reprocess) {
     await updateReportStatus(reportId, "in_progress");
   }
 
