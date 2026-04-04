@@ -3,8 +3,8 @@ import { getDb } from "@/db";
 import { type SelectedRecommendation, structuredReports, userFile } from "@/db/schema";
 import { parsePDF } from "@/service/file/triggerParsing";
 import { getStorage } from "@/service/googleStorage";
-import { sendQstashMessage } from "@/service/qstash";
 import { processWebpageContent } from "@/service/ingestion/webpageProcessing";
+import { sendQstashMessage } from "@/service/qstash";
 import { enqueueToCMetaParsing } from "@/service/tocMetaQueue";
 import { createContextLogger } from "@/utils/logger";
 import { eq, inArray } from "drizzle-orm";
@@ -57,15 +57,17 @@ const ingestRecommendation = async (
 ): Promise<string> => {
   const fileId = randomUUID();
 
-  await getDb().insert(userFile).values({
-    id: fileId,
-    name: rec.title,
-    userId,
-    orgId,
-    type: rec.type === "pdf" ? "pdf" : "web_article",
-    status: "pending",
-    sourceDocumentUrl: rec.url,
-  });
+  await getDb()
+    .insert(userFile)
+    .values({
+      id: fileId,
+      name: rec.title,
+      userId,
+      orgId,
+      type: rec.type === "pdf" ? "pdf" : "web_article",
+      status: "pending",
+      sourceDocumentUrl: rec.url,
+    });
 
   if (rec.type === "web_article") {
     // Process webpage in background

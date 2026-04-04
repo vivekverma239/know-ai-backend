@@ -2,10 +2,10 @@ import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import type { PreflightResult } from "@/db/schema";
 import { similaritySearchDocuments } from "@/service/simSearch";
+import { env } from "@/utils/env";
 import { createContextLogger } from "@/utils/logger";
 import { Output, generateText } from "ai";
 import Exa from "exa-js";
-import { env } from "@/utils/env";
 import { z } from "zod";
 
 const logger = createContextLogger({ agent: "readinessAgent" });
@@ -126,7 +126,10 @@ export const assessReportReadiness = async ({
 
   // Step 2: LLM analyzes coverage gaps
   const docSummaries = relevantDocs
-    .map((doc) => `- Document "${doc.title}" (ID: ${doc.id}): ${doc.summary ?? "No summary available"}`)
+    .map(
+      (doc) =>
+        `- Document "${doc.title}" (ID: ${doc.id}): ${doc.summary ?? "No summary available"}`,
+    )
     .join("\n");
 
   const { experimental_output: assessment } = await generateText({

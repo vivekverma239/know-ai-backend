@@ -198,7 +198,10 @@ export const chunks = createTable(
   "chunk",
   (d) => ({
     id: d.uuid().primaryKey().default(sql`gen_random_uuid()`),
-    documentId: d.uuid().notNull().references(() => userFile.id, { onDelete: "cascade" }),
+    documentId: d
+      .uuid()
+      .notNull()
+      .references(() => userFile.id, { onDelete: "cascade" }),
     chapterId: d.uuid(),
     startPage: d.integer(),
     endPage: d.integer(),
@@ -334,11 +337,7 @@ export const structuredReports = createTable("structured_report", (d) => ({
     .references(() => structuredReportTemplate.id),
   topic: d.varchar({ length: 255 }).notNull(),
   referencePeriod: d.varchar({ length: 255 }),
-  status: d
-    .varchar({ length: 20 })
-    .$type<StructuredReportStatus>()
-    .notNull()
-    .default("pending"),
+  status: d.varchar({ length: 20 }).$type<StructuredReportStatus>().notNull().default("pending"),
   stepOutputs: d.jsonb().$type<StepOutputs>(),
   finalOutput: d.text(),
   metadata: d.jsonb().$type<{ title?: string; summary?: string }>().default({}),
