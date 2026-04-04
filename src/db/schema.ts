@@ -281,6 +281,50 @@ export type ModelConfig = {
 // Placeholder for StepOutputs until full agent port
 export type StepOutputs = Record<string, unknown>;
 
+export type PreflightDocument = {
+  id: string;
+  name: string;
+  relevanceScore: number;
+  coversTopic: string;
+};
+
+export type PreflightGap = {
+  topic: string;
+  description: string;
+};
+
+export type PreflightRecommendation = {
+  title: string;
+  url: string;
+  type: "pdf" | "web_article";
+  fillsGap: string;
+};
+
+export type PreflightResult = {
+  score: number;
+  sufficient: boolean;
+  existingDocuments: PreflightDocument[];
+  gaps: PreflightGap[];
+  recommendations: PreflightRecommendation[];
+  checkedAt: string;
+};
+
+export type SelectedRecommendation = {
+  url: string;
+  title: string;
+  type: "pdf" | "web_article";
+  fileId: string;
+  status: "pending" | "completed" | "failed";
+};
+
+export type StructuredReportStatus =
+  | "pending"
+  | "awaiting_review"
+  | "indexing"
+  | "in_progress"
+  | "completed"
+  | "failed";
+
 export const structuredReports = createTable("structured_report", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   userId: d.varchar({ length: 255 }).notNull(),
@@ -292,7 +336,7 @@ export const structuredReports = createTable("structured_report", (d) => ({
   referencePeriod: d.varchar({ length: 255 }),
   status: d
     .varchar({ length: 20 })
-    .$type<"pending" | "in_progress" | "completed" | "failed">()
+    .$type<StructuredReportStatus>()
     .notNull()
     .default("pending"),
   stepOutputs: d.jsonb().$type<StepOutputs>(),
@@ -301,6 +345,8 @@ export const structuredReports = createTable("structured_report", (d) => ({
   usage: d.jsonb().$type<Record<string, LanguageModelUsage>>(),
   sources: d.jsonb().$type<Source[]>(),
   modelConfig: d.jsonb().$type<ModelConfig>(),
+  preflightResult: d.jsonb().$type<PreflightResult>(),
+  selectedRecommendations: d.jsonb().$type<SelectedRecommendation[]>(),
 }));
 
 /**
