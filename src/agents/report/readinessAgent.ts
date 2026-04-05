@@ -151,9 +151,9 @@ ${docSummaries || "No documents found."}
 
 ## Your Task
 1. Identify the key coverage areas required by the task description and report instructions.
-2. Map each available document to the coverage areas it addresses. Assign a relevance score (0-1) for each document.
-3. Identify gaps — coverage areas with no or weak document support.
-4. Assign an overall readiness score (0-100) based on the percentage of coverage areas satisfied.
+2. Map each available document to the coverage areas it addresses. Assign a relevance score (0-1) for each document. Be generous — a document titled like an annual report, 10-K, earnings report, or financial statement very likely contains detailed breakdowns (revenue segments, geographic data, KPIs, etc.) even if the summary doesn't mention them explicitly.
+3. Identify gaps — coverage areas where the user truly has NO relevant documents at all. Do NOT flag a gap if an existing document likely covers that area (e.g., a 10-K filing contains financial statements, segment breakdowns, KPIs, and geographic data by definition). Only flag gaps for topics that are genuinely not covered by any available document.
+4. Assign an overall readiness score (0-100) based on the percentage of coverage areas satisfied. If the user has relevant financial filings or reports, assume they contain standard sections and score accordingly.
 5. Set "sufficient" to true if the score is 60 or above and at least 2 relevant documents exist.
 
 Return your assessment as JSON. Leave the "recommendations" array empty — it will be filled separately.`,
