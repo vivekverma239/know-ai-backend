@@ -4,7 +4,7 @@ import type { PreflightResult } from "@/db/schema";
 import { similaritySearchDocuments } from "@/service/simSearch";
 import { env } from "@/utils/env";
 import { createContextLogger } from "@/utils/logger";
-import { Output, generateText } from "ai";
+import { Output, generateText, tool } from "ai";
 import Exa from "exa-js";
 import { z } from "zod";
 
@@ -37,67 +37,6 @@ const preflightResultSchema = z.object({
   ),
 });
 
-const searchWebForSources = async (
-  gaps: { topic: string; description: string }[],
-  reportTopic: string,
-): Promise<{ title: string; url: string; type: "pdf" | "web_article"; fillsGap: string }[]> => {
-  const exa = new Exa(env.get("EXA_API_KEY"));
-  const recommendations: {
-    title: string;
-    url: string;
-    type: "pdf" | "web_article";
-    fillsGap: string;
-  }[] = [];
-
-  const seenUrls = new Set<string>();
-
-  for (const gap of gaps) {
-    try {
-      // Search for PDFs
-      const pdfResults = await exa.search(`${reportTopic} ${gap.topic}`, {
-        type: "neural",
-        category: "pdf",
-        numResults: 3,
-      });
-
-      for (const result of pdfResults.results) {
-        if (seenUrls.has(result.url)) continue;
-        seenUrls.add(result.url);
-        recommendations.push({
-          title: result.title?.trim() || `PDF: ${gap.topic}`,
-          url: result.url,
-          type: "pdf",
-          fillsGap: gap.topic,
-        });
-      }
-
-      // Search for web articles
-      const webResults = await exa.search(`${reportTopic} ${gap.topic}`, {
-        type: "neural",
-        numResults: 3,
-      });
-
-      for (const result of webResults.results) {
-        if (seenUrls.has(result.url)) continue;
-        seenUrls.add(result.url);
-        recommendations.push({
-          title: result.title?.trim() || `Article: ${gap.topic}`,
-          url: result.url,
-          type: "web_article",
-          fillsGap: gap.topic,
-        });
-      }
-    } catch (error) {
-      logger.warn("Web search failed for gap", {
-        gap: gap.topic,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  return recommendations;
-};
-
 export const assessReportReadiness = async ({
   topic,
   referencePeriod,
@@ -115,30 +54,81 @@ export const assessReportReadiness = async ({
 }): Promise<PreflightResult> => {
   logger.info("Starting readiness assessment", { topic, userId });
 
-  // Step 1: Find relevant documents via similarity search
-  const relevantDocs = await similaritySearchDocuments({
-    query: topic,
-    limit: 10,
-    userId,
-    orgId,
+  const seenUrls = new Set<string>();
+
+  const documentSearchTool = tool({
+    description:
+      "Search the user's uploaded documents by topic. Returns documents with titles, IDs, and summaries. Use this to check what documents are available for the report.",
+    parameters: z.object({
+      query: z.string().describe("Search query to find relevant documents"),
+      limit: z
+        .number()
+        .optional()
+        .default(10)
+        .describe("Max number of results"),
+    }),
+    execute: async ({ query, limit }) => {
+      const docs = await similaritySearchDocuments({
+        query,
+        limit,
+        userId,
+        orgId,
+      });
+      return docs.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        summary: doc.summary ?? "No summary available",
+      }));
+    },
   });
 
-  logger.info("Found relevant documents", {
-    count: relevantDocs.length,
-    docIds: relevantDocs.map((d) => d.id),
+  const webSearchTool = tool({
+    description:
+      "Search the web for documents (PDFs, articles, reports) that could fill data gaps. Use this after identifying what's missing from the user's documents. Returns titles and URLs of relevant sources.",
+    parameters: z.object({
+      query: z.string().describe("Search query for finding relevant sources"),
+      category: z
+        .enum(["pdf", "general"])
+        .optional()
+        .default("general")
+        .describe("Search for PDFs specifically or general web results"),
+    }),
+    execute: async ({ query, category }) => {
+      try {
+        const exa = new Exa(env.get("EXA_API_KEY"));
+        const results = await exa.search(query, {
+          type: "neural",
+          category: category === "pdf" ? "pdf" : undefined,
+          numResults: 5,
+        });
+        return results.results
+          .filter((r) => {
+            if (seenUrls.has(r.url)) return false;
+            seenUrls.add(r.url);
+            return true;
+          })
+          .map((result) => ({
+            title: result.title?.trim() || "",
+            url: result.url,
+            type: (category === "pdf" ? "pdf" : "web_article") as
+              | "pdf"
+              | "web_article",
+          }));
+      } catch (error) {
+        logger.warn("Web search failed", {
+          query,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+      }
+    },
   });
-
-  // Step 2: LLM analyzes coverage gaps
-  const docSummaries = relevantDocs
-    .map(
-      (doc) =>
-        `- Document "${doc.title}" (ID: ${doc.id}): ${doc.summary ?? "No summary available"}`,
-    )
-    .join("\n");
 
   const { experimental_output: assessment } = await generateText({
     model: getLLM(MODELS.GEMINI_3_FLASH),
-    prompt: `You are a report readiness analyst. Assess whether the available documents are sufficient to generate a high-quality report.
+    tools: { documentSearch: documentSearchTool, webSearch: webSearchTool },
+    maxSteps: 10,
+    prompt: `You are a report readiness analyst. Your job is to assess whether the user has sufficient documents to generate a high-quality report, and if not, find relevant sources on the web.
 
 ## Report Details
 - **Topic:** ${topic}
@@ -146,17 +136,28 @@ export const assessReportReadiness = async ({
 - **Task Description:** ${taskDescription}
 - **Report Instructions:** ${initialResearchPrompt}
 
-## Available Documents
-${docSummaries || "No documents found."}
+## Your Process
 
-## Your Task
-1. Identify the key coverage areas required by the task description and report instructions.
-2. Map each available document to the coverage areas it addresses. Assign a relevance score (0-1) for each document. Be generous — a document titled like an annual report, 10-K, earnings report, or financial statement very likely contains detailed breakdowns (revenue segments, geographic data, KPIs, etc.) even if the summary doesn't mention them explicitly.
-3. Identify gaps — coverage areas where the user truly has NO relevant documents at all. Do NOT flag a gap if an existing document likely covers that area (e.g., a 10-K filing contains financial statements, segment breakdowns, KPIs, and geographic data by definition). Only flag gaps for topics that are genuinely not covered by any available document.
-4. Assign an overall readiness score (0-100) based on the percentage of coverage areas satisfied. If the user has relevant financial filings or reports, assume they contain standard sections and score accordingly.
-5. Set "sufficient" to true if the score is 60 or above and at least 2 relevant documents exist.
+Follow these steps carefully:
 
-Return your assessment as JSON. Leave the "recommendations" array empty — it will be filled separately.`,
+### Step 1: Search for existing documents
+Use the documentSearch tool with multiple queries related to the topic to thoroughly check what the user already has. Try different search terms (company name, financial terms, report types, etc.).
+
+### Step 2: Assess coverage
+Based on the documents found, identify what coverage areas are satisfied and what's genuinely missing. Be thorough — a single annual report or 10-K likely covers financial statements, segment breakdowns, KPIs, and geographic data.
+
+### Step 3: Search the web for missing data
+For any genuine gaps, use the webSearch tool to find specific PDFs and articles that would fill them. Search for both PDFs (category: "pdf") and general web articles. Use specific search queries like "{company} 10-K 2024 filing" or "{topic} quarterly earnings report".
+
+### Step 4: Return your assessment
+After using the tools, return your final structured assessment:
+- **existingDocuments**: Documents from the user's collection that are relevant (with relevance scores and what they cover)
+- **gaps**: Only topics where the user truly has NO documents AND you couldn't easily find them — be very conservative here
+- **recommendations**: Web sources you found that would strengthen the report (with title, url, type, and which gap they fill)
+- **score**: 0-100 readiness score (percentage of coverage areas satisfied by existing docs)
+- **sufficient**: true if score >= 60 and at least 2 relevant documents exist
+
+Important: Do NOT include empty-titled recommendations. Every recommendation must have a meaningful title.`,
     experimental_output: Output.object({ schema: preflightResultSchema }),
   });
 
@@ -166,21 +167,19 @@ Return your assessment as JSON. Leave the "recommendations" array empty — it w
       score: 0,
       sufficient: false,
       existingDocuments: [],
-      gaps: [{ topic: "unknown", description: "Assessment failed to produce output" }],
+      gaps: [
+        {
+          topic: "unknown",
+          description: "Assessment failed to produce output",
+        },
+      ],
       recommendations: [],
       checkedAt: new Date().toISOString(),
     };
   }
 
-  // Step 3: If there are gaps, search the web for sources to fill them
-  let recommendations: PreflightResult["recommendations"] = [];
-  if (assessment.gaps.length > 0) {
-    recommendations = await searchWebForSources(assessment.gaps, topic);
-  }
-
   const result: PreflightResult = {
     ...assessment,
-    recommendations,
     checkedAt: new Date().toISOString(),
   };
 
