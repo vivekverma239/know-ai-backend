@@ -255,6 +255,7 @@ export async function parsePdf(
       metadata,
       outline,
       chapters,
+      pageSummaries: clusterResult.pageSummaries,
       usage: ctx.usage.getReport(),
     };
   } finally {
@@ -263,5 +264,24 @@ export async function parsePdf(
     for (const blobPath of tempBlobPaths) {
       if (bucketName) await deleteTempBlob(blobPath, bucketName);
     }
+  }
+}
+
+/**
+ * Parse a PDF from an in-memory buffer.
+ * Writes to a temp file, delegates to parsePdf, then cleans up.
+ */
+export async function parsePdfFromBuffer(
+  buffer: Buffer,
+  options: PipelineOptions = {},
+): Promise<ParsedDocument> {
+  const workDir = options.workDir ?? fs.mkdtempSync(path.join(os.tmpdir(), "parse-engine-buf-"));
+  const tempPath = path.join(workDir, "document.pdf");
+  fs.writeFileSync(tempPath, buffer);
+
+  try {
+    return await parsePdf(tempPath, { ...options, workDir });
+  } finally {
+    try { fs.unlinkSync(tempPath); } catch { /* ignore */ }
   }
 }

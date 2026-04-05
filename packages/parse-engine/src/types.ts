@@ -176,5 +176,6 @@ export interface ParsedDocument {
   metadata?: DocumentMetadata;
   outline?: Section[];
   chapters?: ChapterWithSections[];
+  pageSummaries?: Array<{ pageNumber: number; summary: string }>;
   usage?: import("./usage.js").PipelineUsage;
 }

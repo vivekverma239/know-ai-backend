@@ -11,7 +11,7 @@
  */
 
 // Core pipeline
-export { parsePdf, type PipelineOptions } from "./parse.js";
+export { parsePdf, parsePdfFromBuffer, type PipelineOptions } from "./parse.js";
 
 // Context & config
 export { PipelineContext, type PipelineConfig } from "./context.js";
