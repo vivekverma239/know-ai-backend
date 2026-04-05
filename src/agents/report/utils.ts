@@ -18,6 +18,8 @@ export const mergeTokenUsage = (
       totalTokens: 0,
       reasoningTokens: 0,
       cachedInputTokens: 0,
+      inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+      outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
     };
   }
 

@@ -5,7 +5,7 @@ import { type ParsedCitation, parseCitations } from "@/utils/citation";
 import { createContextLogger } from "@/utils/logger";
 import { getTracer } from "@lmnr-ai/lmnr";
 import {
-  type CoreMessage,
+  type ModelMessage,
   type LanguageModelUsage,
   type StepResult,
   type ToolSet,
@@ -165,7 +165,7 @@ export const finAgent = async ({
 
   const stream = streamText({
     model: getLLM(model),
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     system: systemPrompt,
     tools: wrapToolsWithFailureLogging({ tools, agentLogger, context }),
     stopWhen: stepCountIs(15),

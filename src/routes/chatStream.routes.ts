@@ -177,7 +177,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                 },
                 messages: [
                   { role: "system", content: SYSTEM_PROMPT },
-                  ...convertToModelMessages(messages),
+                  ...(await convertToModelMessages(messages)),
                 ],
                 experimental_telemetry: {
                   isEnabled: true,
@@ -214,6 +214,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
         return reply.send(createUIMessageStreamResponse({ stream }));
       }
 
+      const knowledgeBaseModelMessages = await convertToModelMessages(messages);
       const stream = await observe({ name: "knowledgeBaseAgent" }, () =>
         streamText({
           model: llm,
@@ -253,7 +254,7 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            ...convertToModelMessages(messages),
+            ...knowledgeBaseModelMessages,
           ],
           experimental_telemetry: { isEnabled: true },
         }),
