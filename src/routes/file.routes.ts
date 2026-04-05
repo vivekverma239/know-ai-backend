@@ -9,7 +9,6 @@ import {
   userFile,
   userFileChapter,
   userFileCluster,
-  userFileHeirarchialIndex,
   userFilePage,
   userFileSection,
 } from "../db/schema";
@@ -20,7 +19,6 @@ import {
   FileSectionsResponse,
   FileUploadRequest,
   FileUploadResponse,
-  HierarchicalIndexItems,
   SignedUrlResponse,
   UserFileSchema,
   UserFileWithMetaSchema,
@@ -361,65 +359,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
     },
   });
 
-  // Get hierarchical index
-  fastify.get<{
-    Querystring: {
-      fileId: string;
-      level?: number;
-      limit?: number;
-      offset?: number;
-    };
-  }>("/hierarchical-index", {
-    preHandler: fastify.authenticate,
-    schema: {
-      description: "Get hierarchical index",
-      tags: ["Files"],
-      querystring: Type.Object({
-        fileId: Type.String(),
-        level: Type.Optional(Type.Number()),
-        limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
-        offset: Type.Optional(Type.Number({ minimum: 0 })),
-      }),
-      response: {
-        200: HierarchicalIndexItems,
-      },
-    },
-    handler: async (request, reply) => {
-      const user = request.user;
-      if (!user) {
-        throw new AuthenticationError("Unauthorized");
-      }
-      const {
-        fileId,
-        level,
-        limit = 10,
-        offset = 0,
-      } = request.query as {
-        fileId: string;
-        level?: number;
-        limit?: number;
-        offset?: number;
-      };
-
-      // Check if user has access to the file
-      const file = await checkFileAccess(fileId, user.id, user.orgId);
-      if (!file) {
-        throw new NotFoundError("File not found");
-      }
-
-      const items = await getDb().query.userFileHeirarchialIndex.findMany({
-        where: and(
-          eq(userFileHeirarchialIndex.fileId, fileId),
-          level !== undefined ? eq(userFileHeirarchialIndex.level, level) : undefined,
-        ),
-        limit,
-        offset,
-        orderBy: (t, { asc }) => [asc(t.startPage)],
-      });
-      return reply.send({ items });
-    },
-  });
-
   // Delete file
   fastify.delete<{ Params: { id: string } }>("/:id", {
     preHandler: fastify.authenticate,
@@ -472,9 +411,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       await getDb().delete(chunks).where(eq(chunks.documentId, id));
       await getDb().delete(userFileCluster).where(eq(userFileCluster.fileId, id));
       await getDb().delete(userFileChapter).where(eq(userFileChapter.fileId, id));
-      await getDb()
-        .delete(userFileHeirarchialIndex)
-        .where(eq(userFileHeirarchialIndex.fileId, id));
       await getDb().delete(userFile).where(eq(userFile.id, id));
       return reply.send({ success: true });
     },

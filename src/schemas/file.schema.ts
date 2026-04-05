@@ -48,20 +48,6 @@ export const FileSectionsResponse = Type.Object({
   total: Type.Number(),
 });
 
-export const HierarchicalIndexItems = Type.Object({
-  items: Type.Array(
-    Type.Object({
-      id: Type.String(),
-      fileId: Type.String(),
-      title: Type.String(),
-      summary: Type.String(),
-      level: Type.Number(),
-      startPage: Type.Number(),
-      endPage: Type.Number(),
-    }),
-  ),
-});
-
 export const DeleteResponse = Type.Object({ success: Type.Boolean() });
 
 export const FileUploadRequest = Type.Object({

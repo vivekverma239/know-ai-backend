@@ -5,7 +5,6 @@ import {
   userFile,
   userFileChapter,
   userFileCluster,
-  userFileHeirarchialIndex,
   userFilePage,
   userFileSection,
   userFileToCMeta,
@@ -169,9 +168,6 @@ export const ensureUserFileForDocument = async (
       await tx.delete(chunks).where(inArray(chunks.documentId, duplicateIds));
       await tx.delete(userFileCluster).where(inArray(userFileCluster.fileId, duplicateIds));
       await tx.delete(userFileChapter).where(inArray(userFileChapter.fileId, duplicateIds));
-      await tx
-        .delete(userFileHeirarchialIndex)
-        .where(inArray(userFileHeirarchialIndex.fileId, duplicateIds));
       await tx.delete(userFileToCMeta).where(inArray(userFileToCMeta.fileId, duplicateIds));
       await tx.delete(userFile).where(inArray(userFile.id, duplicateIds));
 

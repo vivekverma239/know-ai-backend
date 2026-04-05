@@ -1,5 +1,4 @@
 import type { Chapter, Section, Subsection, SubsectionAPI } from "@/@types/fileIndex";
-import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
 import type { DocumentMetadata } from "@/@types/metadata";
 import type { ParsedPDF } from "@/@types/parsedData";
 import { getEmbeddings } from "@/ai-backend/embeddings";
@@ -9,7 +8,6 @@ import {
   userFile,
   userFileChapter,
   userFileCluster,
-  userFileHeirarchialIndex,
   userFilePage,
   userFileSection,
 } from "@/db/schema";
@@ -413,86 +411,3 @@ export const updateStatus = async (fileId: string) => {
   await getDb().update(userFile).set({ status: "completed" }).where(eq(userFile.id, fileId));
 };
 
-export const updateHeirarchialIndex = async (fileId: string, data: HeirarchialIndexData) => {
-  return traceManager.withSpan(
-    "file:updateHeirarchialIndex",
-    async (span) => {
-      try {
-        logger.info("Starting hierarchical index update", {
-          fileId,
-          levelCount: data.levels.length,
-          spanId: span.id,
-        });
-
-        const files = await getDb().select().from(userFile).where(eq(userFile.id, fileId));
-        if (!files[0]) throw new Error("File not found");
-
-        const file = files[0];
-        const levelData = data.levels.map((level) => ({
-          fileId,
-          startPage: level.start_page,
-          endPage: level.end_page,
-          title: level.title,
-          level: level.level,
-          summary: level.summary,
-          children: level.children.map((child) => ({
-            startPage: child.start_page,
-            endPage: child.end_page,
-            summary: child.summary,
-          })),
-        }));
-
-        logger.info("Generating embeddings for hierarchical index", {
-          fileId,
-          levelCount: levelData.length,
-          spanId: span.id,
-        });
-
-        await getDb()
-          .delete(userFileHeirarchialIndex)
-          .where(eq(userFileHeirarchialIndex.fileId, fileId));
-        if (levelData.length > 0) {
-          const embeddings = await getEmbeddings(
-            levelData.map(
-              (level) =>
-                `\nLevel ${level.startPage}-${level.endPage}: ${
-                  level.summary
-                }\n${level.children.map((child) => child.summary).join("\n")}`,
-            ),
-          );
-
-          await getDb()
-            .insert(userFileHeirarchialIndex)
-            .values(
-              levelData.map((level, index) => ({
-                ...level,
-                userId: file.userId,
-                orgId: file.orgId,
-                embedding: embeddings[index],
-              })),
-            );
-        } else {
-          logger.info("No hierarchical index levels found; skipping insert", {
-            fileId,
-            spanId: span.id,
-          });
-        }
-
-        logger.info("Hierarchical index updated successfully", {
-          fileId,
-          levelCount: levelData.length,
-          spanId: span.id,
-        });
-      } catch (error) {
-        logError(error, {
-          fileId,
-          operation: "updateHeirarchialIndex",
-          levelCount: data.levels.length,
-          spanId: span.id,
-        });
-        throw error;
-      }
-    },
-    { fileId, operation: "updateHeirarchialIndex", levelCount: data.levels.length },
-  );
-};

@@ -1,4 +1,3 @@
-import type { HeirarchialIndexData } from "@/@types/heirarchialIndex";
 import type { ParsedPDF } from "@/@types/parsedData";
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
@@ -7,7 +6,6 @@ import type { SectionCallbackData } from "@/@types/fileIndex";
 import type { DocumentMetadata } from "@/@types/metadata";
 import type { CallbackTokenUsage } from "@/@types/tokenUsage";
 import {
-  updateHeirarchialIndex,
   updateOutline,
   updateParsedMetadata,
   updateParsedPages,
@@ -60,7 +58,7 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         const { fileId } = request.params as { fileId: string };
         const { status, data, task_type, usage_metadata } = request.body as {
           status: string;
-          data: HeirarchialIndexData | ParsedPDF | DocumentMetadata | SectionCallbackData;
+          data: ParsedPDF | DocumentMetadata | SectionCallbackData;
           task_type: string;
           usage_metadata: CallbackTokenUsage;
         };
@@ -73,9 +71,7 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         });
 
         // Process based on task type
-        if (task_type === "parse_heirarchial_index") {
-          await updateHeirarchialIndex(fileId, data as HeirarchialIndexData);
-        } else if (task_type === "parse_outline") {
+        if (task_type === "parse_outline") {
           const section = data as SectionCallbackData;
           await updateOutline({
             chapters: section.chapters,
