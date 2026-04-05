@@ -14,17 +14,22 @@ import {
   AdminDocumentListResponseSchema,
   AdminDocumentPageSchema,
   AdminDocumentPagesResponseSchema,
+  AdminDocumentReparseResponseSchema,
   AdminDocumentSectionsResponseSchema,
   AdminDocumentTocMetadataResponseSchema,
 } from "@/schemas/admin.schema";
 import { getPdfStoragePathCandidates, resolveExistingPdfStoragePath } from "@/service/file/storagePath";
+// import { parsePDF } from "@/service/file/triggerParsing"; // OLD: external backend
+import { enqueueDocumentParse } from "@/service/file/enqueueDocumentParse";
 import { getStorage } from "@/service/googleStorage";
+// import { enqueueToCMetaParsing } from "@/service/tocMetaQueue"; // OLD: separate ToC meta job
 import { NotFoundError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
 import {
   type SQLWrapper,
   and,
+  asc,
   desc,
   eq,
   ilike,
@@ -274,6 +279,63 @@ export const registerDocumentHandlers = async (fastify: FastifyInstance) => {
     },
   });
 
+  fastify.post<{
+    Params: { id: string };
+  }>("/documents/:id/reparse", {
+    preHandler: fastify.authenticateAdmin,
+    schema: {
+      description: "Trigger reparsing for an existing document",
+      tags: ["Admin"],
+      params: Type.Object({ id: Type.String() }),
+      body: Type.Optional(Type.Object({})),
+      response: {
+        202: AdminDocumentReparseResponseSchema,
+      },
+    },
+    handler: async (request, reply) => {
+      logger.info("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "reparse_document",
+        resourceId: request.params.id,
+        ip: request.ip,
+      });
+
+      const file = await getDb().query.userFile.findFirst({
+        where: eq(userFile.id, request.params.id),
+      });
+      if (!file) {
+        throw new NotFoundError("Document not found");
+      }
+
+      await getDb()
+        .update(userFile)
+        .set({
+          status: "pending",
+          updatedAt: new Date(),
+        })
+        .where(eq(userFile.id, file.id));
+
+      await Promise.all([
+        getDb().delete(userFileToCMeta).where(eq(userFileToCMeta.fileId, file.id)),
+        getDb().delete(userFileSection).where(eq(userFileSection.fileId, file.id)),
+        getDb().delete(userFilePage).where(eq(userFilePage.fileId, file.id)),
+        getDb().delete(chunks).where(eq(chunks.documentId, file.id)),
+        getDb().delete(userFileChapter).where(eq(userFileChapter.fileId, file.id)),
+      ]);
+
+      // await parsePDF(file.id); // OLD: external backend
+      // await enqueueToCMetaParsing(file.id); // OLD: separate ToC meta job
+      await enqueueDocumentParse(file.id);
+
+      return reply.code(202).send({
+        success: true,
+        fileId: file.id,
+        status: "pending",
+        message: "Reparsing triggered successfully.",
+      });
+    },
+  });
+
   fastify.get<{
     Params: { id: string };
     Querystring: { page?: number; pageSize?: number };
@@ -307,7 +369,7 @@ export const registerDocumentHandlers = async (fastify: FastifyInstance) => {
       const [items, totalRows] = await Promise.all([
         getDb().query.userFilePage.findMany({
           where: eq(userFilePage.fileId, fileId),
-          orderBy: (table, { asc: ascOrder }) => [ascOrder(table.pageNumber)],
+          orderBy: [asc(userFilePage.pageNumber)],
           limit: pageSize,
           offset,
         }),

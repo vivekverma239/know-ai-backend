@@ -4,7 +4,7 @@ import type { PreflightResult } from "@/db/schema";
 import { similaritySearchDocuments } from "@/service/simSearch";
 import { env } from "@/utils/env";
 import { createContextLogger } from "@/utils/logger";
-import { Output, generateText, tool } from "ai";
+import { Output, generateText, stepCountIs, tool } from "ai";
 import Exa from "exa-js";
 import { z } from "zod";
 
@@ -59,7 +59,7 @@ export const assessReportReadiness = async ({
   const documentSearchTool = tool({
     description:
       "Search the user's uploaded documents by topic. Returns documents with titles, IDs, and summaries. Use this to check what documents are available for the report.",
-    parameters: z.object({
+    inputSchema: z.object({
       query: z.string().describe("Search query to find relevant documents"),
       limit: z
         .number()
@@ -67,7 +67,7 @@ export const assessReportReadiness = async ({
         .default(10)
         .describe("Max number of results"),
     }),
-    execute: async ({ query, limit }) => {
+    execute: async ({ query, limit }: { query: string; limit: number }) => {
       const docs = await similaritySearchDocuments({
         query,
         limit,
@@ -85,7 +85,7 @@ export const assessReportReadiness = async ({
   const webSearchTool = tool({
     description:
       "Search the web for documents (PDFs, articles, reports) that could fill data gaps. Use this after identifying what's missing from the user's documents. Returns titles and URLs of relevant sources.",
-    parameters: z.object({
+    inputSchema: z.object({
       query: z.string().describe("Search query for finding relevant sources"),
       category: z
         .enum(["pdf", "general"])
@@ -93,7 +93,7 @@ export const assessReportReadiness = async ({
         .default("general")
         .describe("Search for PDFs specifically or general web results"),
     }),
-    execute: async ({ query, category }) => {
+    execute: async ({ query, category }: { query: string; category: string }) => {
       try {
         const exa = new Exa(env.get("EXA_API_KEY"));
         const results = await exa.search(query, {
@@ -127,7 +127,7 @@ export const assessReportReadiness = async ({
   const { experimental_output: assessment } = await generateText({
     model: getLLM(MODELS.GEMINI_3_FLASH),
     tools: { documentSearch: documentSearchTool, webSearch: webSearchTool },
-    maxSteps: 10,
+    stopWhen: stepCountIs(10),
     prompt: `You are a report readiness analyst. Your job is to assess whether the user has sufficient documents to generate a high-quality report, and if not, find relevant sources on the web.
 
 ## Report Details
