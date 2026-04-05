@@ -146,18 +146,28 @@ Use the documentSearch tool with multiple queries related to the topic to thorou
 ### Step 2: Assess coverage
 Based on the documents found, identify what coverage areas are satisfied and what's genuinely missing. Be thorough — a single annual report or 10-K likely covers financial statements, segment breakdowns, KPIs, and geographic data.
 
-### Step 3: Search the web for missing data
-For any genuine gaps, use the webSearch tool to find specific PDFs and articles that would fill them. Search for both PDFs (category: "pdf") and general web articles. Use specific search queries like "{company} 10-K 2024 filing" or "{topic} quarterly earnings report".
+### Step 3: Search the web comprehensively
+Use the webSearch tool extensively to find PDFs and articles that would strengthen the report. Be generous — the user can choose which ones to index, so recommend broadly. Search for:
+- Annual reports, 10-K/10-Q filings
+- Earnings presentations and press releases
+- Industry reports and market analyses
+- Relevant news articles and research papers
+Search with both category "pdf" and "general". Use multiple specific queries.
 
 ### Step 4: Return your assessment
 After using the tools, return your final structured assessment:
 - **existingDocuments**: Documents from the user's collection that are relevant (with relevance scores and what they cover)
-- **gaps**: Only topics where the user truly has NO documents AND you couldn't easily find them — be very conservative here
-- **recommendations**: Web sources you found that would strengthen the report (with title, url, type, and which gap they fill)
+- **gaps**: Only topics where the user truly has NO documents AND no web sources were found
+- **recommendations**: ALL web sources you found that would strengthen the report. Be comprehensive — include every useful source. The user will select which ones to index. Each recommendation needs a title, url, type, and a SHORT fillsGap label (max 5 words, e.g. "Q4 Earnings", "Revenue Segments", "Industry Analysis")
 - **score**: 0-100 readiness score (percentage of coverage areas satisfied by existing docs)
 - **sufficient**: true if score >= 60 and at least 2 relevant documents exist
 
-Important: Do NOT include empty-titled recommendations. Every recommendation must have a meaningful title.`,
+IMPORTANT filtering rules for recommendations:
+- Do NOT include empty-titled recommendations. Every recommendation must have a meaningful title.
+- Keep fillsGap labels SHORT (max 5 words).
+- Do NOT recommend generic hub/index pages (e.g. "Annual Reports Hub", "SEC EDGAR search page", "Investor Relations page"). Only recommend URLs that link DIRECTLY to a specific document or article.
+- Each URL must point to an actual document (PDF, earnings release, specific article) — not a page that lists or aggregates multiple documents.
+- Both PDFs and web articles (HTML pages with specific content) are supported for indexing.`,
     experimental_output: Output.object({ schema: preflightResultSchema }),
   });
 
