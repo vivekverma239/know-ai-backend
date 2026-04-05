@@ -67,74 +67,68 @@ const fetchWebpageContent = async (url: string): Promise<{ title: string; conten
   return { title, content };
 };
 
+/** Returns fileId if successful, null if download failed (no DB record created). */
 const ingestRecommendation = async (
   rec: { url: string; title: string; type: "pdf" | "web_article" },
   userId: string,
   orgId: string,
-): Promise<string> => {
+): Promise<string | null> => {
   const fileId = randomUUID();
 
-  await getDb()
-    .insert(userFile)
-    .values({
-      id: fileId,
-      name: rec.title,
-      userId,
-      orgId,
-      type: rec.type === "pdf" ? "pdf" : "web_article",
-      status: "pending",
-      sourceDocumentUrl: rec.url,
+  try {
+    // Download first — only create DB record if download succeeds
+    if (rec.type === "web_article") {
+      const { title, content } = await fetchWebpageContent(rec.url);
+
+      await getDb()
+        .insert(userFile)
+        .values({
+          id: fileId,
+          name: title,
+          userId,
+          orgId,
+          type: "web_article",
+          status: "pending",
+          sourceDocumentUrl: rec.url,
+          webArticleMetadata: { url: rec.url, title, content },
+        });
+
+      await processWebpageContent(fileId, content, rec.url, title);
+      await getDb().update(userFile).set({ status: "completed" }).where(eq(userFile.id, fileId));
+    } else {
+      const buffer = await downloadDocument(rec.url);
+      await getStorage().uploadFile({
+        data: buffer,
+        contentType: "application/pdf",
+        path: `files/${userId}/${fileId}/document.pdf`,
+      });
+
+      // Only create DB record after file is in storage
+      await getDb()
+        .insert(userFile)
+        .values({
+          id: fileId,
+          name: rec.title,
+          userId,
+          orgId,
+          type: "pdf",
+          status: "pending",
+          sourceDocumentUrl: rec.url,
+        });
+
+      await parsePDF(fileId);
+      await enqueueToCMetaParsing(fileId);
+    }
+
+    return fileId;
+  } catch (error) {
+    logger.error("Document download/ingestion failed", {
+      url: rec.url,
+      type: rec.type,
+      error: error instanceof Error ? error.message : String(error),
     });
-
-  if (rec.type === "web_article") {
-    // Process webpage in background
-    (async () => {
-      try {
-        const { title, content } = await fetchWebpageContent(rec.url);
-        await getDb()
-          .update(userFile)
-          .set({
-            name: title,
-            type: "web_article",
-            webArticleMetadata: { url: rec.url, title, content },
-          })
-          .where(eq(userFile.id, fileId));
-
-        await processWebpageContent(fileId, content, rec.url, title);
-        await getDb().update(userFile).set({ status: "completed" }).where(eq(userFile.id, fileId));
-      } catch (error) {
-        logger.error("Web article ingestion failed", {
-          fileId,
-          url: rec.url,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        await getDb().update(userFile).set({ status: "failed" }).where(eq(userFile.id, fileId));
-      }
-    })();
-  } else {
-    // Process PDF in background
-    (async () => {
-      try {
-        const buffer = await downloadDocument(rec.url);
-        await getStorage().uploadFile({
-          data: buffer,
-          contentType: "application/pdf",
-          path: `files/${userId}/${fileId}/document.pdf`,
-        });
-        await parsePDF(fileId);
-        await enqueueToCMetaParsing(fileId);
-      } catch (error) {
-        logger.error("PDF ingestion failed", {
-          fileId,
-          url: rec.url,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        await getDb().update(userFile).set({ status: "failed" }).where(eq(userFile.id, fileId));
-      }
-    })();
+    return null;
   }
-
-  return fileId;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -201,8 +195,8 @@ export const startIndexingAndWait = async ({
       url: rec.url,
       title: rec.title,
       type: rec.type,
-      fileId,
-      status: "pending",
+      fileId: fileId ?? rec.url, // use URL as placeholder if download failed
+      status: fileId ? "pending" : "failed",
     });
   }
 
@@ -215,17 +209,23 @@ export const startIndexingAndWait = async ({
     })
     .where(eq(structuredReports.id, reportId));
 
-  // Step 2: Poll until all documents are ready
-  const fileIds = selectedRecs.map((r) => r.fileId);
-  const finalStatuses = await pollUntilReady(fileIds);
+  // Step 2: Poll until all documents are ready (only those that were created)
+  const pendingFileIds = selectedRecs
+    .filter((r) => r.status !== "failed")
+    .map((r) => r.fileId);
+
+  const finalStatuses = pendingFileIds.length > 0
+    ? await pollUntilReady(pendingFileIds)
+    : new Map<string, string>();
 
   // Step 3: Update selected recommendations with final statuses
   const updatedRecs = selectedRecs.map((rec) => ({
     ...rec,
-    status: (finalStatuses.get(rec.fileId) === "completed" ? "completed" : "failed") as
-      | "pending"
-      | "completed"
-      | "failed",
+    status: (rec.status === "failed"
+      ? "failed"
+      : finalStatuses.get(rec.fileId) === "completed"
+        ? "completed"
+        : "failed") as "pending" | "completed" | "failed",
   }));
 
   await getDb()
