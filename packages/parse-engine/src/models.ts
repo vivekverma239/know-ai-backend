@@ -21,7 +21,7 @@ export interface ModelConfig {
 const defaults: ModelConfig = {
   lite: "google/gemini-2.5-flash-lite",
   medium: "google/gemini-2.5-flash",
-  smart: "google/gemini-3-flash",
+  smart: "google/gemini-3.1-flash",
 };
 
 /**
