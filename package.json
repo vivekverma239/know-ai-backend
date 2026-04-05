@@ -24,6 +24,7 @@
     "admin:dev": "pnpm --dir admin-dashboard dev",
     "admin:build": "pnpm --dir admin-dashboard build",
     "admin:preview": "pnpm --dir admin-dashboard preview",
+    "admin:create-users": "tsx scripts/generateAdminUsersJson.ts",
     "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts",
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev",
     "sync:auth": "tsx scripts/sync_auth_tables.ts",
@@ -34,6 +35,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
   "dependencies": {
+    "parse-engine": "workspace:*",
     "@ai-sdk/google": "^2.0.17",
     "@ai-sdk/openai": "^2.0.42",
     "@ai-sdk/perplexity": "^2.0.11",

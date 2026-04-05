@@ -1,0 +1,58 @@
+{
+  "name": "parse-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "eval": "tsx src/cli.ts",
+    "eval:run": "tsx src/eval/runner.ts",
+    "eval:collect": "tsx src/eval/collect.ts",
+    "test:table": "tsx scripts/test-table.ts",
+    "pipeline": "tsx src/pipeline.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Document parsing pipeline with LLM-powered table, chart, and media extraction",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
+    "@ai-sdk/gateway": "^3.0.87",
+    "@ai-sdk/google": "^3.0.57",
+    "@ai-sdk/openai": "^3.0.50",
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@aws-sdk/client-textract": "^3.1023.0",
+    "@google-cloud/storage": "^7.19.0",
+    "@llamaindex/liteparse": "^1.4.4",
+    "@mistralai/mistralai": "^2.1.2",
+    "ai": "^6.0.145",
+    "commander": "^14.0.3",
+    "dotenv": "^17.4.0",
+    "mupdf": "^1.27.0",
+    "p-limit": "^7.3.0",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.34.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
+  }
+}
