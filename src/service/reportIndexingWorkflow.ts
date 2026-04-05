@@ -17,26 +17,46 @@ const POLL_INTERVAL_MS = 15_000;
 const DOWNLOAD_API_URL = "https://download.agents-tools.com/download";
 const DOWNLOAD_API_KEY = process.env.DOCUMENT_DOWNLOAD_API_KEY ?? "";
 
-const downloadDocument = async (url: string): Promise<Buffer> => {
-  const response = await fetch(DOWNLOAD_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": DOWNLOAD_API_KEY,
-    },
-    body: JSON.stringify({
-      url,
-      strategy: "auto",
-      timeout: 60000,
-    }),
-  });
+const MAX_RETRIES = 3;
 
-  if (!response.ok) {
-    throw new Error(`Download API failed: ${response.status} ${response.statusText}`);
+const downloadDocument = async (url: string): Promise<Buffer> => {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(DOWNLOAD_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": DOWNLOAD_API_KEY,
+        },
+        body: JSON.stringify({
+          url,
+          strategy: "auto",
+          timeout: 60000,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download API failed: ${response.status} ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < MAX_RETRIES - 1) {
+        const backoff = Math.pow(2, attempt) * 1000;
+        logger.warn(`Download attempt ${attempt + 1} failed, retrying in ${backoff}ms`, {
+          url,
+          error: lastError.message,
+        });
+        await sleep(backoff);
+      }
+    }
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  throw lastError ?? new Error(`Download failed after ${MAX_RETRIES} attempts`);
 };
 
 const fetchWebpageContent = async (url: string): Promise<{ title: string; content: string }> => {
