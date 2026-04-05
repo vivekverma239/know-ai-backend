@@ -49,6 +49,8 @@ const searchWebForSources = async (
     fillsGap: string;
   }[] = [];
 
+  const seenUrls = new Set<string>();
+
   for (const gap of gaps) {
     try {
       // Search for PDFs
@@ -59,6 +61,8 @@ const searchWebForSources = async (
       });
 
       for (const result of pdfResults.results) {
+        if (seenUrls.has(result.url)) continue;
+        seenUrls.add(result.url);
         recommendations.push({
           title: result.title?.trim() || `PDF: ${gap.topic}`,
           url: result.url,
@@ -74,8 +78,8 @@ const searchWebForSources = async (
       });
 
       for (const result of webResults.results) {
-        // Skip if already added as PDF
-        if (recommendations.some((r) => r.url === result.url)) continue;
+        if (seenUrls.has(result.url)) continue;
+        seenUrls.add(result.url);
         recommendations.push({
           title: result.title?.trim() || `Article: ${gap.topic}`,
           url: result.url,
