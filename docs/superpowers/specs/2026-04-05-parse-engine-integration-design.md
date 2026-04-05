@@ -7,6 +7,11 @@
 
 Replace the external PDF parsing backend (`BACKEND_URL/parse/document/async`) with a direct in-process integration of the `parse-engine` library. Parsing remains async via QStash. Old parsing code is commented out, not deleted.
 
+## Removals
+
+- **Hierarchical index** — remove entirely: `userFileHeirarchialIndex` table references, `GET /files/hierarchical-index` API endpoint, `updateHeirarchialIndex` function, `@types/heirarchialIndex.ts` types, and cleanup references in `documentIngestion.ts`. The DB table stays (no migration) but all code references are removed.
+- **Separate ToC meta QStash job** — no longer needed. parse-engine output populates `userFileToCMeta` directly in the worker.
+
 ## Architecture
 
 ```
@@ -16,7 +21,7 @@ Upload/Webhook
       → QStash delivers to POST /api/v1/document-parse-callback
         → Download PDF buffer from GCS
         → parsePdfFromBuffer(buffer, options)
-        → Map output → updateParsedPages / updateParsedMetadata / updateOutline / updateHeirarchialIndex
+        → Map output → updateParsedPages / updateParsedMetadata / updateOutline / upsert userFileToCMeta
         → Mark file "completed"
 ```
 
@@ -54,7 +59,7 @@ New route: `POST /api/v1/document-parse-callback`
    - `updateParsedPages(fileId, mappedPages)`
    - `updateParsedMetadata(fileId, mappedMetadata)`
    - `updateOutline({ chapters, title, summary, fileId })`
-   - `updateHeirarchialIndex(fileId, derivedLevels)`
+   - Upsert `userFileToCMeta` with mapped ToC, metadata, and page summaries
 6. Mark status `completed`
 7. On error: mark status `failed`, log error
 
@@ -80,11 +85,11 @@ New file: `src/service/file/parseEngineMapper.ts`
 - `startPage` → `start_page` (+ 1 for 1-indexing)
 - `sections[].subsections[]` → `SubsectionAPI` format (`subsection_summary` field name)
 
-### Hierarchical Index
-- Derived from chapters/sections → `HeirarchialIndexData`
-- Each chapter → `LevelData` entry
-- Each section within → `LevelDataChildren` entry
-- `level` = chapter index
+### ToC Meta (replaces separate parseToCMeta agent)
+- parse-engine `ChapterWithSections[]` → `TocSection[]` format (`{ title, pageStart, pageEnd, summary, subsections[] }`)
+- parse-engine `pageSummaries` → `ChunkPageSummary[]` format (`{ pageNumber, summary, keyPoints: [] }`)
+- parse-engine `DocumentSummary` + `DocumentMetadata` → `DocumentMetadata` (parseToCMeta format: `{ title, shortSummary, summary, publishedDate }`)
+- Page numbers shifted +1 for 1-indexing
 
 ## parse-engine Changes
 
@@ -142,8 +147,15 @@ Optional overrides:
 - `package.json` — add `parse-engine` workspace dep
 - `Dockerfile` — build parse-engine, install native deps if needed
 
+### Removed (hierarchical index)
+- `src/routes/file.routes.ts` — remove `GET /hierarchical-index` endpoint + delete handler references
+- `src/service/file/parsing.ts` — remove `updateHeirarchialIndex` function
+- `src/service/ingestion/documentIngestion.ts` — remove `userFileHeirarchialIndex` cleanup in dedup
+- `src/routes/parsingCallback.routes.ts` — remove `parse_heirarchial_index` handler
+- `src/@types/heirarchialIndex.ts` — remove file (or leave as dead code)
+
 ### Preserved (commented out, not deleted)
 - `src/service/file/triggerParsing.ts` — `parsePDF()` function
 - `src/service/tocMetaQueue.ts` — `enqueueToCMetaParsing()` function
-- `src/routes/parsingCallback.routes.ts` — callback dispatcher
-- `src/routes/tocMetaCallback.routes.ts` — ToC meta callback
+- `src/routes/parsingCallback.routes.ts` — callback dispatcher (kept registered, no new traffic)
+- `src/routes/tocMetaCallback.routes.ts` — ToC meta callback (kept registered, no new traffic)
