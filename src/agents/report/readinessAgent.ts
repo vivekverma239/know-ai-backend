@@ -60,7 +60,7 @@ const searchWebForSources = async (
 
       for (const result of pdfResults.results) {
         recommendations.push({
-          title: result.title ?? `PDF: ${gap.topic}`,
+          title: result.title?.trim() || `PDF: ${gap.topic}`,
           url: result.url,
           type: "pdf",
           fillsGap: gap.topic,
@@ -77,7 +77,7 @@ const searchWebForSources = async (
         // Skip if already added as PDF
         if (recommendations.some((r) => r.url === result.url)) continue;
         recommendations.push({
-          title: result.title ?? `Article: ${gap.topic}`,
+          title: result.title?.trim() || `Article: ${gap.topic}`,
           url: result.url,
           type: "web_article",
           fillsGap: gap.topic,
