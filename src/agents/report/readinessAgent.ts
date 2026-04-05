@@ -167,7 +167,9 @@ IMPORTANT filtering rules for recommendations:
 - Keep fillsGap labels SHORT (max 5 words).
 - Do NOT recommend generic hub/index pages (e.g. "Annual Reports Hub", "SEC EDGAR search page", "Investor Relations page"). Only recommend URLs that link DIRECTLY to a specific document or article.
 - Each URL must point to an actual document (PDF, earnings release, specific article) — not a page that lists or aggregates multiple documents.
-- Both PDFs and web articles (HTML pages with specific content) are supported for indexing.`,
+- Both PDFs and web articles (HTML pages with specific content) are supported for indexing.
+- No REDUNDANT sources: if an annual report (10-K) is available for a period, do NOT also recommend quarterly reports (10-Q) for the same period — the annual report already covers it.
+- No DUPLICATES: do not recommend the same document from different sources (e.g. the same 10-K from SEC EDGAR and from the company's investor relations site). Pick the most authoritative source.`,
     experimental_output: Output.object({ schema: preflightResultSchema }),
   });
 
