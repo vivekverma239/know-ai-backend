@@ -117,6 +117,17 @@ export const getAdminDocumentDetail = (token: string, id: string) => {
   return apiRequest<AdminDocumentDetail>(`/admin/documents/${id}`, { token });
 };
 
+export const reparseAdminDocument = (token: string, id: string) => {
+  return apiRequest<{ success: boolean; fileId: string; status: string; message: string }>(
+    `/admin/documents/${id}/reparse`,
+    {
+      method: "POST",
+      token,
+      body: {},
+    },
+  );
+};
+
 export const getAdminDocumentPages = (
   token: string,
   id: string,
