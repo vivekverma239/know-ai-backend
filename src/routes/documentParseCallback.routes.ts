@@ -18,7 +18,8 @@ import { Type } from "@sinclair/typebox";
 import { Receiver } from "@upstash/qstash";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
-import { parsePdfFromBuffer } from "parse-engine";
+// Dynamic import — parse-engine is ESM-only (mupdf uses top-level await)
+const loadParseEngine = () => import("parse-engine");
 
 const documentParseCallbackRoutes = async (fastify: FastifyInstance) => {
   const receiver = new Receiver({
@@ -143,6 +144,7 @@ const documentParseCallbackRoutes = async (fastify: FastifyInstance) => {
         });
 
         // Run parse-engine
+        const { parsePdfFromBuffer } = await loadParseEngine();
         const result = await parsePdfFromBuffer(pdfBuffer, {
           textract: true,
           verbose: true,
