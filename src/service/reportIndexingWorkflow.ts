@@ -14,40 +14,37 @@ const logger = createContextLogger({ service: "reportIndexingWorkflow" });
 const MAX_POLL_ATTEMPTS = 40; // 40 * 15s = 10 minutes max
 const POLL_INTERVAL_MS = 15_000;
 
-const downloadDocument = async (url: string): Promise<Buffer> => {
-  const controller = new AbortController();
-  const timeoutMs = Number(process.env.DOCUMENT_DOWNLOAD_TIMEOUT_MS ?? "120000");
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+const DOWNLOAD_API_URL = "https://download.agents-tools.com/download";
+const DOWNLOAD_API_KEY = process.env.DOCUMENT_DOWNLOAD_API_KEY ?? "";
 
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`Document download failed: ${response.status} ${response.statusText}`);
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } finally {
-    clearTimeout(timeoutId);
+const downloadDocument = async (url: string): Promise<Buffer> => {
+  const response = await fetch(DOWNLOAD_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": DOWNLOAD_API_KEY,
+    },
+    body: JSON.stringify({
+      url,
+      strategy: "auto",
+      timeout: 60000,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Download API failed: ${response.status} ${response.statusText}`);
   }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 };
 
 const fetchWebpageContent = async (url: string): Promise<{ title: string; content: string }> => {
-  const controller = new AbortController();
-  const timeoutMs = Number(process.env.DOCUMENT_DOWNLOAD_TIMEOUT_MS ?? "120000");
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`Webpage fetch failed: ${response.status} ${response.statusText}`);
-    }
-    const content = await response.text();
-    const titleMatch = /<title[^>]*>([^<]+)<\/title>/i.exec(content);
-    const title = titleMatch?.[1]?.trim() || url;
-    return { title, content };
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  const buffer = await downloadDocument(url);
+  const content = buffer.toString("utf-8");
+  const titleMatch = /<title[^>]*>([^<]+)<\/title>/i.exec(content);
+  const title = titleMatch?.[1]?.trim() || url;
+  return { title, content };
 };
 
 const ingestRecommendation = async (
