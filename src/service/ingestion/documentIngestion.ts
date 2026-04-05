@@ -11,9 +11,10 @@ import {
 } from "@/db/schema";
 import { logError, logger } from "@/utils/logger";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import { parsePDF } from "../file/triggerParsing";
+// import { parsePDF } from "../file/triggerParsing"; // OLD: external backend
+import { enqueueDocumentParse } from "../file/enqueueDocumentParse";
 import { getStorage } from "../googleStorage";
-import { enqueueToCMetaParsing } from "../tocMetaQueue";
+// import { enqueueToCMetaParsing } from "../tocMetaQueue"; // OLD: separate ToC meta job
 import { processWebpageContent } from "./webpageProcessing";
 
 type DocumentIngestionData = {
@@ -276,8 +277,9 @@ export const ensureUserFileForDocument = async (
         path: `files/${userId}/${fileId}/document.pdf`,
       });
       await getDb().update(userFile).set({ status: "pending" }).where(eq(userFile.id, fileId));
-      await parsePDF(fileId);
-      await enqueueToCMetaParsing(fileId);
+      // await parsePDF(fileId); // OLD: external backend
+      // await enqueueToCMetaParsing(fileId); // OLD: separate ToC meta job
+      await enqueueDocumentParse(fileId);
     }
   } catch (error) {
     logError(error, { operation: "documentIngestion:parse", documentId, fileId });

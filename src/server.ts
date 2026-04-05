@@ -34,11 +34,16 @@ import structuredReportRoutes from "./routes/structuredReport.routes";
 import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
 import webSearchRoutes from "./routes/webSearch.routes";
 import tocMetaCallbackRoutes from "./routes/tocMetaCallback.routes";
+import documentParseCallbackRoutes from "./routes/documentParseCallback.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
 const fastify = Fastify({ logger: false, ignoreTrailingSlash: true });
 
 const start = async () => {
+  const port = Number.parseInt(process.env.PORT || "3000", 10);
+  const isProduction = process.env.NODE_ENV === "production" || process.env.ENV === "prod";
+  const host = process.env.HOST || (isProduction || process.env.PORT ? "0.0.0.0" : "localhost");
+
   // Register logging plugin FIRST to ensure all requests are logged
   const logLevel = process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error" | undefined;
   await fastify.register(loggingPlugin, {
@@ -132,6 +137,9 @@ const start = async () => {
   await fastify.register(tocMetaCallbackRoutes, {
     prefix: "/api/v1/toc-meta-callback",
   });
+  await fastify.register(documentParseCallbackRoutes, {
+    prefix: "/api/v1/document-parse-callback",
+  });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
   await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
   await fastify.register(adminAuthRoutes, { prefix: "/api/v1/admin/auth" });
@@ -142,13 +150,13 @@ const start = async () => {
   const start = async () => {
     try {
       await fastify.listen({
-        port: 3000,
-        host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
+        port,
+        host,
       });
       logger.info("Server started successfully", {
-        host: process.env.ENV === "prod" ? "0.0.0.0" : "localhost",
-        port: 3000,
-        docsUrl: "http://localhost:3000/docs",
+        host,
+        port,
+        docsUrl: `http://${host}:${port}/docs`,
       });
     } catch (err) {
       fastify.log.error(err);
