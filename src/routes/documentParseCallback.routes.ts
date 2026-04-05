@@ -146,6 +146,7 @@ const documentParseCallbackRoutes = async (fastify: FastifyInstance) => {
         // Run parse-engine
         const { parsePdfFromBuffer } = await loadParseEngine();
         const result = await parsePdfFromBuffer(pdfBuffer, {
+          paddle: !!process.env.MODAL_ENDPOINT_URL,
           textract: true,
           verbose: true,
         });
