@@ -28,6 +28,7 @@ const envSchema = z.object({
   APP_URL: z.string().optional(),
 
   // Admin
+  ADMIN_USERS_JSON: z.string().optional(),
   ADMIN_SECRETS_FILE: z.string().optional(),
   ADMIN_JWT_SECRET: z.string().optional(),
   ADMIN_CHALLENGE_TTL_MINUTES: z.string().optional(),
@@ -44,6 +45,14 @@ const envSchema = z.object({
   EXA_API_KEY: z.string().optional(),
   FIRECRAWL_API_KEY: z.string().optional(),
   SCRAPER_SERVICE_URL: z.string().optional(),
+
+  // parse-engine (PDF parsing pipeline)
+  MISTRAL_API_KEY: z.string().optional(),
+  AI_GATEWAY_API_KEY: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION_NAME: z.string().optional(),
+  MODAL_ENDPOINT_URL: z.string().optional(),
 
   // Feature flags
   PERSIST_TOKEN_USAGE: z.string().optional(),
