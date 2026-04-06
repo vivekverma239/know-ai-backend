@@ -4,6 +4,7 @@ import { MODELS } from "@/@types/llm";
 import { processDeepSearchQuery } from "@/agents/deepResearch";
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
+import { parseCitations } from "@/utils/citation";
 import { updateSession } from "@/db/mutation/session";
 import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
@@ -27,11 +28,31 @@ const SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to 
 
 const DEEP_SEARCH_SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool and a deep research tool. By default \nuse the deep research tool for any financial query. If it's a very specific \nquestion, you can use the knowledge base tool to answer it.\n\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [file_{documentId}/page={pageNumber}]\nwhere documentId is the id of the document and pageNumber is the page number of the document. Call the tool one by \none only if you don't get the coorect information in previous call.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
 
+/**
+ * Extract text from a UIMessage's parts, parse citations, and attach
+ * them as `metadata.sources` on assistant messages.
+ */
+const enrichAssistantCitations = async (msgs: CoreMessageExt[]) => {
+  for (const msg of msgs) {
+    if (msg.role !== "assistant") continue;
+    const text = msg.parts
+      .map((p) => (p.type === "text" ? p.text : ""))
+      .join("\n");
+    if (!text) continue;
+    const citations = await parseCitations(text);
+    if (citations.length > 0) {
+      msg.metadata = { ...msg.metadata, sources: citations };
+    }
+  }
+};
+
 type CoreMessageExt = UIMessage & {
   id: string;
   metadata?: {
-    agent: "deepResearch" | "knowledgeBase";
+    agent?: "deepResearch" | "knowledgeBase";
     steps?: StepMessage[];
+    sources?: Awaited<ReturnType<typeof parseCitations>>;
+    [key: string]: unknown;
   };
 };
 
@@ -189,7 +210,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
                 result.toUIMessageStream({
                   onFinish: async ({ messages: finishedMessages }) => {
                     try {
-                      await saveMessage(finishedMessages as CoreMessageExt[]);
+                      const msgs = finishedMessages as CoreMessageExt[];
+                      await enrichAssistantCitations(msgs);
+                      await saveMessage(msgs);
                     } catch (error) {
                       logger.error("Failed to persist messages on stream finish", {
                         error: error instanceof Error ? error.message : String(error),
@@ -265,7 +288,9 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
           originalMessages: messages,
           onFinish: async ({ messages: finishedMessages }) => {
             try {
-              await saveMessage(finishedMessages as CoreMessageExt[]);
+              const msgs = finishedMessages as CoreMessageExt[];
+              await enrichAssistantCitations(msgs);
+              await saveMessage(msgs);
             } catch (error) {
               logger.error("Failed to persist messages on stream finish", {
                 error: error instanceof Error ? error.message : String(error),
