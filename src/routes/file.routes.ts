@@ -655,6 +655,114 @@ const fileRoutes = async (fastify: FastifyInstance) => {
       });
     },
   });
+  // Get citation details — enriches citation references with file data and signed URLs
+  fastify.post<{
+    Body: {
+      citations: Array<{ fileId: string; pageNumbers: number[] }>;
+    };
+  }>("/citations", {
+    preHandler: fastify.authenticate,
+    schema: {
+      description: "Get enriched citation details with signed URLs and page content",
+      tags: ["Files"],
+      body: Type.Object({
+        citations: Type.Array(
+          Type.Object({
+            fileId: Type.String(),
+            pageNumbers: Type.Array(Type.Number()),
+          }),
+        ),
+      }),
+      response: {
+        200: Type.Object({
+          citations: Type.Array(
+            Type.Object({
+              fileId: Type.String(),
+              title: Type.String(),
+              summary: Type.String(),
+              type: Type.String(),
+              signedUrl: Type.Optional(Type.String()),
+              pages: Type.Array(
+                Type.Object({
+                  pageNumber: Type.Number(),
+                  content: Type.String(),
+                }),
+              ),
+            }),
+          ),
+        }),
+      },
+    },
+    handler: async (request, reply) => {
+      const user = request.user;
+      if (!user) {
+        throw new AuthenticationError("Unauthorized");
+      }
+      const { citations } = request.body;
+
+      const results = await Promise.all(
+        citations.map(async (citation) => {
+          const file = await checkFileAccess(citation.fileId, user.id, user.orgId);
+          if (!file) {
+            return {
+              fileId: citation.fileId,
+              title: "Unknown",
+              summary: "",
+              type: "unknown",
+              signedUrl: undefined,
+              pages: [],
+            };
+          }
+
+          // Get signed URL for PDF files
+          let signedUrl: string | undefined;
+          if (file.type === "pdf") {
+            try {
+              const storage = getStorage();
+              const gcsPath = await resolveExistingPdfStoragePath(storage, {
+                id: file.id,
+                userId: file.userId,
+                orgId: file.orgId,
+                isAdminFile: file.isAdminFile,
+              });
+              if (gcsPath) {
+                signedUrl = await storage.getSignedUrl(gcsPath);
+              }
+            } catch {
+              // Skip signed URL if resolution fails
+            }
+          }
+
+          // Get page content for requested pages
+          const pages = citation.pageNumbers.length > 0
+            ? await getDb()
+                .select({
+                  pageNumber: userFilePage.pageNumber,
+                  content: userFilePage.content,
+                })
+                .from(userFilePage)
+                .where(
+                  and(
+                    eq(userFilePage.fileId, citation.fileId),
+                    sql`${userFilePage.pageNumber} = ANY(${citation.pageNumbers})`,
+                  ),
+                )
+            : [];
+
+          return {
+            fileId: file.id,
+            title: file.metadata?.title ?? file.name ?? "Untitled",
+            summary: file.metadata?.shortSummary ?? file.metadata?.summary ?? "",
+            type: file.type ?? "pdf",
+            signedUrl,
+            pages,
+          };
+        }),
+      );
+
+      return reply.send({ citations: results });
+    },
+  });
 };
 
 export default fileRoutes;
