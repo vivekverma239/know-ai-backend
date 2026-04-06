@@ -14,8 +14,8 @@ const logger = createContextLogger({ service: "reportIndexingWorkflow" });
 const MAX_POLL_ATTEMPTS = 40; // 40 * 15s = 10 minutes max
 const POLL_INTERVAL_MS = 15_000;
 
-const DOWNLOAD_API_URL = "https://download.agents-tools.com/download";
-const DOWNLOAD_API_KEY = process.env.DOCUMENT_DOWNLOAD_API_KEY ?? "";
+const SCRAPER_API_URL = "https://download.agents-tools.com/api/scrape/pdf/download";
+const SCRAPER_API_KEY = process.env.DOCUMENT_DOWNLOAD_API_KEY ?? "";
 
 const MAX_RETRIES = 3;
 
@@ -44,15 +44,15 @@ const downloadDocument = async (url: string): Promise<Buffer> => {
         }
       }
 
-      // Direct download failed or returned HTML — try download API
-      if (DOWNLOAD_API_KEY) {
-        const apiResponse = await fetch(DOWNLOAD_API_URL, {
+      // Direct download failed or returned HTML — try scraper API
+      if (SCRAPER_API_KEY) {
+        const apiResponse = await fetch(SCRAPER_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": DOWNLOAD_API_KEY,
+            "x-api-key": SCRAPER_API_KEY,
           },
-          body: JSON.stringify({ url, strategy: "auto", timeout: 60000 }),
+          body: JSON.stringify({ url }),
         });
 
         if (apiResponse.ok) {
@@ -60,7 +60,7 @@ const downloadDocument = async (url: string): Promise<Buffer> => {
           return Buffer.from(arrayBuffer);
         }
 
-        throw new Error(`Download API failed: ${apiResponse.status} ${apiResponse.statusText}`);
+        throw new Error(`Scraper API failed: ${apiResponse.status} ${apiResponse.statusText}`);
       }
 
       throw new Error(`Direct download failed: ${directResponse.status}`);
