@@ -99,6 +99,7 @@ export async function parsePdf(
 
   try {
     let allMedia: DetectedMedia[] = [];
+    let paddleTables: DetectedMedia[] = [];
     const ctx = new PipelineContext({
       persistence,
       models,
@@ -112,12 +113,12 @@ export async function parsePdf(
       chunks = pdf.chunk(CHUNK_SIZE, path.join(workDir, "chunks"));
     }
 
-    // Step 1: PaddleOCR detection
+    // Step 1: PaddleOCR detection (tables only — images come from Mistral)
     if (paddle) {
       if (!modalEndpoint) throw new Error("PaddleOCR requires modalUrl or MODAL_ENDPOINT_URL env");
       if (!bucketName) throw new Error("PaddleOCR requires bucket or GOOGLE_STORAGE_BUCKET env");
 
-      log(verbose, "PaddleOCR → detecting media blocks...");
+      log(verbose, "PaddleOCR → detecting table blocks...");
       let paddlePages;
       if (needsChunking) {
         const chunkUrls = [];
@@ -132,16 +133,13 @@ export async function parsePdf(
         tempBlobPaths.push(upload.blobPath);
         paddlePages = await runPaddleOCR(upload.signedUrl, modalEndpoint, maxPages);
       }
-      allMedia = paddlePages.flatMap((p) => [...p.images, ...p.tables]);
-      log(verbose, `  Found ${allMedia.length} media blocks`);
+      paddleTables = paddlePages.flatMap((p) => p.tables);
+      log(verbose, `  Found ${paddleTables.length} tables (images will come from Mistral)`);
 
-      // Step 2: Mask PDF
-      if (mask && allMedia.length > 0) {
-        log(verbose, "Masking media blocks...");
-        const maskBlocks = mediasToMaskBlocks(
-          allMedia.filter((m) => m.type === "image"),
-          allMedia.filter((m) => m.type === "table"),
-        );
+      // Step 2: Mask only tables so Mistral doesn't double-parse them
+      if (mask && paddleTables.length > 0) {
+        log(verbose, "Masking table blocks...");
+        const maskBlocks = mediasToMaskBlocks([], paddleTables);
         pdfForMistral = path.join(workDir, `${baseName}_masked.pdf`);
         maskPdf(resolvedPdf, maskBlocks, pdfForMistral);
       }
@@ -163,7 +161,13 @@ export async function parsePdf(
     }
     log(verbose, `  ${mistralResult.totalPages} pages parsed`);
 
-    if (!paddle) {
+    if (paddle) {
+      // Tables from Paddle, images from Mistral
+      const mistralImages = mistralResult.pages.flatMap((p) => p.images);
+      allMedia = [...paddleTables, ...mistralImages];
+      log(verbose, `  Combined: ${paddleTables.length} paddle tables + ${mistralImages.length} mistral images`);
+    } else {
+      // No paddle — everything from Mistral
       allMedia = mistralResult.pages.flatMap((p) => [...p.images, ...p.tables]);
     }
 
