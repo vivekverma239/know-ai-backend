@@ -19,30 +19,51 @@ const DOWNLOAD_API_KEY = process.env.DOCUMENT_DOWNLOAD_API_KEY ?? "";
 
 const MAX_RETRIES = 3;
 
+const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+/** Try direct fetch first, fall back to download API if blocked. Retries with backoff. */
 const downloadDocument = async (url: string): Promise<Buffer> => {
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const response = await fetch(DOWNLOAD_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": DOWNLOAD_API_KEY,
-        },
-        body: JSON.stringify({
-          url,
-          strategy: "auto",
-          timeout: 60000,
-        }),
+      // Try direct download with browser user-agent first
+      const directResponse = await fetch(url, {
+        headers: { "User-Agent": BROWSER_USER_AGENT },
+        redirect: "follow",
       });
 
-      if (!response.ok) {
-        throw new Error(`Download API failed: ${response.status} ${response.statusText}`);
+      if (directResponse.ok) {
+        const contentType = directResponse.headers.get("content-type") ?? "";
+        if (contentType.includes("pdf") || contentType.includes("octet-stream") || !contentType.includes("html")) {
+          const arrayBuffer = await directResponse.arrayBuffer();
+          if (arrayBuffer.byteLength > 1000) {
+            return Buffer.from(arrayBuffer);
+          }
+        }
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
+      // Direct download failed or returned HTML — try download API
+      if (DOWNLOAD_API_KEY) {
+        const apiResponse = await fetch(DOWNLOAD_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": DOWNLOAD_API_KEY,
+          },
+          body: JSON.stringify({ url, strategy: "auto", timeout: 60000 }),
+        });
+
+        if (apiResponse.ok) {
+          const arrayBuffer = await apiResponse.arrayBuffer();
+          return Buffer.from(arrayBuffer);
+        }
+
+        throw new Error(`Download API failed: ${apiResponse.status} ${apiResponse.statusText}`);
+      }
+
+      throw new Error(`Direct download failed: ${directResponse.status}`);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt < MAX_RETRIES - 1) {
