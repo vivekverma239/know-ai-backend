@@ -39,6 +39,12 @@ const structuredReportCallbackRoutes = async (fastify: FastifyInstance) => {
         return reply.status(404).send({ error: "Report not found" });
       }
 
+      // Block processing if report is currently indexing (unless the indexing workflow is resuming)
+      if (report.status === "indexing" && !skipPreflight) {
+        logger.warn("Report is still indexing, skipping processing", { reportId });
+        return reply.status(409).send({ error: "Report is still indexing" });
+      }
+
       // If skipPreflight or reprocessing, go directly to the pipeline
       if (skipPreflight || reprocess) {
         processStructuredReportWithObserver({ reportId, reprocess })

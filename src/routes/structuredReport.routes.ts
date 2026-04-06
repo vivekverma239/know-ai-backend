@@ -258,6 +258,12 @@ const structuredReportRoutes = async (fastify: FastifyInstance) => {
         return reply.send({ status: "processing", message: "Report generation resumed" });
       }
 
+      // Set status to indexing immediately so the UI reflects the change
+      await getDb()
+        .update(structuredReports)
+        .set({ status: "indexing" })
+        .where(eq(structuredReports.id, id));
+
       // Start indexing workflow in background
       startIndexingAndWait({
         reportId: id,
