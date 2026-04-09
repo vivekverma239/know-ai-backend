@@ -1,17 +1,26 @@
+# Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
-.env.test
-.env.production
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-node_modules
-trpc
-data/
-dist/
 .env.*
+
+# Dependencies
+node_modules
+
+# Build output
+dist/
+trpc
+
+# Data
+data/
+
+# Claude Code
+.claude/
+
+# Superset
+.superset/
+
+# Logs
+deploy-cloudrun.log
+
+# Docs & Tests
+docs/
+test/
