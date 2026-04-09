@@ -1,0 +1,206 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-3-flash-lite",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T09:37:40.527Z",
+  "results": [
+    {
+      "caseId": "metro-nested-table",
+      "description": "Metro Bank strategy slide with nested commercial pipeline table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-fiscal-outlook",
+      "description": "IMF: Fiscal outlook comparison table (Dec-Apr 2022/23 vs 2023/24)",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-balance-of-payments",
+      "description": "IMF: Balance of payments projection table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-selected-economic-indicators",
+      "description": "IMF: Selected economic indicators comprehensive table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-financial-indicators",
+      "description": "IMF: Financial soundness indicators table (2015-2023)",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-external-financing",
+      "description": "IMF: External financing requirements table (2024-2027)",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-financial-soundness",
+      "description": "IMF: Financial soundness indicators multi-year table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-fiscal-operations",
+      "description": "IMF: Federal government fiscal operations table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-bop-detailed",
+      "description": "IMF: Detailed balance of payments table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-external-financing-detailed",
+      "description": "IMF: Detailed external financing requirements",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "imf-reviews-purchases",
+      "description": "IMF: Schedule of reviews and purchases table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "metro-h1-results",
+      "description": "Metro Bank H1'24 results: 8 key financial metrics across 3 periods",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "metro-balance-sheet",
+      "description": "Metro Bank balance sheet: capital accretion, provisions, portfolio composition",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "metro-mortgages",
+      "description": "Metro Bank mortgage overview: LTV splits, geographical distribution, IFRS9 staging",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "metro-upgraded-guidance",
+      "description": "Metro Bank upgraded guidance: RoTE, NIM, and cost:income projections",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Model 'google/gemini-3-flash-lite' not found"
+    }
+  ],
+  "summary": {
+    "total": 21,
+    "passed": 0,
+    "failed": 0,
+    "errors": 21,
+    "avgScore": 0,
+    "avgLatencyMs": 0,
+    "dimensions": {}
+  }
+}

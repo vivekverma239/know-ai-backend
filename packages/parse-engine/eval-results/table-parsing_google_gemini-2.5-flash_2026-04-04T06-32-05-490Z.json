@@ -1,0 +1,36 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-2.5-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T06:32:05.490Z",
+  "results": [
+    {
+      "caseId": "metro-nested-table",
+      "description": "Metro Bank strategy slide with nested commercial pipeline table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output does not parse the table provided in the reference at all. It appears to be parsing a completely different section of a document, or has failed to extract the correct table. None of the structural elements, data, or headers match the reference. The formatting is also incomplete and contains non-standard markdown elements, indicating a parsing error."
+      },
+      "output": "```markdown\n| | | | |\n|:---|:---|:---|:---|\n| **Delivering mid-to-high teen RoTE by 2027** [colspan=4] | | | |\n| **Cost Discipline** [rowspan=3] | M Continued cost discipline with **£80 million** of annualised **run-rate savings** on track to be delivered by Q4'24 [colspan=3] | | |\n| | M Reduced colleague numbers by > 1,000 or c.22% of FTE [colspan=3] | | |\n| | M Repositioned our store and call centre propositions [colspan=3] | | |\n| **Asset Rotation** [rowspan",
+      "latencyMs": 22764,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "errors": 0,
+    "avgScore": 1,
+    "avgLatencyMs": 22764,
+    "dimensions": {}
+  }
+}

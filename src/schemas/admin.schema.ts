@@ -71,6 +71,13 @@ export const AdminDocumentDetailResponseSchema = Type.Intersect([
   }),
 ]);
 
+export const AdminDocumentReparseResponseSchema = Type.Object({
+  success: Type.Boolean(),
+  fileId: Type.String(),
+  status: Type.String(),
+  message: Type.String(),
+});
+
 export const AdminDocumentPageSchema = Type.Object({
   id: Type.String(),
   fileId: Type.String(),

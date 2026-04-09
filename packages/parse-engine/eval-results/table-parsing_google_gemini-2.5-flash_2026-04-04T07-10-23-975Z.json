@@ -1,0 +1,131 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-2.5-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T07:10:23.975Z",
+  "results": [
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output completely failed to parse the table. It captured only a tiny fraction of the column headers, and even those are placed incorrectly within a flat structure, missing the multi-level hierarchy. All row headers and all data points are entirely missing. The `[colspan=17]` is incorrectly placed as a cell value rather than a structural directive. This is a very poor extraction."
+      },
+      "output": "| | 2022 | SR (Jan.) | 2023 | 2023 | Q1 | Q2 | Q3 | Q4 | SR (Jan.) | 2024 | SR (Jan.) | 2025 | 2026 | 2027 | 2028 | 2029 |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| | | 2023 | | | | | | | 2024 | | 2025 | | | | | | |\n| **Proj.** | [colspan=17] | | | | | | | | | | | |",
+      "latencyMs": 19181,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely incomplete, cutting off after the second data row. The attempted use of `[colspan=X]` is non-standard markdown and is also applied incorrectly in some cases (e.g., '£ million' spanning 5 columns when 6 data columns are implied). Due to the incompleteness and structural issues, both data and structural accuracy are very low."
+      },
+      "output": "| | Year ended 31 December [colspan=3] | Six months ended 30 June [colspan=2] |\n|:------------------------------------------|:-----------------------------------|:-------------------------------------|\n| | 2020 | 2021 | 2022 | 2022 | 2023 |\n| | | | | (unaudited) [colspan=2] |\n| | (£ million) [colspan=5] |\n| Net cash inflow/(outflow) from operating activities | 1,041 | 2,854 | (1,185) | (73) | 182 |\n| Net cash (outflow)/inflow from investing activities |",
+      "latencyMs": 20392,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely incomplete, capturing only one row of data from a multi-row table. The header detection is poor, with key headers misplaced and the multi-level header structure incorrectly represented using non-standard markdown (colspan). Structural and data accuracy are very low due to the missing content. Formatting is also poor because of the incompleteness and non-standard syntax."
+      },
+      "output": "| | | Adjustments [colspan=3] | |\n| :------------------------- | :----------------------------- | :--------------------------------------- | :----------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :------------------- |\n| | | | (unaudited) (£ million) [colspan=2] | |\n| | As at 30 June 2023 <sup>(1)</sup> | Net proceeds from the Firm Placing <sup>(2)</sup> | Net proceeds from the issuance of the Cash New MREL Notes <sup>(3)</sup> | Issuance of the New Tier 2 Notes and the Non-Cash New MREL Notes <sup>(4)</sup> | Pro Forma Group |\n| Total assets............... | 21,747",
+      "latencyMs": 23198,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output correctly identifies all headers and the overall table structure, including the logical grouping of sub-factors under their respective factors. However, the `[rowspan=X]` syntax used for merged cells is not standard markdown. More significantly, there are several inaccuracies in the data, specifically regarding the presence or absence of the '•' dots in various cells when compared to the source image. For instance, some dots are missing (e.g., 'Scale of the Economy' - Social IPS, 'National Income' - Governance IPS, 'Government Liquidity Risk' - Environmental IPS), and one is incorrectly added ('Government Liquidity Risk' - Governance IPS)."
+      },
+      "output": "| Factor | Sub-factor | Environmental IPS | Social IPS | Governance IPS |\n|---|---|---|---|---|\n| ECONOMIC STRENGTH [rowspan=3] | Growth Dynamics | • | • | • |\n| | Scale of the Economy | | | |\n| | National Income | | • | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH [rowspan=2] | Quality of Institutions | | • | • |\n| | Policy Effectiveness | | • | • |\n| FISCAL STRENGTH [rowspan=2] | Debt Burden | • | • | |\n| | Debt Affordability | | • | • |\n| SUSCEPTIBILITY TO EVENT RISK [rowspan=4] | Political Risk | | • | • |\n| | Government Liquidity Risk | | | • |\n| | Banking Sector Risk | | | • |\n| | External Vulnerability Risk | • | | |",
+      "latencyMs": 5397,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 1026,
+        "cost": 0.0031257
+      }
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model successfully detected all table headers. However, the output is severely truncated, making the table incomplete and unusable. Additionally, it attempted to represent merged cells using non-standard markdown ('[rowspan=X]') which deviates from standard markdown table representation. There was also a data error where '10%' was transcribed as '1'."
+      },
+      "output": "| Factor | Sub-factor | Sub-factor Weighting | Metric / Sub-sub-factor | Metric/Sub-sub-factor Weighting |\n| :---------------------------------- | :---------------------------------- | :------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------- |\n| ECONOMIC STRENGTH [rowspan=5]       | Growth Dynamics                     | 35%                                   | Average Real GDP Growth                                                                                                                                                                                                                                                                                                                                                                                           | 25%                                 |\n|                                     |                                     |                                       | MAD Volatility in Real GDP Growth                                                                                                                                                                                                                                                                                                                                                                                 | 1",
+      "latencyMs": 18108,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1353,
+        "completionTokens": 4092,
+        "cost": 0.0106359
+      }
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely incomplete, capturing only a small portion of the table. It attempts to use `[rowspan=2]` which is not standard markdown table syntax. Additionally, there is a data inaccuracy for the 'aa3' column under 'Average Real GDP Growth', showing '4.4-4' instead of the correct '4.4-4.9' based on the source image."
+      },
+      "output": "| Sub-factor | Metric | Metric Weight | aaa | aa1 | aa2 | aa3 | a1 | a2 | a3 | baa1 | baa2 | baa3 | ba1 | ba2 | ba3 | b1 | b2 | b3 | caa1 | caa2 | caa3 | ca |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| Growth Dynamics [rowspan=2] | Average Real GDP Growth (%) t-4 to t+5 \\*1 | 25% | ≥ 5.7 | 5.3-5.7 | 4.9-5.3 | 4.4-4",
+      "latencyMs": 18012,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 2901,
+        "completionTokens": 4092,
+        "cost": 0.0111003
+      }
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "errors": 0,
+    "avgScore": 1.33,
+    "avgLatencyMs": 17381,
+    "dimensions": {}
+  }
+}

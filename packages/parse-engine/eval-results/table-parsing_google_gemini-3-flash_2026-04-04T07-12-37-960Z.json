@@ -1,0 +1,131 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-3-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T07:12:37.960Z",
+  "results": [
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output only extracted a small portion of the table headers and failed to extract any of the table data. The header structure itself is also incorrectly represented, with incorrect colspans and misaligned labels. This is a very poor extraction, earning low scores across all dimensions."
+      },
+      "output": "| | | [colspan=14] Proj. |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| | | SR (Jan.) | | [colspan=4] 2024 | SR (Jan.) | | SR (Jan.) | 2025 | 2026 | 2027 | 2028 | 2029 |\n| | 2022 | 2023 | 2023 | Q1 | Q2 | Q3 | Q4 | 2024 |",
+      "latencyMs": 23207,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1119,
+        "completionTokens": 4094,
+        "cost": 0.0128415
+      }
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model failed to parse the vast majority of the table. It only extracted the header rows and the first data row, which was also incomplete. This severely impacts structural and data accuracy."
+      },
+      "output": "| | [colspan=3] Year ended 31 December | | | [colspan=2] Six months ended 30 June | |\n| :--- | :---: | :---: | :---: | :---: | :---: |\n| | **2020** | **2021** | **2022** | **2022** | **2023** |\n| | [colspan=3] *(£ million)* | | | [colspan=2] *(unaudited)* | |\n| Net cash inflow/(outflow) from operating activities ...................... | 1,041 | 2,854 | (1,185) | (73) |",
+      "latencyMs": 26667,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1119,
+        "completionTokens": 4096,
+        "cost": 0.0128475
+      }
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model failed significantly in parsing this table. It only captured the headers and the first row label, failing to extract any data rows. The structural representation of the complex headers, particularly the 'Adjustments' spanning multiple columns and the nested '(unaudited)' and '(£ million)' notes, was incorrect (e.g., wrong colspan values and placement). The markdown syntax for colspan is non-standard, making the formatting poor and unlikely to render correctly."
+      },
+      "output": "| | | [colspan=3] Adjustments | |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| | **As at 30 June 2023<sup>(1)</sup>** | **Net proceeds from the Firm Placing<sup>(2)</sup>** | **Net proceeds from the issuance of the Cash New MREL Notes<sup>(3)</sup>** | **Issuance of the New Tier 2 Notes and the Non-Cash New MREL Notes<sup>(4)</sup>** | **Pro Forma Group** |\n| | [colspan=5] *(unaudited)* | | | | |\n| | [colspan=5] *(£ million)* | | | | |\n| **Total assets........................................................",
+      "latencyMs": 25283,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1163,
+        "completionTokens": 4094,
+        "cost": 0.0128635
+      }
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output provided is not a parsed markdown table. It consists of scattered text snippets and internal thoughts, making it impossible to evaluate against the source image and reference as a table parsing task. All scores for individual dimensions would be 1 due to the complete lack of a table structure or relevant content."
+      },
+      "output": "000 - 8,000` (Wait, fixed: 7,000 - 8,000)\n`6,200 - 7,000`\n`5,500 - 6,200`\n`4,700 - 5,500`\n`4,100 - 4,700`\n`< 4,100`\n\nFinal formatting check.\nThe adjustment section is at the bottom.\n`Adjustment to Factor Score` is a header for the bottom section.\n`Other` is on the next line.\n`0 to 9 notches` is on the line after that.\nEach spans the whole table width.\n\nLet'",
+      "latencyMs": 18103,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1164,
+        "completionTokens": 4092,
+        "cost": 0.012858
+      }
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output fails significantly on structural accuracy and formatting due to the use of non-standard `[rowspan=X]` syntax, which is not valid markdown for merged cells. This makes the table unparseable by standard markdown renderers. Additionally, there are several inaccuracies in the data, with multiple dots (●) either missing or incorrectly placed compared to the source image. Header detection is the only strong point."
+      },
+      "output": "| Factor | Sub-factor | Environmental IPS | Social IPS | Governance IPS |\n| :--- | :--- | :---: | :---: | :---: |\n| ECONOMIC STRENGTH [rowspan=3] | Growth Dynamics | ● | ● | ● |\n| | Scale of the Economy | | | |\n| | National Income | | ● | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH [rowspan=2] | Quality of Institutions | | ● | ● |\n| | Policy Effectiveness | | ● | ● |\n| FISCAL STRENGTH [rowspan=2] | Debt Burden | ● | ● | |\n| | Debt Affordability | | ● | ● |\n| SUSCEPTIBILITY TO EVENT RISK [rowspan=4] | Political Risk | ● | ● | ● |\n| | Government Liquidity Risk | | | ● |\n| | Banking Sector Risk | | | ● |\n| | External Vulnerability Risk | ● | | |",
+      "latencyMs": 18751,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1163,
+        "completionTokens": 3009,
+        "cost": 0.0096085
+      }
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model correctly identified the table headers and applied appropriate markdown formatting, including rowspan syntax, for the part it extracted. However, the actual output is severely incomplete, stopping abruptly and missing the vast majority of the table's content and structure. While what's present is accurate and well-formatted, the critical incompleteness renders the extraction largely unusable."
+      },
+      "output": "| Factor | Sub-factor | Sub-factor Weighting | Metric / Sub-sub-factor | Metric / Sub-sub-factor Weighting |\n| :--- | :--- | :--- | :--- | :--- |\n| [rowspan=5] ECONOMIC STRENGTH | [rowspan=2] Growth Dynamics | 35% | Average Real GDP Growth | 25% |\n| | | | MAD Volatility in Real GDP Growth | 10% |\n| | Scale of the Economy | 30% | Nominal GDP (US$ bn) | 30% |\n| | National Income | 35% | GDP per Capita (PPP, Int. USD) | 35% |\n| | Adjustment to Factor Score | ",
+      "latencyMs": 23186,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1151,
+        "completionTokens": 4090,
+        "cost": 0.0128455
+      }
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "errors": 0,
+    "avgScore": 1.17,
+    "avgLatencyMs": 22533,
+    "dimensions": {}
+  }
+}

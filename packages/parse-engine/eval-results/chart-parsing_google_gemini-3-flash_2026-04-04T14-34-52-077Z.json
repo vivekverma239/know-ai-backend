@@ -1,0 +1,169 @@
+{
+  "task": "chart-parsing",
+  "model": "google/gemini-3-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T14:34:52.070Z",
+  "results": [
+    {
+      "caseId": "imf-fiscal-chart",
+      "description": "IMF report chart: fiscal chart",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output accurately extracts all key textual information such as the title, subtitle, axis labels, legend, and source. The data extraction is remarkably accurate, with numerical estimates for the bar heights being very close to what can be visually inferred from the source image. The output is well-structured using headings and a clear table for data points. The only minor point for improvement is the absence of a narrative overview of the chart's implications, which was present in the reference output, slightly impacting completeness."
+      },
+      "output": "Based on the first image provided, here is the extracted information from the chart:\n\n### **Chart Overview**\n*   **Title:** Peso Debt Service\n*   **Subtitle:** (ARS billions)\n*   **Chart Type:** Grouped Bar Chart\n*   **Source Note:** Sources: MECON and Fund staff calculations.\n\n### **Axes and Legend**\n*   **Y-axis:** Debt service amount in ARS billions (Scale: 0 to 80,000).\n*   **X-axis:** Years (2024 to 2028).\n*   **Legend:**\n    *   **Pre-Exchange:** Light blue bars\n    *   **Post-Exchange:** Dark blue bars\n\n### **Extracted Data Points**\nThe following values are estimated based on the chart's scale:\n\n| Year | Pre-Exchange (ARS billions) | Post-Exchange (ARS billions) |\n| :--- | :--- | :--- |\n| **2024** | ~58,900 | ~16,500 |\n| **2025** | ~24,000 | ~42,500 |\n| **2026** | ~5,700 | ~21,300 |\n| **2027** | ~4,000 | ~16,000 |\n| **2028** | ~800 | ~10,000 |",
+      "latencyMs": 10948,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2384,
+        "completionTokens": 1555,
+        "cost": 0.005857
+      }
+    },
+    {
+      "caseId": "imf-external-debt-composition",
+      "description": "IMF report chart: external debt composition",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output does an excellent job of extracting all the basic chart information, including the title, subtitle, axis labels, and legend with associated colors. The data extraction from the chart lines into the table is highly accurate, with numerical values closely matching the source image and the reference. The output also correctly identifies when data points are not present for a given series ('—'). However, the actual output completely misses the 'Summary of Trends' section, which is a significant part of the reference and represents an interpretation of the data. Despite this omission, the quality of the extracted data and the clarity of the presented information are very good."
+      },
+      "output": "Based on the provided image, here is the extracted information from the chart:\n\n### **Chart Information**\n*   **Title:** Evolution of Exchange Rate Expectations\n*   **Subtitle:** (ROFEX future contracts, AR$/US$)\n*   **Chart Type:** Multi-series Line Chart\n*   **Y-Axis:** Exchange Rate (AR$/US$), ranging from 800 to 2000 in increments of 200.\n*   **X-Axis:** Time (Months), from Jan-24 to Jan-25.\n*   **Legend:**\n    *   **end-Dec 2023** (Light blue line)\n    *   **end-Feb 2024** (Medium blue line)\n    *   **end-May, 2024** (Dark blue line)\n\n---\n\n### **Extracted Data Points**\nThe following table provides estimated values for the exchange rate expectations across different months, based on the chart's visual representation.\n\n| Month | Expectations as of end-Dec 2023 | Expectations as of end-Feb 2024 | Expectations as of end-May 2024 |\n| :--- | :---: | :---: | :---: |\n| **Jan-24** | ~850 | — | — |\n| **Feb-24** | ~900 | — | — |\n| **Mar-24** | ~1000 | ~880 | — |\n| **Apr-24** | ~1100 | ~950 | — |\n| **May-24** | ~1200 | ~1000 | ~920 |\n| **Jun-24** | ~1300 | ~1080 | ~950 |\n| **Jul-24** | ~1400 | ~1180 | ~980 |\n| **Aug-24** | ~1500 | ~1280 | ~1020 |\n| **Sep-24** | ~1600 | ~1380 | ~1060 |\n| **Oct-24** | ~1700 | ~1480 | ~1100 |\n| **Nov-24** | ~1800 | ~1580 | ~1150 |\n| **Dec-24** | — | ~1700 | ~1200 |\n| **Jan-25** | — | — | ~1260 |",
+      "latencyMs": 13705,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2384,
+        "completionTokens": 1888,
+        "cost": 0.006856
+      }
+    },
+    {
+      "caseId": "imf-private-official-debt-maturity",
+      "description": "IMF report chart: private official debt maturity",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output is well-structured and captures most of the chart's information accurately. The identification of the May-21 peak, which is not a labeled X-axis tick but is visually the highest point for 'Total' and 'Ex. Agr', is a strong point. However, there is a clear data extraction error for 'Agr' in 'Mar-22', where the value is -2, but on the graph, it is visibly positive and closer to +10 or +12. This significant error in data extraction prevents a perfect score. The description of the X-axis tick marks is also slightly off (described as 4-month increments with tick marks every 2 months, but they are consistently 4-month increments)."
+      },
+      "output": "Based on the first image provided, here is the extraction of the chart's information:\n\n### **Chart Information**\n*   **Title:** Economic Activity\n*   **Subtitle:** (Percent, y/y; 3m m.a.)\n*   **Chart Type:** Multi-series Line Chart\n*   **Axis Labels and Units:**\n    *   **X-axis:** Time (labeled from Nov-20 to Mar-24 in 4-month increments, with tick marks every 2 months)\n    *   **Left Y-axis (LHS):** Percentage change (-10 to 30)\n    *   **Right Y-axis (RHS):** Percentage change (-40 to 40) — specifically for the Agriculture series.\n*   **Legend Entries:**\n    *   **Total** (Dark blue line)\n    *   **Ex. Agr** (Medium blue line) — Likely representing Economic Activity excluding Agriculture.\n    *   **Agr (RHS)** (Light blue line) — Representing Agricultural activity, measured on the right-hand scale.\n*   **Sources:** INDEC; Haver Analytics; and Fund staff calculations.\n\n---\n\n### **Extracted Data Points (Estimated)**\nThe following table provides approximate values for key data points read from the chart:\n\n| Date | Total (%, LHS) | Ex. Agr (%, LHS) | Agr (%, RHS) |\n| :--- | :---: | :---: | :---: |\n| **Nov-20** | -7.5 | -7.0 | -3 |\n| **Mar-21** | -1.5 | -1.5 | 6 |\n| **May-21** (Peak) | 20.0 | 22.0 | 2 |\n| **Jul-21** | 13.0 | 14.5 | -3 |\n| **Nov-21** | 9.5 | 9.5 | 4 |\n| **Mar-22** | 6.0 | 6.0 | -2 |\n| **Jul-22** | 7.0 | 8.0 | -5 |\n| **Nov-22** | 5.0 | 5.5 | -1 |\n| **Mar-23** | 0.5 | 1.0 | -10 |\n| **Jul-23** (Trough) | -5.0 | -2.5 | -40 |\n| **Nov-23** | 0.0 | 0.5 | 0 |\n| **Mar-24** | -5.0 | -5.5 | 10 |\n\n**Observations from the chart:**\n*   **Volatility in Agriculture:** The agricultural sector (light blue line) shows extreme volatility, dropping to a significant low of -40% (y/y) around July 2023 before rebounding sharply.\n*   **Overall Trend:** Total economic activity peaked in mid-2021 (over 20% growth, likely due to low-base effects from the previous year) and has generally trended downward since, entering negative territory in late 2023/early 2024.\n*   **Convergence:** By March 2024, the \"Total\" and \"Ex. Agr\" series appear to converge at approximately -5% growth.",
+      "latencyMs": 24514,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2362,
+        "completionTokens": 3800,
+        "cost": 0.012581
+      }
+    },
+    {
+      "caseId": "imf-embig-sovereign-spread",
+      "description": "IMF report chart: embig sovereign spread",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is highly complete and accurate, especially in its granular data extraction. It successfully identifies the chart type, axis labels, title, and legend. The estimations for individual data points are very accurate considering the visual nature of the chart and the difficulty in precise reading. While the structure differs slightly from the reference, it is logical and well-organized. The only minor missing elements are explicit axis ranges and increments, but this is minor given the overall high quality of data extraction and accuracy."
+      },
+      "output": "Based on the provided image, here is the extracted information from the chart:\n\n### **Chart Information**\n*   **Title:** Maturity and Yields of ARS (CER) Debt Issuances\n*   **Chart Type:** Scatter Plot\n*   **X-Axis Label:** Maturity (days)\n*   **Y-Axis Label:** Yields (percent)\n*   **Legend:**\n    *   ● **Sept-Nov 23** (Light Blue dots)\n    *   ● **Dec 23-May 24** (Dark Blue dots)\n\n---\n\n### **Extracted Data Points (Estimated)**\nThe following table provides approximate values based on the visual positioning of the data points on the grid.\n\n| Period | Estimated Maturity (days) | Estimated Yield (%) |\n| :--- | :--- | :--- |\n| **Sept-Nov 23** | ~100 to 250 | Cluster between -10% and +10% |\n| | ~350 to 500 | Cluster between -20% and +10% |\n| | ~550 | +3% and +10% |\n| **Dec 23-May 24** | ~100 | -87% |\n| | ~120 | -110% |\n| | ~320 | -14% |\n| | ~420 | -23% |\n| | ~500 | -4% and -13% |\n| | ~650 | -15% |\n| | ~680 | -20% |\n| | ~710 | -4% |\n| | ~860 | -6% |\n| | ~1060 | +1% and -5% |\n| | ~1230 | -4% |\n\n### **Key Observations**\n*   **Yield Trends:** Issuances from Sept-Nov 23 generally had higher yields (mostly positive or near zero) compared to the Dec 23-May 24 period.\n*   **Negative Yields:** Issuances in the Dec 23-May 24 period show significantly negative yields, particularly for short-term maturities (under 200 days), where yields dropped below -100%.\n*   **Maturity Extension:** The Dec 23-May 24 period shows debt issuances with longer maturities, extending beyond 1,000 days, whereas Sept-Nov 23 issuances were mostly capped around 600 days.",
+      "latencyMs": 12479,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2355,
+        "completionTokens": 1902,
+        "cost": 0.0068835
+      }
+    },
+    {
+      "caseId": "imf-reserve-assets",
+      "description": "IMF report chart: reserve assets",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent data extraction and accuracy for the numerical values in the stacked bar chart. All titles, axes labels, units, and legend entries are correctly identified. The estimations for each segment of the stacked bars across all years are highly accurate and align very well with visual inspection and the reference values. The structure is clear and well-organized. However, the output is marked down slightly for completeness because it omits the 'Observations' section, which provides analytical insights derived from the chart data, as presented in the reference. Additionally, the 'Notes from the chart context' are included but are not visible within the provided source image, thus not part of parsing the image itself, though they were present in the reference."
+      },
+      "output": "### Chart Information Extraction\n\n**Chart Title:** Private and Official Debt Maturity Profile 1/\n**Subtitle:** (Billions of US$)\n**Chart Type:** Stacked Bar Chart\n\n**Axis Labels and Units:**\n*   **Y-Axis:** Debt amount in Billions of US$ (range: 0 to 70)\n*   **X-Axis:** Years (2024, 2025, 2026, 2027, 2028)\n\n**Legend Entries:**\n*   **FX Bonds** (Dark Blue)\n*   **Peso Bonds** (Medium Blue)\n*   **IMF** (Light Blue/Cyan)\n*   **Other Official** (Grey)\n*   **Bopreal** (Yellow)\n\n---\n\n### Data Points\n*The values below are estimated based on the visual representation of the stacked bar segments against the Y-axis.*\n\n**Estimated Debt Values (Billions of US$)**\n\n| Category | 2024 | 2025 | 2026 | 2027 | 2028 |\n| :--- | :---: | :---: | :---: | :---: | :---: |\n| FX Bonds | ~3 | ~9 | ~9 | ~10 | ~12 |\n| Peso Bonds | ~17 | ~25 | ~12 | ~9 | ~3 |\n| IMF | ~3 | ~3.5 | ~5 | ~7.5 | ~9.5 |\n| Other Official | ~3 | ~5 | ~5 | ~4.5 | ~4.5 |\n| Bopreal | ~1.5 | ~1.5 | ~1 | ~5 | 0 |\n| **Approx. Total** | **~27.5** | **~44** | **~32** | **~36** | **~29** |\n\n**Notes from the chart context:**\n*   **1/** Includes principal and interest payments.\n*   Data for 2024 covers May–December.\n*   Peso-denominated bonds are converted to USD using an official exchange rate of 885.8 ARS/USD.",
+      "latencyMs": 14452,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2389,
+        "completionTokens": 2021,
+        "cost": 0.0072575
+      }
+    },
+    {
+      "caseId": "imf-growth-comparison",
+      "description": "IMF report chart: growth comparison",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output provides an excellent extraction of the chart's data points and general overview. The data table is highly accurate, with numerical values very closely matching both the source image and the reference, demonstrating strong data extraction. The structure is clear and well-organized. The primary reason for not scoring a perfect 5 is the omission of a descriptive summary of the trends, which was present in the reference output, slightly impacting completeness. However, the core data extraction is almost perfect."
+      },
+      "output": "Based on the provided chart, here is the extracted information:\n\n### **Chart Overview**\n*   **Title:** Primary Fiscal Balance\n*   **Subtitle:** (Percent of GDP)\n*   **Chart Type:** Line Chart\n*   **Legend:** \n    *   **Successful:** Dark blue line\n    *   **Not successful:** Light blue line\n*   **X-Axis:** Years relative to stabilization episode (labeled from -5 to 5)\n*   **Y-Axis:** Percent of GDP (range from -2 to 8)\n\n---\n\n### **Extracted Data Points**\nValues are estimated based on the grid lines provided in the chart.\n\n| Year (Relative to 0) | Successful (Percent of GDP) | Not Successful (Percent of GDP) |\n| :--- | :---: | :---: |\n| -5 | -1.2 | 1.3 |\n| -4 | -0.9 | 0.8 |\n| -3 | 0.9 | 1.7 |\n| -2 | 3.8 | 1.4 |\n| -1 | 3.7 | 1.0 |\n| 0 | 3.9 | 1.4 |\n| 1 | 5.6 | 3.4 |\n| 2 | 5.0 | 3.2 |\n| 3 | 4.1 | 2.9 |\n| 4 | 1.5 | 3.3 |\n| 5 | 1.1 | 2.3 |",
+      "latencyMs": 9617,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2362,
+        "completionTokens": 1241,
+        "cost": 0.004904
+      }
+    },
+    {
+      "caseId": "imf-domestic-credit",
+      "description": "IMF report chart: domestic credit",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is excellent. It correctly identifies all chart components, including title, subtitle, chart type, and axis descriptions. The legend entries are accurate. The data extraction is exceptionally good, providing estimated values for all semi-annual points, and in many cases, these values are more precise and visually accurate than those provided in the reference. The key observations correctly summarize the main trends in the chart. The structure is clear and well-organized, making the information easy to digest."
+      },
+      "output": "Based on the first image provided, here is the extracted information from the chart:\n\n### **Chart Overview**\n*   **Title:** Real Wage Index\n*   **Subtitle:** (Index, Jan 2017=100)\n*   **Chart Type:** Multi-line chart\n*   **Y-Axis:** Index value (ranging from 30 to 130)\n*   **X-Axis:** Timeline from Jan-17 to Jan-24 (semi-annual labels)\n\n### **Legend Entries**\n*   **Formal sector (private):** Dark blue line\n*   **Formal sector (public):** Light blue line\n*   **Formal sector:** Medium blue line\n*   **Informal sector:** Light gray line\n\n### **Extracted Data Points (Estimated)**\nThe following table provides estimated index values at key time intervals based on the chart's visual plot.\n\n| Date | Formal sector (private) | Formal sector (public) | Formal sector | Informal sector |\n| :--- | :---: | :---: | :---: | :---: |\n| **Jan-17** | 100 | 100 | 100 | 100 |\n| **Jul-17** | 102 | 103 | 103 | 108 |\n| **Jan-18** | 101 | 103 | 101 | 106 |\n| **Jul-18** | 94 | 95 | 94 | 95 |\n| **Jan-19** | 89 | 89 | 89 | 93 |\n| **Jul-19** | 88 | 87 | 88 | 85 |\n| **Jan-20** | 88 | 85 | 88 | 81 |\n| **Jul-20** | 84 | 81 | 83 | 80 |\n| **Jan-21** | 83 | 77 | 81 | 79 |\n| **Jul-21** | 84 | 80 | 82 | 72 |\n| **Jan-22** | 84 | 82 | 84 | 74 |\n| **Jul-22** | 83 | 81 | 82 | 68 |\n| **Jan-23** | 83 | 81 | 83 | 64 |\n| **Jul-23** | 83 | 88 | 84 | 59 |\n| **Jan-24** | 72 | 63 | 68 | 38 |\n\n### **Key Observations from the Chart**\n*   **Baseline:** All sectors are indexed to 100 in January 2017.\n*   **General Trend:** There is a consistent downward trend in real wages for all sectors over the seven-year period.\n*   **Sector Divergence:** The informal sector (gray line) shows a much more significant and steeper decline compared to the formal sectors, especially beginning in 2021.\n*   **Recent Sharp Decline:** All sectors show a sharp, dramatic drop in the real wage index starting in late 2023 and continuing into January 2024.",
+      "latencyMs": 13069,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2355,
+        "completionTokens": 1346,
+        "cost": 0.0052155
+      }
+    },
+    {
+      "caseId": "imf-inflation-comparison",
+      "description": "IMF report chart: inflation comparison",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output successfully extracts the title, axes information, legend, and data points in a structured format. However, it misses the 'Summary of Trends' section present in the reference, which impacts completeness. While most data points are accurately estimated, there are noticeable discrepancies for the 'Successful' line at time periods 2, 3, 4, and 5, where the model consistently overestimates the values (e.g., reporting 15 and 10 when the line is clearly near 0 in the source image). This lowers the accuracy and data_extraction scores. The overall structure is good, despite a minor redundancy."
+      },
+      "output": "Based on the chart provided in the first image, here is the extracted information:\n\n### **Chart Information**\n*   **Title:** \"Ex-ante\" Real Interest Rate\n*   **Subtitle:** (Percent)\n*   **Chart Type:** Line chart\n*   **Y-Axis:** Percent (Scale from -1,200 to 400)\n*   **X-Axis:** Time periods relative to a central event (0), ranging from -5 to 5.\n*   **Legend:**\n    *   **Successful:** Dark blue line\n    *   **Not Successful:** Light blue line\n\n### **Data Values**\nThe following values are estimated based on the chart's grid and axes:\n\n| Time Period | Successful (Percent) | Not Successful (Percent) |\n| :--- | :--- | :--- |\n| **-5** | -310 | -45 |\n| **-4** | -960 | -30 |\n| **-3** | -1,070 | -90 |\n| **-2** | -540 | -260 |\n| **-1** | -250 | -950 |\n| **0** | -50 | -780 |\n| **1** | -10 | -115 |\n| **2** | 5 | -20 |\n| **3** | 10 | -30 |\n| **4** | 15 | -25 |\n| **5** | 10 | -245 |",
+      "latencyMs": 8138,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 2367,
+        "completionTokens": 860,
+        "cost": 0.0037635
+      }
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "errors": 0,
+    "avgScore": 4.13,
+    "avgLatencyMs": 13365,
+    "dimensions": {}
+  }
+}

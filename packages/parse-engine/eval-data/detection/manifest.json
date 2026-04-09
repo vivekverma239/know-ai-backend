@@ -1,0 +1,62 @@
+[
+  {
+    "id": "imf-page-9",
+    "page": "detection/pages/imf-page-9.png",
+    "reference": "detection/references/imf-page-9.json",
+    "description": "IMF page 10: 2 charts, no tables"
+  },
+  {
+    "id": "imf-page-11",
+    "page": "detection/pages/imf-page-11.png",
+    "reference": "detection/references/imf-page-11.json",
+    "description": "IMF page 12: 1 chart + 1 table (mixed)"
+  },
+  {
+    "id": "imf-page-13",
+    "page": "detection/pages/imf-page-13.png",
+    "reference": "detection/references/imf-page-13.json",
+    "description": "IMF page 14: 3 charts, no tables"
+  },
+  {
+    "id": "imf-page-15",
+    "page": "detection/pages/imf-page-15.png",
+    "reference": "detection/references/imf-page-15.json",
+    "description": "IMF page 16: 4 charts, dense page"
+  },
+  {
+    "id": "imf-page-16",
+    "page": "detection/pages/imf-page-16.png",
+    "reference": "detection/references/imf-page-16.json",
+    "description": "IMF page 17: 2 tables only, no charts"
+  },
+  {
+    "id": "imf-page-36",
+    "page": "detection/pages/imf-page-36.png",
+    "reference": "detection/references/imf-page-36.json",
+    "description": "IMF page 37: 6 charts, very dense"
+  },
+  {
+    "id": "imf-page-37",
+    "page": "detection/pages/imf-page-37.png",
+    "reference": "detection/references/imf-page-37.json",
+    "description": "IMF page 38: 2 tables only"
+  },
+  {
+    "id": "imf-page-38",
+    "page": "detection/pages/imf-page-38.png",
+    "reference": "detection/references/imf-page-38.json",
+    "description": "IMF page 39: 1 chart + 1 table (mixed)"
+  },
+  {
+    "id": "imf-page-40",
+    "page": "detection/pages/imf-page-40.png",
+    "reference": "detection/references/imf-page-40.json",
+    "description": "IMF page 41: 6 charts, very dense"
+  },
+  {
+    "id": "imf-page-45",
+    "page": "detection/pages/imf-page-45.png",
+    "reference": "detection/references/imf-page-45.json",
+    "description": "IMF page 46: 1 full-page table"
+  }
+]

@@ -1,0 +1,950 @@
+[
+  {
+    "referenceIdx": "Insert table/media 0 here",
+    "parsedData": "This report provides a detailed description of the \"Economic Activity\" chart.\n\n### **Chart Overview**\n*   **Title:** Economic Activity\n*   **Units:** Percent change, year-over-year (y/y), based on a 3-month moving average (3m m.a.).\n*   **Time Period:** November 2020 to March 2024.\n\n### **Axes and Scales**\n*   **X-Axis:** Time, with markers for November, March, and July across the years 2020 to 2024.\n*   **Primary Y-Axis (Left):** Measures percentage change for the \"Total\" and \"Ex. Agr\" series. Ranges from -10 to 30.\n*   **Secondary Y-Axis (Right - RHS):** Measures percentage change specifically for the \"Agr\" (Agriculture) series. Ranges from -40 to 40. Note: The 0 level on the primary axis corresponds to approximately -20 on the secondary axis.\n\n### **Data Series Legend**\n1.  **Total (Dark Blue Line):** Uses the left axis. Represents total economic activity.\n2.  **Ex. Agr (Medium Blue Line):** \"Excluding Agriculture,\" uses the left axis. Represents economic activity minus the agricultural sector.\n3.  **Agr (RHS) (Light Blue Line):** \"Agriculture,\" uses the right-hand side axis. Represents agricultural sector activity.\n\n### **Estimated Data Values**\nThe following table provides estimated values at key time intervals based on the visual plot:\n\n| Month/Year | Total (LHS %) | Ex. Agr (LHS %) | Agr (RHS %) |\n| :--- | :---: | :---: | :---: |\n| Nov-20 | -7 | -7 | -3 |\n| Mar-21 | -2 | -2 | +5 |\n| Jul-21 (Peak) | +19 | +21 | -4 |\n| Nov-21 | +10 | +10 | +3 |\n| Mar-22 | +8 | +8 | +10 |\n| Jul-22 | +7 | +7 | -5 |\n| Nov-22 | +5 | +5 | -2 |\n| Mar-23 | +1 | +2 | -10 |\n| Jul-23 (Trough) | -5 | -2 | -35 |\n| Nov-23 | 0 | 0 | +2 |\n| Mar-24 | -5 | -5 | +10 |\n\n### **Key Observations**\n*   **Total and Non-Agricultural Activity:** Both series peaked significantly in early-to-mid 2021 (reaching over 20%) before entering a long-term downward trend. They briefly returned to near 0% in late 2023 before contracting again in early 2024.\n*   **Agricultural Volatility:** The agricultural sector (RHS) shows extreme fluctuations. It experienced a massive contraction in mid-2023 (reaching approx -35%) but has shown a strong recovery trend into 2024, diverging from the total economic trend.\n\n### **Sources**\n*   INDEC; Haver Analytics; and Fund staff calculations.",
+    "page": 9,
+    "idx": 0,
+    "bounds": [
+      0.5958823529411764,
+      0.22090909090909092,
+      0.8976470588235295,
+      0.4159090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 1 here",
+    "parsedData": "The following information is extracted from the provided line chart titled **\"Evolution of Exchange Rate Expectations.\"**\n\n### **Chart Overview**\n*   **Title:** Evolution of Exchange Rate Expectations\n*   **Subtitle:** (ROFEX future contracts, AR$/US$)\n*   **Y-Axis:** Exchange rate in Argentine Pesos (AR$) per US Dollar (US$), ranging from 800 to 2000.\n*   **X-Axis:** Timeline by month from January 2024 (Jan-24) to January 2025 (Jan-25).\n*   **Data Series:** The chart shows three different sets of expectations (future curves) as of three specific dates:\n    1.  **end-Dec 2023** (Light blue line)\n    2.  **end-Feb 2024** (Medium blue line)\n    3.  **end-May, 2024** (Dark blue line)\n\n---\n\n### **Extracted Data Points (Estimated Values)**\n\nThe values below are estimated based on the position of the lines relative to the axes.\n\n| Month | end-Dec 2023 Expectations (AR$/US$) | end-Feb 2024 Expectations (AR$/US$) | end-May 2024 Expectations (AR$/US$) |\n| :--- | :---: | :---: | :---: |\n| **Jan-24** | ~850 | - | - |\n| **Feb-24** | ~900 | - | - |\n| **Mar-24** | ~1000 | ~880 | - |\n| **Apr-24** | ~1100 | ~950 | - |\n| **May-24** | ~1200 | ~1000 | ~920 |\n| **Jun-24** | ~1300 | ~1080 | ~950 |\n| **Jul-24** | ~1400 | ~1180 | ~980 |\n| **Aug-24** | ~1500 | ~1280 | ~1020 |\n| **Sep-24** | ~1600 | ~1380 | ~1060 |\n| **Oct-24** | ~1700 | ~1480 | ~1110 |\n| **Nov-24** | ~1800 | ~1580 | ~1160 |\n| **Dec-24** | - | ~1700 | ~1210 |\n| **Jan-25** | - | - | ~1260 |\n\n---\n\n### **Summary of Trends**\n*   **Decreasing Expectations:** As time progressed from December 2023 to May 2024, the expected exchange rate for future months decreased significantly. The slope of the expectations curve became much flatter by May 2024 compared to December 2023.\n*   **Highest Projection:** The December 2023 projection was the most aggressive, expecting the rate to hit 1800 AR$/US$ by November 2024.\n*   **Most Recent Projection:** The May 2024 projection is the most conservative, expecting the rate to reach approximately 1260 AR$/US$ by January 2025.",
+    "page": 9,
+    "idx": 1,
+    "bounds": [
+      0.5858823529411765,
+      0.5436363636363636,
+      0.89,
+      0.725
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 2 here",
+    "parsedData": "Based on the provided chart, here is the summary of the data:\n\n### **Real Revenue and Spending Growth**\n**(Percent, y/y; cumulative since Dec 2023)**\n\nThe chart illustrates year-over-year real growth across various fiscal categories. All categories show negative growth (contraction).\n\n| Category | Estimated Real Growth (%) |\n| :--- | :--- |\n| **Revenue** | -8% |\n| **Primary spending** | -26% |\n| **Capital** | -75% |\n| **Curr. transfers provinces** | -45% |\n| **Pensions** | -31% |\n| **Subsidies** | -17% |\n| **Wages** | -10% |\n| **Social transfers** | -10% |\n\n**Chart Details:**\n*   **Y-Axis Range:** -100 to 40 (increments of 20).\n*   **Scale:** Percent, year-over-year.\n*   **Timeframe:** Cumulative since December 2023.\n*   **Visual Legend:** Revenue is indicated by a grey bar, Primary spending by a dark blue bar, and specific spending components by light blue bars.",
+    "page": 11,
+    "idx": 2,
+    "bounds": [
+      0.5976470588235294,
+      0.4859090909090909,
+      0.8935294117647059,
+      0.6536363636363637
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 3 here",
+    "parsedData": "This bar chart, titled **Peso Debt Service (ARS billions)**, compares debt service obligations before and after a debt exchange across the years 2024 to 2028.\n\n### Overview\nThe chart shows a significant reduction in debt service due in 2024 following the exchange, with those obligations redistributed across the following years, primarily peaking in 2025.\n\n### Data Summary\nThe following table provides estimated figures based on the chart's vertical axis (values in ARS billions):\n\n| Year | Pre-Exchange (Light Blue) | Post-Exchange (Dark Blue) |\n| :--- | :--- | :--- |\n| **2024** | ~59,000 | ~16,000 |\n| **2025** | ~24,000 | ~42,500 |\n| **2026** | ~6,000 | ~21,000 |\n| **2027** | ~4,000 | ~16,000 |\n| **2028** | ~1,000 | ~10,000 |\n\n### Chart Details\n*   **Vertical (Y) Axis:** Value in ARS billions, ranging from 0 to 80,000 in increments of 10,000.\n*   **Horizontal (X) Axis:** Years from 2024 to 2028.\n*   **Legend:** \n    *   Light Blue: Pre-Exchange\n    *   Dark Blue: Post-Exchange\n*   **Source:** MECON and Fund staff calculations.\n\n**Note regarding background:** The provided background image contains text and additional context, but per instructions, no content from the background has been included in this extraction.",
+    "page": 12,
+    "idx": 3,
+    "bounds": [
+      0.5694117647058824,
+      0.225,
+      0.8935294117647059,
+      0.41863636363636364
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 4 here",
+    "parsedData": "This is a description of the horizontal bar chart provided in the first image.\n\n### **Chart Title: Factors of Monetary Base Growth**\n**Subtitle/Units:** (Trillions of AR$, Dec 11- May 23)\n\nThe chart illustrates the various components contributing to the growth of the monetary base. Values to the right of the zero line indicate factors that increased the monetary base, while values to the left indicate factors that decreased it.\n\n| Factor | Estimated Value (Trillions of AR$) |\n| :--- | :--- |\n| **Total (Dark Blue Bar)** | **~4.5** |\n| Interest payments | ~11.5 |\n| FX purchases | 10.0 |\n| Net credit to gov't 1/ | ~0.5 |\n| Peso-den. securities and other BCRA liabilities | ~-9.0 |\n| BOPREAL | ~-8.5 |\n\n**Note on Calculations:** The \"Total\" bar (approximately 4.5 trillion AR$) represents the net result of the positive drivers (Interest payments, FX purchases, and Net credit to gov't) minus the contractionary factors (BCRA liabilities and BOPREAL).\n\n---\n**Sources:** BCRA; and Fund staff calculations.\n**Footnotes:** 1/ Includes put exercise, new NTTS and treasury buybacks.",
+    "page": 13,
+    "idx": 4,
+    "bounds": [
+      0.17294117647058824,
+      0.2318181818181818,
+      0.4747058823529412,
+      0.42863636363636365
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 5 here",
+    "parsedData": "### Chart Description: Policy Rate and Core Inflation\n\nThe provided chart illustrates the relationship between the monetary policy rate, core inflation, and real interest rates (both ex-post and ex-ante) from November 2022 to May 2024. All values are expressed in monthly percentages (m/m).\n\n#### Chart Components\n*   **Title:** Policy Rate and Core Inflation (Percent, m/m)\n*   **Y-Axis:** Percentage values ranging from -16 to 48, with increments of 8.\n*   **X-Axis:** Time from Nov-22 to May-24.\n*   **Legend:**\n    *   **Real interest rate (ex-post):** Grey bars.\n    *   **Real interest rate (ex-ante):** Yellow bars.\n    *   **Policy rate (effective terms):** Light blue line.\n    *   **Core inflation:** Dark blue line.\n*   **Sources:** BCRA; INDEC; and Fund staff estimates.\n*   **Note:** Real interest rates are derived from core inflation. The ex-ante measure is based on average expected core inflation for the current and subsequent two months (t, t+1, t+2).\n\n#### Extracted Data (Approximate Monthly Values)\n\n| Month | Policy Rate (Line) | Core Inflation (Line) | Real Interest Rate: Ex-post (Grey Bar) | Real Interest Rate: Ex-ante (Yellow Bar) |\n| :--- | :---: | :---: | :---: | :---: |\n| Nov-22 | ~6% | ~5% | ~1% | N/A |\n| Dec-22 | ~6% | ~5% | ~1% | ~0.5% |\n| Jan-23 | ~6% | ~6% | ~0% | ~0.5% |\n| Feb-23 | ~7% | ~8% | ~-1% | ~0.5% |\n| Mar-23 | ~7% | ~7% | ~0.5% | ~1% |\n| Apr-23 | ~8% | ~8% | ~0.5% | ~1.5% |\n| May-23 | ~8% | ~8% | ~1% | ~1% |\n| Jun-23 | ~8% | ~6.5% | ~1.5% | ~0% |\n| Jul-23 | ~8% | ~6.5% | ~1.5% | ~0% |\n| Aug-23 | ~10% | ~14% | ~-3.5% | ~2% |\n| Sep-23 | ~10% | ~13.5% | ~-3% | ~0% |\n| Oct-23 | ~11% | ~9% | ~2% | ~0% |\n| Nov-23 | ~11% | ~14% | ~-2% | ~-2% |\n| Dec-23 | ~9% | ~28% | ~-15% | ~-7% |\n| Jan-24 | ~8.5% | ~18% | ~-10% | ~-9% |\n| Feb-24 | ~8.5% | ~12% | ~-3% | ~-6% |\n| Mar-24 | ~7% | ~10% | ~-2% | ~-4% |\n| Apr-24 | ~5% | ~8% | ~-1% | ~-3% |\n| May-24 | ~4% | ~6% | N/A | ~-2% |\n\n#### Key Trends\n*   **Core Inflation Peak:** Inflation surged significantly, peaking at approximately 28% in December 2023, followed by a steady decline toward 6% by May 2024.\n*   **Policy Rate:** The effective policy rate rose steadily to a peak of 11% in late 2023 before being reduced to around 4% by May 2024.\n*   **Real Interest Rates:** Both measures turned sharply negative in late 2023 due to the inflation spike, with the ex-post rate reaching nearly -15% in December 2023. They have since begun trending back toward zero as inflation cooled.",
+    "page": 13,
+    "idx": 5,
+    "bounds": [
+      0.5405882352941176,
+      0.235,
+      0.8258823529411765,
+      0.4318181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 6 here",
+    "parsedData": "This is a line chart titled **\"Credit to the Private Sector\"** showing monthly changes (3-month moving average) from December 2022 to April 2024.\n\n### Chart Overview\n*   **Vertical Axis (Y):** Percent change (m/m; 3m m.a.), ranging from -15 to 20.\n*   **Horizontal Axis (X):** Timeline from Dec-22 to Apr-24.\n*   **Legend:**\n    *   **Dark Blue Line:** FX (Foreign Exchange credit)\n    *   **Light Blue Line:** Peso 1/ (Peso-denominated credit at constant end-2023 prices)\n\n### Estimated Data Points\nThe following table provides estimated values based on the data points plotted at the labeled intervals on the X-axis:\n\n| Month | FX (%) | Peso (%) |\n| :--- | :--- | :--- |\n| Dec-22 | -1.5 | -1.0 |\n| Feb-23 | 1.0 | -1.0 |\n| Apr-23 | 3.5 | 1.5 |\n| Jun-23 | 1.0 | 0.5 |\n| Aug-23 | 0.0 | 0.5 |\n| Oct-23 | 0.5 | 1.0 |\n| Dec-23 | -3.0 | -3.0 |\n| Feb-24 | 0.0 | -9.0 |\n| Apr-24 | 16.5 | -8.0 |\n\n### Observed Trends\n*   **FX Credit:** Remained relatively stable near the zero line with minor fluctuations until early 2024. Starting in February 2024, it experienced a sharp, dramatic increase, reaching approximately 16.5% by April 2024.\n*   **Peso Credit:** Also remained relatively stable near zero through late 2023. However, beginning in December 2023, it saw a significant decline, reaching a low of approximately -10.5% in March 2024 before showing a slight recovery to -8.0% in April 2024.\n\n### Sources and Notes\n*   **Sources:** BCRA; and Fund staff calculations.\n*   **Note 1/:** Peso values are at constant end-2023 prices.",
+    "page": 13,
+    "idx": 6,
+    "bounds": [
+      0.5976470588235294,
+      0.5186363636363637,
+      0.8847058823529412,
+      0.71
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 7 here",
+    "parsedData": "### Chart Analysis: Net International Reserves\n\nThe chart tracks **Net International Reserves** in billions of US dollars from January 2023 to June 2024. It compares the **Target (7th review)** against the **Actual** performance.\n\n#### Chart Metadata\n*   **Title:** Net International Reserves\n*   **Subtitle:** Billions of US$, at program rates; cumulative 2/\n*   **Y-Axis:** Billions of US$, ranging from -15 to 15 in increments of 5.\n*   **X-Axis:** Monthly intervals from Jan-23 to Jun-24.\n\n#### Target vs. Actual Data Points (Approximated from Chart)\n\n| Period | Target (7th review) [Billions US$] | Actual Performance Trend [Billions US$] |\n| :--- | :--- | :--- |\n| **Jan-23 – Mar-23** | ~2.0 | Started at ~5.0, dropped to ~0 by March. |\n| **Apr-23 – Jun-23** | ~7.0 | Fluctuated around 0 to -2.0; failed to meet target. |\n| **Jul-23 – Sep-23** | ~-2.0 | Continued decline from ~-5.0 to ~-7.0. |\n| **Oct-23 – Dec-23** | ~1.5 | Sharp decline, reaching a low of ~-14.5 in December. |\n| **Jan-24 – Mar-24** | ~6.0 | Significant recovery, rising from ~-12.0 to ~7.0. |\n| **Apr-24 – Jun-24** | ~9.0 | Continued upward trend, peaking at ~12.0 before settling near 10.0. |\n\n#### Summary of Trends\n*   **2023 Performance:** Actual reserves consistently underperformed against the targets set in the 7th review. Reserves entered negative territory in March 2023 and suffered a precipitous drop in the final quarter of the year, hitting a bottom of approximately -$14.5 billion in December 2023.\n*   **2024 Recovery:** There was a sharp reversal starting in January 2024. Actual reserves crossed back into positive territory in early 2024 and surpassed the program targets by April 2024, reaching a peak of approximately $12 billion.",
+    "page": 15,
+    "idx": 7,
+    "bounds": [
+      0.15176470588235294,
+      0.36,
+      0.4717647058823529,
+      0.5686363636363636
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 8 here",
+    "parsedData": "This chart illustrates the **Primary Balance** for Argentina, measured in **Billions of AR$ (Argentine Pesos)**. The data represents a \"cumulative floor since the start of the year,\" meaning the values reset to zero at the beginning of each calendar year.\n\n### Chart Components\n*   **Title:** Primary Balance\n*   **Units:** Billions of AR$ (cumulative floor since start of year)\n*   **Legend:** \n    *   **Light Blue Line:** Actual Primary Balance\n    *   **Dark Blue Line:** Primary Balance (PB) Target (7th review)\n*   **Y-Axis:** Values ranging from -6000 to 6000 in increments of 2000.\n*   **X-Axis:** Timeframe from January 2023 to July 2024.\n\n### Data Summary\nThe table below provides approximate values extracted from the chart's visual trends:\n\n| Date | Actual Primary Balance (Billions AR$) | PB Target (7th Review) (Billions AR$) |\n| :--- | :--- | :--- |\n| **2023 Data** | | |\n| Jan-23 | ~ -200 | ~ -400 |\n| Mar-23 | ~ -800 | ~ -400 |\n| May-23 | ~ -1200 | ~ -1200 |\n| Jul-23 | ~ -2200 | ~ -2200 |\n| Sep-23 | ~ -2800 | ~ -2200 |\n| Nov-23 | ~ -3200 | ~ -3100 |\n| Dec-23 | ~ -5800 | ~ -3100 |\n| **2024 Data** | | |\n| Jan-24 | ~ +2000 | ~ +1000 |\n| Feb-24 | ~ +3200 | ~ +1000 |\n| Mar-24 | ~ +3800 | ~ +1000 |\n| Apr-24 | ~ +4100 | ~ +1900 |\n| May-24 to Jul-24 | No data | ~ +1900 (Flat) |\n\n### Key Observations\n*   **2023 Performance:** For most of 2023, the actual balance was negative and generally tracked close to the set targets until the end of the year, when the actual deficit significantly exceeded the target, dropping to approximately -5800 billion AR$.\n*   **2024 Performance:** Following the start-of-year reset, the primary balance shifted to a surplus. In early 2024, the \"Actual\" performance substantially outperformed the \"Target,\" reaching over +4000 billion AR$ by April, while the target remained lower at approximately +1900 billion AR$.",
+    "page": 15,
+    "idx": 8,
+    "bounds": [
+      0.5364705882352941,
+      0.3618181818181818,
+      0.8529411764705882,
+      0.5686363636363636
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 9 here",
+    "parsedData": "### Chart Description: Monetary Financing\n\nThis chart tracks cumulative Monetary Financing in Argentina from January 2023 through mid-2024. \n\n*   **Title:** Monetary Financing\n*   **Units:** Billions of AR$ (Argentine Pesos), representing a cumulative ceiling since the start of the year.\n*   **Legend:**\n    *   **Light Blue Line:** Actual\n    *   **Dark Blue Line:** Target (7th review)\n\n#### Axes\n*   **X-Axis (Time):** Monthly intervals from Jan-23 to Jul-24.\n*   **Y-Axis (Value):** Values in Billions of AR$, ranging from -4200 to 3800 in increments of 1000.\n\n#### Data Trends\nThe chart shows two distinct cumulative periods (2023 and 2024), as the metric resets at the beginning of each year.\n\n**1. Calendar Year 2023**\nIn 2023, both the target and actual values remained in positive territory, generally increasing in a step-like fashion until late Q3.\n\n| Date Period (Approx.) | Target (Billions of AR$) | Actual (Billions of AR$) |\n| :--- | :--- | :--- |\n| Jan-23 to Mar-23 | ~100 | ~0 |\n| Mar-23 to May-23 | ~400 | ~150 - 400 |\n| May-23 to Jul-23 | ~400 | ~700 |\n| Jul-23 to Sep-23 | ~1700 | ~1900 |\n| Sep-23 to Jan-24 | ~1300 - 1700 | ~1400 |\n\n**2. Calendar Year 2024**\nIn 2024, the target was set and maintained at zero. The actual figures moved significantly into negative territory (net contraction).\n\n| Date Period (Approx.) | Target (Billions of AR$) | Actual (Billions of AR$) |\n| :--- | :--- | :--- |\n| Jan-24 onwards | 0 | Starts near -2400 |\n| Feb-24 to Mar-24 | 0 | Volatile, peaking near -400 |\n| Mar-24 (Low point) | 0 | Sharp drop to approx. -3900 |\n| Apr-24 to Jul-24 | 0 | Stabilizes near -2100 |\n\n---\n*Note: The second image provided contains background/non-chart information which was not used for this description per the instructions.*",
+    "page": 15,
+    "idx": 9,
+    "bounds": [
+      0.1388235294117647,
+      0.575,
+      0.4747058823529412,
+      0.79
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 10 here",
+    "parsedData": "This is a line chart depicting the \"Stock of Domestic Arrears\" in Argentina, measured in Billions of AR$ (daily average).\n\n### **Chart Overview**\n*   **Title:** Stock of Domestic Arrears\n*   **Units:** Billions of AR$, daily average\n*   **Y-Axis:** Value from 0 to 6,000 in increments of 1,000.\n*   **X-Axis:** Timeline from January 2023 to July 2024.\n*   **Legend:**\n    *   **Light Blue Line:** Actual data.\n    *   **Dark Blue Line:** Arrears target (7th review).\n\n### **Data Values (Estimated from Y-Axis Scale)**\n\n| Time Period | Actual (Light Blue) | Arrears Target (Dark Blue) |\n| :--- | :--- | :--- |\n| **Jan-23 to Mar-23** | ~700 | ~1,200 |\n| **Mar-23 to May-23** | Rising from ~700 to ~1,000 | ~1,200 |\n| **May-23 to Jul-23** | ~1,000 | ~1,200 |\n| **Jul-23 to Sep-23** | ~1,250 | ~1,350 |\n| **Sep-23 to Dec-23** | Rising from ~1,250 to ~1,650 | ~1,350 |\n| **Jan-24 to Mar-24** | ~1,550 (horizontal segment) | No Target shown for this specific window |\n| **Feb-24 to Jul-24** | No Data | ~5,300 (horizontal segment) |\n\n### **Key Observations**\n*   **Actual Performance:** The \"Actual\" stock of domestic arrears showed a steady upward trend through 2023, starting at approximately 700 billion AR$ in early 2023 and reaching approximately 1,650 billion AR$ by the end of the year.\n*   **Comparison to Target:** Throughout most of 2023, the actual arrears remained below the set target. However, in late 2023 (around September/October), the actual amount surpassed the target of approximately 1,350 billion AR$.\n*   **Target Adjustment:** There is a significant jump in the \"Arrears target\" for the 2024 period, shifting from approximately 1,350 billion AR$ in late 2023 to approximately 5,300 billion AR$ for the first half of 2024.",
+    "page": 15,
+    "idx": 10,
+    "bounds": [
+      0.5364705882352941,
+      0.5727272727272728,
+      0.8529411764705882,
+      0.7827272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 11 here",
+    "parsedData": "### Chart Description: Real Minimum Pension Benefits\n\nThis line chart tracks real minimum pension benefits in Argentina from January 2021 through July 2028 (projected).\n\n#### **General Information**\n*   **Title:** Real Minimum Pension Benefits\n*   **Units:** Thousands of AR$ (Argentine Pesos), constant prices.\n*   **Y-Axis:** Ranges from 0 to 400 in increments of 50.\n*   **X-Axis:** Timeline from Jan-21 to Jul-28, marked in six-month intervals.\n\n#### **Legend and Data Series**\nThe chart tracks four distinct series:\n1.  **Movilidad (Cyan line):** Represents the basic mobility-adjusted pension.\n2.  **Movilidad + bonus (Dark Gray line):** Represents the basic pension plus additional bonuses (starts around mid-2022).\n3.  **Monthly CPI in April (Light Blue line):** Represents an inflation-indexed projection starting in early 2024.\n4.  **Govt decree (incl. 12.5% Jan compensation) (Solid Black line):** Represents the pension adjustment via government decree starting in early 2024.\n\n#### **Estimated Data Values (Thousands of AR$)**\n\n| Date | Movilidad (Cyan) | Movilidad + bonus (Gray) | Monthly CPI (Lt Blue) | Govt decree (Black) |\n| :--- | :--- | :--- | :--- | :--- |\n| **Jan-21** | ~230 | N/A | N/A | N/A |\n| **Jan-22** | ~225 | N/A | N/A | N/A |\n| **Jul-22** | ~200 | ~250 | N/A | N/A |\n| **Jan-23** | ~200 | ~250 | N/A | N/A |\n| **Jul-23** | ~180 | ~240 | N/A | N/A |\n| **Jan-24** | ~110 | ~160 | ~180 | ~160 |\n| **Jul-24** | ~140 | ~200 | ~200 | ~235 |\n| **Jan-25** | ~175 | ~245 | ~210 | ~245 |\n| **Jul-25** | ~180 | ~250 | ~210 | ~245 |\n| **Jan-26** | ~210 | ~280 | ~215 | ~250 |\n| **Jan-27** | ~210 | ~285 | ~218 | ~255 |\n| **Jan-28** | ~235 | ~310 | ~220 | ~255 |\n| **Jul-28** | ~230 | ~300 | ~220 | ~255 |\n\n#### **Key Observations**\n*   **Volatility:** All series show significant volatility, particularly the \"Movilidad\" and \"Movilidad + bonus\" lines, which exhibit a saw-tooth pattern.\n*   **Significant Drop:** There is a sharp decline in all active benefit series reaching a low point around January 2024.\n*   **Recovery and Projections:** After the early 2024 low, all series trend upward. The \"Govt decree\" line levels off around 250, while the \"Movilidad + bonus\" is projected to be the highest value by 2028, reaching approximately 300. The \"Monthly CPI in April\" projection remains the most stable, slowly rising to approximately 220 by the end of the period.",
+    "page": 18,
+    "idx": 11,
+    "bounds": [
+      0.5305882352941177,
+      0.285,
+      0.8605882352941177,
+      0.495
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 12 here",
+    "parsedData": "### Chart Description: Maturity and Yields of ARS (CER) Debt Issuances\n\nThis scatter plot illustrates the relationship between the maturity (in days) and the yields (in percent) for ARS (CER) debt issuances across two distinct time periods.\n\n#### Chart Components\n| Component | Details |\n| :--- | :--- |\n| **Title** | Maturity and Yields of ARS (CER) Debt Issuances |\n| **Y-Axis (Vertical)** | Yields (percent); Range: -120 to 60 (increments of 20) |\n| **X-Axis (Horizontal)** | Maturity (days); Range: 0 to 1500 (increments of 500 labeled) |\n| **Legend** | ● **Sept-Nov 23** (Light Blue) <br> ● **Dec 23-May 24** (Dark Blue) |\n\n#### Data Summary\nThe chart compares debt issuances from late 2023 against those from late 2023 to mid-2024.\n\n| Data Series | Maturity Range (approx. days) | Yield Range (approx. %) | Observations |\n| :--- | :--- | :--- | :--- |\n| **Sept-Nov 23** | 100 to 550 | -18% to +10% | Most points are clustered between 0% and +10% yield with maturities under 500 days. |\n| **Dec 23-May 24** | 100 to 1250 | -110% to +2% | Contains two extreme low-yield outliers at ~100 days (-88% and -110%). Shows a shift toward longer maturities (up to 1250 days) with mostly negative yields. |\n\n#### Specific Notable Figures\n*   **Outliers (Dec 23-May 24):** Two short-term issuances (approx. 100 days) recorded exceptionally low yields near **-88%** and **-110%**.\n*   **Long-Term Maturity:** For the **Dec 23-May 24** period, issuances extended significantly further on the X-axis, reaching maturities of approximately **700, 850, 1050, and 1250 days**, with yields generally fluctuating between **0% and -20%**.\n*   **Clustering (Sept-Nov 23):** The majority of these issuances are concentrated within the **100 to 450-day** maturity range, maintaining yields mostly in positive territory between **0% and +10%**.\n\n***\n*Note: Background/Non-chart images from the reference document have not been parsed as per instructions.*",
+    "page": 19,
+    "idx": 12,
+    "bounds": [
+      0.5635294117647058,
+      0.14363636363636365,
+      0.8676470588235294,
+      0.33
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 13 here",
+    "parsedData": "This is a description of the \"Private and Official Debt Maturity Profile\" chart provided in the first image.\n\n### Chart Overview\n*   **Title:** Private and Official Debt Maturity Profile 1/\n*   **Units:** Billions of US$\n*   **Y-Axis:** Debt value from 0 to 70 (increments of 10).\n*   **X-Axis:** Projected years from 2024 to 2028.\n*   **Chart Type:** Stacked Bar Chart.\n\n### Data Breakdown\nThe chart categorizes debt into five types: **FX Bonds**, **Peso Bonds**, **IMF**, **Other Official**, and **Bopreal**. The following table provides estimated values (in Billions of US$) based on visual interpolation of the chart.\n\n| Year | FX Bonds (Dark Navy) | Peso Bonds (Dark Blue) | IMF (Light Blue) | Other Official (Grey) | Bopreal (Yellow) | Total Estimated Debt |\n| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n| **2024** | 2 | 17 | 3 | 3 | 2 | **~27** |\n| **2025** | 9 | 25 | 4 | 5 | 2 | **~45** |\n| **2026** | 9 | 12 | 5 | 5 | 1 | **~32** |\n| **2027** | 10 | 9 | 8 | 4 | 5 | **~36** |\n| **2028** | 12 | 3 | 9 | 5 | 0 | **~29** |\n\n### Observations\n*   **Peak Maturity:** The highest total debt maturity is projected for 2025 at approximately $45 billion.\n*   **Shifting Debt Composition:** There is a notable shift over time; Peso Bonds represent the largest share in 2024 and 2025, while FX Bonds and IMF obligations grow to represent the majority of the profile by 2027 and 2028.\n*   **Bopreal:** This component remains a small portion of the total, peaking in 2027.\n\n**Sources:** MECON; and Fund staff estimates.",
+    "page": 19,
+    "idx": 13,
+    "bounds": [
+      0.5464705882352942,
+      0.4368181818181818,
+      0.8635294117647059,
+      0.6
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 14 here",
+    "parsedData": "This chart, titled **\"Relative Price Distortions,\"** illustrates the cumulative percentage difference in price changes for various categories compared to the Greater Buenos Aires (GBA) headline inflation from December 2019 through April 2024.\n\n### **Chart Overview**\n*   **X-Axis:** Percent difference from headline inflation (Scale: -75 to 50).\n*   **Y-Axis:** Categories of goods and services.\n*   **Legend:** \n    *   **Light Blue Bar:** Data as of April 2024 (Apr-24).\n    *   **Dark Blue Diamond:** Data as of November 2023 (Nov-23).\n*   **Sources:** INDEC; Haver Analytics; and Fund staff calculations.\n\n### **Data Extraction**\nThe following table provides estimated values based on the chart's scale, representing the cumulative difference relative to headline inflation for each category.\n\n| Category | Nov-23 (Estimated %) | Apr-24 (Estimated %) |\n| :--- | :---: | :---: |\n| Purchase of Vehicle | +15 | +35 |\n| Housing Maintenance & Repair | +30 | +20 |\n| Clothing & Accessories | +37 | +17 |\n| Books & Stationery | +25 | +17 |\n| Restaurants & Hotels | +22 | +13 |\n| Footwear | +15 | +7 |\n| Medical Products & Appliances | 0 | +4 |\n| Personal Care | -20 | +3 |\n| Audiovisual | +8 | -4 |\n| Fuels & Lubricants | -26 | -5 |\n| Home Appliances & Equipment | -25 | -18 |\n| Education | -17 | -18 |\n| Public Transportation | -48 | -25 |\n| Electricity & Gas | -62 | -27 |\n| Communication | -43 | -30 |\n| Rent for Housing | -40 | -52 |\n\n### **Summary of Findings**\n*   **Positive Distortions:** \"Purchase of Vehicle\" shows the highest positive distortion as of April 2024, significantly increasing since November 2023.\n*   **Negative Distortions:** \"Rent for Housing\" shows the largest negative distortion (prices trailing significantly behind headline inflation) as of April 2024.\n*   **Major Adjustments:** Several categories that were significantly below headline inflation in November 2023 (like Electricity & Gas and Public Transportation) saw substantial narrowing of that gap by April 2024. Conversely, \"Clothing & Accessories\" saw a major decrease in its relative price over the same period.",
+    "page": 21,
+    "idx": 14,
+    "bounds": [
+      0.5635294117647058,
+      0.3409090909090909,
+      0.8788235294117647,
+      0.5286363636363637
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 15 here",
+    "parsedData": "The provided chart, titled **\"Real Electricity Bills: Jan-Apr 2024 (250 kWh/month, constant Jan 2024 AR$)\"**, illustrates the composition of electricity bills in Argentina for three consumer categories (N1, N2, N3) across two time periods: January and the February-April average. \n\n### **Chart Components**\n*   **Left Y-axis:** Costs in constant January 2024 AR$, ranging from 0 to 30,000.\n*   **Right Y-axis:** Percentage of minimum salary, ranging from 0 to 14.\n*   **X-axis:** Two periods (\"Jan\" and \"Feb - Apr\"), each subdivided into three consumer tiers (N1: high-income, N2: low-income, N3: middle-income).\n*   **Legend:**\n    *   **Light Blue:** Generation costs.\n    *   **Dark Blue:** Distribution (VAD) costs.\n    *   **Yellow/Orange:** Tax (set at 24.7%).\n    *   **Grey:** Government Subsidy.\n    *   **Black Diamond (♦):** The total bill as a percentage of the minimum salary (plotted against the right axis).\n\n### **Estimated Data Values**\nThe following table provides estimated numerical values based on the chart's scales.\n\n| Period | Category | Generation (AR$) | Distribution (VAD) (AR$) | Tax (24.7%) (AR$) | Subsidy (AR$) | Total Cost (Inc. Subsidy) (AR$) | % of Min Salary (rhs) |\n| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n| **Jan** | **N1** | ~6,100 | ~900 | ~1,800 | 0 | ~8,800 | ~5.6 |\n| | **N2** | ~1,100 | ~900 | ~600 | ~6,200 | ~8,800 | ~1.7 |\n| | **N3** | ~1,800 | ~1,100 | ~700 | ~5,200 | ~8,800 | ~2.3 |\n| **Feb-Apr** | **N1** | ~13,300 | ~3,100 | ~4,200 | 0 | ~20,600 | ~11.7 |\n| | **N2** | ~1,000 | ~3,300 | ~1,000 | ~15,300 | ~20,600 | ~3.1 |\n| | **N3** | ~2,900 | ~3,200 | ~1,500 | ~13,000 | ~20,600 | ~4.3 |\n\n### **Key Observations**\n*   **Significant Increase:** Real electricity bills for N1 (non-subsidized) more than doubled between January and the February-April period, rising from roughly 8,800 AR$ to over 20,600 AR$.\n*   **Subsidy Structure:** The N2 and N3 categories receive substantial subsidies that keep their final bills significantly lower than the total cost of service. In the Feb-Apr period, the subsidy accounts for approximately 74% of the total cost for N2 and 63% for N3.\n*   **Cost Shift:** Between the two periods, distribution costs (VAD) increased significantly for all categories, jumping from around 1,000 AR$ to over 3,000 AR$.\n*   **Impact on Income:** For N1 consumers, the electricity bill's share of the minimum salary increased from roughly 5.6% to 11.7%. For N2 and N3, while the percentages also increased, they remained lower at approximately 3.1% and 4.3%, respectively.\n\n**Source:** MECON; and Fund staff calculations.",
+    "page": 22,
+    "idx": 15,
+    "bounds": [
+      0.5947058823529412,
+      0.13863636363636364,
+      0.8847058823529412,
+      0.33
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 16 here",
+    "parsedData": "### Chart Analysis: Trade Balance and Real GDP Level\n\nThis chart illustrates the quarterly trends and projections for the Trade Balance and Real GDP for Argentina from Q1 2023 through Q4 2025.\n\n#### Chart Components\n*   **Title:** Trade Balance and Real GDP Level (Billions of AR$; SA)\n*   **X-Axis (Time):** Quarters from 2023Q1 to 2025Q4.\n*   **Left Y-Axis (Trade Balance):** Values ranging from -10 to 20 (increments of 5: -10, -5, 0, 5, 10, 15, 20).\n*   **Right Y-Axis (GDP, rhs):** Values ranging from 600 to 800 (increments of 20: 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800).\n*   **Legend:**\n    *   **Light Blue Line:** Trade balance, G & S (US$) — measured against the left axis.\n    *   **Dark Blue Line:** GDP (AR$, rhs) — measured against the right-hand side (rhs) axis.\n\n#### Extracted Data Points (Approximate)\n\nThe following table provides estimated values based on the chart's visual plot points.\n\n| Quarter | Trade Balance, G & S (US$) [Left Axis] | GDP (AR$, rhs) [Right Axis] |\n| :--- | :--- | :--- |\n| **2023Q1** | -1 | 720 |\n| **2023Q2** | -3 | 700 |\n| **2023Q3** | -4.5 | 718 |\n| **2023Q4** | -1.5 | 705 |\n| **2024Q1** | 5 | 685 |\n| **2024Q2** | 4.8 | 682 |\n| **2024Q3** | 2 | 683 |\n| **2024Q4** | 5 | 688 |\n| **2025Q1** | 5.5 | 700 |\n| **2025Q2** | 5.2 | 712 |\n| **2025Q3** | 2 | 730 |\n| **2025Q4** | 5 | 750 |\n\n#### Trends Summary\n*   **Trade Balance:** The trade balance begins in a deficit throughout 2023, hitting a low in Q3 2023. It is projected to shift into a surplus starting in Q1 2024 and remain positive through 2025, showing a volatile but generally upward trend compared to 2023 levels.\n*   **Real GDP:** The GDP shows a declining trend throughout 2023 and into early 2024, reaching a trough in Q2 2024. From Q3 2024 onwards, the chart projects a steady and consistent recovery in GDP levels through the end of 2025.",
+    "page": 23,
+    "idx": 16,
+    "bounds": [
+      0.5758823529411765,
+      0.09,
+      0.89,
+      0.2777272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 17 here",
+    "parsedData": "This chart, titled **\"Real Wage Index (Index, Jan 2017=100)\"**, tracks the evolution of real wages across different economic sectors from January 2017 to early 2024.\n\n### **Chart Components**\n*   **Vertical Axis (Y):** Index values from 30 to 130, where 100 represents the wage level in January 2017.\n*   **Horizontal Axis (X):** A timeline from Jan-17 to post-Jan-24 with six-month intervals.\n*   **Legend (Sectors):**\n    *   **Formal sector (private):** Dark blue line\n    *   **Formal sector (public):** Light blue line\n    *   **Formal sector (aggregate):** Medium blue line\n    *   **Informal sector:** Light grey line\n\n### **Data Observations**\nThe table below provides approximate index values for key points in time based on the chart's grid:\n\n| Time Period | Formal Sector (Private) | Formal Sector (Public) | Informal Sector |\n| :--- | :---: | :---: | :---: |\n| **Jan-17 (Base)** | **100** | **100** | **100** |\n| Jul-17 | ~103 | ~103 | ~108 |\n| Jan-18 | ~100 | ~100 | ~105 |\n| Jan-19 | ~89 | ~89 | ~93 |\n| Jan-20 | ~88 | ~84 | ~81 |\n| Jan-21 | ~83 | ~78 | ~78 |\n| Jan-22 | ~85 | ~82 | ~72 |\n| Jan-23 | ~83 | ~82 | ~65 |\n| Jul-23 | ~84 | ~84 | ~58 |\n| Jan-24 | ~72 | ~68 | ~41 |\n| **End of Series** | **~71** | **~63** | **~37** |\n\n### **Key Trends**\n1.  **Universal Decline:** All sectors show a significant downward trend in real wages since the beginning of 2018.\n2.  **Informal vs. Formal Gap:** While all wages fell, the **Informal sector (grey)** experienced a much more severe collapse, losing approximately 63% of its real value by early 2024 compared to its 2017 baseline. \n3.  **Formal Sector Divergence:** The private formal sector generally maintained slightly higher real wages than the public formal sector from 2020 onwards.\n4.  **Late-Stage Collapse:** All sectors experienced a dramatic and sharp drop in real wages between July 2023 and early 2024. By the end of the series, formal sector wages had fallen to indices between roughly 63 and 71, while informal wages plummeted to below 40.",
+    "page": 33,
+    "idx": 17,
+    "bounds": [
+      0.6135294117647059,
+      0.1368181818181818,
+      0.8747058823529412,
+      0.29772727272727273
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 18 here",
+    "parsedData": "### AUH Benefits Chart Description\n\nThis line chart tracks the value of AUH (Universal Child Allowance) benefits in Argentina over time, adjusted for inflation to constant December 2023 prices.\n\n**Chart Specifications:**\n\n*   **Title:** AUH Benefits\n*   **Unit of Measure:** Thousands of AR$ (Argentine Pesos), constant December 2023 prices.\n*   **Vertical Axis (Y):** Represents the value in thousands, ranging from 15 to 50 in increments of 5.\n*   **Horizontal Axis (X):** Represents time from January 2018 to April 2024.\n\n**Data Observations:**\n\nThe chart shows a general downward trend with significant monthly fluctuations (a \"sawtooth\" pattern) from 2018 through late 2023. The value reached its lowest point in late 2023 before experiencing a sharp, dramatic spike in early 2024.\n\n| X-Axis Label (Date) | Approximate Y-Value (Thousands of AR$) |\n| :--- | :--- |\n| **Jan-18** | ~40 |\n| **Jun-18** | ~38 |\n| **Nov-18** | ~33 |\n| **Apr-19** | ~35 |\n| **Sep-19** | ~40 |\n| **Feb-20** | ~34 |\n| **Jul-20** | ~37 |\n| **Dec-20** | ~34 |\n| **May-21** | ~31 |\n| **Oct-21** | ~34 |\n| **Mar-22** | ~32 |\n| **Aug-22** | ~31 |\n| **Jan-23** | ~31 |\n| **Jun-23** | ~29 |\n| **Nov-23** | ~17 (Lowest point on chart) |\n| **Apr-24** | ~41 (Sharp recovery) |\n\n**Summary Trend:**\nThe benefits started at approximately 40,000 AR$ in January 2018 and gradually eroded to below 20,000 AR$ by November 2023. Between November 2023 and April 2024, the value spiked rapidly, returning to a level slightly above 40,000 AR$.",
+    "page": 33,
+    "idx": 18,
+    "bounds": [
+      0.6305882352941177,
+      0.3809090909090909,
+      0.89,
+      0.5427272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 19 here",
+    "parsedData": "The chart, titled **\"Provincial Imbalances: Public Sector Dependence,\"** is a bubble chart illustrating the relationship between revenue sources and public sector employment across various Argentine provinces.\n\n### **Chart Components**\n*   **Vertical (Y-axis):** Own-source revenues (percent of total), ranging from **0 to 120** in increments of 20.\n*   **Horizontal (X-axis):** Public provincial employment (percent of formal employment), ranging from **0 to 80** in increments of 20.\n*   **Data Points:** 24 labeled bubbles. The size of the bubbles varies, with PBA, COR (top), and SFE being the largest.\n\n### **Extracted Data (Approximate Values)**\nThe table below estimates the coordinates for each labeled province bubble based on their position on the grid.\n\n| Label | Public Provincial Employment (%) | Own-source Revenues (%) |\n| :--- | :---: | :---: |\n| **CABA** | ~10 | ~83 |\n| **NEU** | ~37 | ~74 |\n| **CHU** | ~34 | ~46 |\n| **PBA** | ~24 | ~46 |\n| **MEN** | ~28 | ~43 |\n| **COR (top)** | ~22 | ~41 |\n| **STCZ** | ~38 | ~39 |\n| **TDF** | ~30 | ~39 |\n| **SFE** | ~23 | ~38 |\n| **MIS** | ~41 | ~38 |\n| **PAM** | ~43 | ~35 |\n| **PRN** | ~42 | ~32 |\n| **ENTR** | ~41 | ~30 |\n| **TUC** | ~39 | ~28 |\n| **SLS** | ~37 | ~26 |\n| **SAL** | ~35 | ~24 |\n| **SJN** | ~36 | ~21 |\n| **JUJ** | ~55 | ~19 |\n| **CAT** | ~58 | ~18 |\n| **CHA** | ~51 | ~16 |\n| **SOE** | ~52 | ~14 |\n| **COR (bottom)** | ~42 | ~13 |\n| **RIOJ** | ~62 | ~10 |\n| **EOR** | ~59 | ~10 |\n\n**General Trend:** The chart shows a negative correlation; provinces with higher public sector employment typically have lower own-source revenues as a percentage of their total budget. CABA stands as an outlier with the highest revenue and lowest public employment share.",
+    "page": 34,
+    "idx": 19,
+    "bounds": [
+      0.6335294117647059,
+      0.14363636363636365,
+      0.8976470588235295,
+      0.30863636363636365
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 20 here",
+    "parsedData": "This chart illustrates the **Primary Fiscal Balance** as a **Percent of GDP** over a 10-period timeline (indexed from -5 to 5). It compares \"Successful\" outcomes (dark blue line) against \"Not successful\" outcomes (light blue line).\n\n### **Data Table (Estimated Values)**\n\nThe following table presents estimated values based on the chart's axes:\n\n| Timeline Period | Successful (Percent of GDP) | Not successful (Percent of GDP) |\n| :--- | :--- | :--- |\n| **-5** | -1.2 | 1.3 |\n| **-4** | -0.9 | 0.8 |\n| **-3** | 1.0 | 1.8 |\n| **-2** | 3.8 | 1.4 |\n| **-1** | 3.7 | 1.0 |\n| **0** | 3.9 | 1.5 |\n| **1** | 5.7 | 3.4 |\n| **2** | 5.1 | 3.2 |\n| **3** | 4.2 | 2.9 |\n| **4** | 1.5 | 3.3 |\n| **5** | 1.1 | 2.3 |\n\n### **Summary of Chart Content**\n\n*   **Axis Scales:** The Y-axis (Percent of GDP) ranges from -2 to 8. The X-axis represents a timeline from 5 periods before a central event (0) to 5 periods after.\n*   **Successful Trend:** \"Successful\" episodes begin in a deficit (approx. -1.2%) at period -5, rise sharply to a peak of approx. 5.7% at period 1, and then trend downward to approx. 1.1% by period 5.\n*   **Not successful Trend:** \"Not successful\" episodes begin with a surplus (approx. 1.3%), fluctuate at lower levels than the successful group between periods -2 and 3, peak at approx. 3.4% at period 1, and end higher than the successful group at approx. 2.3% by period 5.\n*   **Background/Non-Chart Images:** Noted as present in the source but excluded from this extraction.",
+    "page": 36,
+    "idx": 20,
+    "bounds": [
+      0.15176470588235294,
+      0.16363636363636364,
+      0.45647058823529413,
+      0.365
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 21 here",
+    "parsedData": "This chart illustrates the evolution of the **\"Ex-ante\" Real Interest Rate (in percent)** over a timeline from period -5 to 5, comparing \"Successful\" and \"Not Successful\" episodes.\n\n### Chart Overview\n*   **Title:** \"Ex-ante\" Real Interest Rate\n*   **Unit:** Percent\n*   **Y-axis:** Values ranging from -1,200 to 400.\n*   **X-axis:** Time periods from -5 to 5.\n*   **Legend:**\n    *   **Successful:** Dark blue line\n    *   **Not Successful:** Light blue line\n\n### Data Points (Approximate Values)\n\n| Period | Successful (%) | Not Successful (%) |\n| :--- | :--- | :--- |\n| -5 | -310 | -50 |\n| -4 | -960 | -40 |\n| -3 | -1,070 | -100 |\n| -2 | -550 | -270 |\n| -1 | -250 | -950 |\n| 0 | -50 | -780 |\n| 1 | -10 | -120 |\n| 2 | 0 | -25 |\n| 3 | 0 | -30 |\n| 4 | 5 | -25 |\n| 5 | 0 | -250 |\n\n### Summary of Trends\n*   **Successful Episodes:** The real interest rate drops sharply before the program start, hitting a low of approximately -1,070% at period -3. Following this, it recovers rapidly and stabilizes near 0% from period 2 through 5.\n*   **Not Successful Episodes:** The rate remains relatively stable until period -3, after which it plunges to a minimum of approximately -950% at period -1. While it recovers toward 0% by period 2, it drops again significantly to around -250% by period 5.\n\n**Background/Non-Chart:** No additional content from the background was processed as per instructions.",
+    "page": 36,
+    "idx": 21,
+    "bounds": [
+      0.5405882352941176,
+      0.16272727272727272,
+      0.8388235294117647,
+      0.3659090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 22 here",
+    "parsedData": "This is a line chart titled **\"Money Balances Growth (Percent)\"** comparing two categories over a time index ranging from -5 to 5.\n\n### Chart Components:\n*   **Title:** Money Balances Growth\n*   **Unit of Measurement:** Percent\n*   **Y-Axis:** Numerical scale from 0 to 1,800 in increments of 200.\n*   **X-Axis:** Numerical scale from -5 to 5.\n*   **Legend:**\n    *   **Successful:** Represented by a dark blue line.\n    *   **Not Successful:** Represented by a light blue line.\n\n### Data Points (Estimated):\nThe following table provides estimated values for each line based on the chart's axes.\n\n| Time Index | Successful (Dark Blue) | Not Successful (Light Blue) |\n| :--- | :--- | :--- |\n| -5 | ~450 | ~100 |\n| -4 | ~630 | ~90 |\n| -3 | ~1,300 | ~80 |\n| -2 | ~740 | ~180 |\n| -1 | ~690 | ~440 |\n| 0 | ~340 | ~1,220 |\n| 1 | ~50 | ~260 |\n| 2 | ~40 | ~200 |\n| 3 | ~20 | ~120 |\n| 4 | ~10 | ~110 |\n| 5 | ~10 | ~380 |\n\n### Key Observations:\n*   **Successful category:** Experienced a massive spike in money balance growth at year -3 (approx. 1,300%) before dropping sharply to near zero levels by year 1 and remaining very low thereafter.\n*   **Not Successful category:** Maintained relatively low growth until year -2, peaking significantly at year 0 (approx. 1,220%). While it dropped at year 1, it remained substantially higher than the successful category through year 5, showing a final upward trend at the end of the period.",
+    "page": 36,
+    "idx": 22,
+    "bounds": [
+      0.15470588235294117,
+      0.4077272727272727,
+      0.45647058823529413,
+      0.61
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 23 here",
+    "parsedData": "The following is a detailed description of the provided line chart:\n\n### **Chart Title and Metadata**\n*   **Main Title:** Real Effective Exchange Rate\n*   **Subtitle/Units:** Index, start of stabilization episode=100; CPI-based.\n*   **Top Text (Partial):** \"...gradual appreciation of the real exchange rate...\"\n\n### **Axes and Legend**\n*   **Y-Axis:** Numerical index ranging from **90 to 150** (increments of 10).\n*   **X-Axis:** Time relative to the stabilization episode, ranging from **-5 to 5** (where 0 is the start of stabilization).\n*   **Legend:**\n    *   **Dark Blue Line:** Successful (stabilization episodes)\n    *   **Light Blue Line:** Unsuccessful (stabilization episodes)\n\n### **Data Table (Estimated Values)**\nValues are estimated based on the data points plotted on the chart relative to the axes. Both lines converge at **100** at time **0**.\n\n| Time (X-axis) | Successful (Dark Blue) | Unsuccessful (Light Blue) |\n| :--- | :--- | :--- |\n| -5 | ~92 | ~119 |\n| -4 | ~100 | ~120 |\n| -3 | ~99 | ~136 |\n| -2 | ~95 | ~109 |\n| -1 | ~101 | ~114 |\n| **0** | **100** | **100** |\n| 1 | ~110 | ~108 |\n| 2 | ~114 | ~119 |\n| 3 | ~118 | ~133 |\n| 4 | ~115 | ~117 |\n| 5 | ~110 | ~119 |\n\n### **General Trends**\n*   **Pre-stabilization (Years -5 to -1):** The \"Unsuccessful\" episodes show much higher volatility and generally higher index values compared to \"Successful\" episodes.\n*   **Post-stabilization (Years 1 to 5):** Both categories show an upward trend (appreciation) initially. The \"Successful\" episodes show a more stable, gradual appreciation followed by a slight decline, while \"Unsuccessful\" episodes show significant volatility, peaking sharply at year 3 before dropping and rising again.\n\n**Background/Non-Chart Images:** The second image provided is a full page from a report containing multiple charts and text. This description ignores that background and focuses solely on the \"Real Effective Exchange Rate\" chart as requested.",
+    "page": 36,
+    "idx": 23,
+    "bounds": [
+      0.5405882352941176,
+      0.4077272727272727,
+      0.8447058823529412,
+      0.61
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 24 here",
+    "parsedData": "This chart illustrates the **Change in International Reserves** as a percentage of GDP over a period ranging from -5 to 5. It compares two categories: \"Successful\" episodes (represented by a dark blue line) and \"Unsuccesful\" episodes (represented by a light blue line).\n\n### Chart Components\n*   **Title:** Change in International Reserves (Percent of GDP)\n*   **Legend:**\n    *   **Successful:** Dark blue line\n    *   **Unsuccesful:** Light blue line (note: spelling matches the chart)\n*   **Vertical (Y) Axis:** Ranges from -2 to 4 percent of GDP.\n*   **Horizontal (X) Axis:** Periods from -5 to 5.\n\n### Data Points (Approximate Values)\nThe following table provides estimated numerical values extracted from the line graph:\n\n| Period | Successful (% of GDP) | Unsuccesful (% of GDP) |\n| :--- | :---: | :---: |\n| -5 | 0.6 | 2.4 |\n| -4 | 0.5 | -0.8 |\n| -3 | 0.8 | -1.1 |\n| -2 | 0.75 | 0.15 |\n| -1 | 0.4 | -0.55 |\n| 0 | 1.75 | 0.15 |\n| 1 | 2.0 | 2.2 |\n| 2 | 2.25 | 0.3 |\n| 3 | 0.15 | 0.6 |\n| 4 | 0.95 | 1.1 |\n| 5 | -0.2 | 1.2 |\n\n### Key Observations\n*   **Successful Group:** Shows a notable spike in reserve accumulation starting at period 0, peaking at over 2% of GDP in periods 1 and 2, before dropping sharply.\n*   **Unsuccesful Group:** Experiences significant volatility before period 0. It also shows a sharp spike to over 2% in period 1, followed by a decline and then a steady increase toward the end of the observed timeframe.",
+    "page": 36,
+    "idx": 24,
+    "bounds": [
+      0.15,
+      0.6386363636363637,
+      0.4435294117647059,
+      0.84
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 25 here",
+    "parsedData": "This chart, titled **\"Inflation Persistence (Months to threshold),\"** illustrates the time (in months) it took for various countries to reduce their inflation rates to specific levels (40%, 20%, and 10%) following successful stabilization programs in different years.\n\n### Chart Components\n*   **Left Y-Axis:** Measures the time in months (0 to 90).\n*   **Right Y-Axis (rhs):** Measures \"Starting inflation\" as a percentage (0 to 300).\n*   **X-Axis:** Lists six countries and the year their stabilization program began: Argentina ('91), Peru ('93), Brazil ('94), Turkey ('01), Mexico ('87), and Israel ('85).\n*   **Legend:**\n    *   **Light Blue Bar:** Months to reach a 40 percent inflation threshold.\n    *   **Medium Blue Bar:** Months to reach a 20 percent inflation threshold.\n    *   **Dark Blue Bar:** Months to reach a 10 percent inflation threshold.\n    *   **Black Diamond (♦):** Starting inflation level (measured on the right-hand scale).\n\n### Data Extraction\nThe following table provides estimated values based on the chart's scales:\n\n| Country (Year) | Starting Inflation (%) [Right Axis] | Months to 40% Threshold | Months to 20% Threshold | Months to 10% Threshold |\n| :--- | :---: | :---: | :---: | :---: |\n| **Argentina ('91)** | ~130 | ~10 | ~14 | ~28 |\n| **Peru ('93)** | ~41 | ~4 | ~16 | ~29 |\n| **Brazil ('94)** | ~230 | ~15 | ~24 | ~33 |\n| **Turkey ('01)** | ~43 | ~12 | ~29 | ~33 |\n| **Mexico ('87)** | ~95 | ~13 | ~15 | ~64 |\n| **Israel ('85)** | ~170 | ~12 | ~13 | ~84 |\n\n### Summary of Observations\n*   **Starting Inflation:** Brazil ('94) had the highest starting inflation at approximately 230%, while Peru ('93) and Turkey ('01) had the lowest among the group, both starting in the 40-45% range.\n*   **Time to 10%:** While most countries reached the 10% threshold within 35 months, Mexico and Israel were notable exceptions, taking significantly longer (approximately 64 and 84 months, respectively) to reach that level.\n*   **Initial Drop:** Most countries were able to drop inflation to the 40% and 20% thresholds relatively quickly (under 30 months), but the \"last mile\" to reach 10% inflation showed the most variance in persistence.",
+    "page": 36,
+    "idx": 25,
+    "bounds": [
+      0.5317647058823529,
+      0.6386363636363637,
+      0.8358823529411765,
+      0.8118181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 26 here",
+    "parsedData": "This is a line and area chart depicting Argentina's **International Investment Position (IIP)** in billions of US dollars, from 2016Q1 to 2023Q3.\n\n### Chart Components\n\n*   **Title:** International Investment Position (Billions of US$)\n*   **Source:** INDEC.\n*   **Y-Axis:** Represents value in Billions of US$, ranging from -200 to 300. A horizontal line is present at 0.\n*   **X-Axis:** Represents time in quarters, from 2016Q1 to 2023Q3.\n*   **Legend:**\n    *   **Overall NIIP (Net International Investment Position):** Light blue shaded area.\n    *   **Private NIIP:** Thick red line.\n    *   **Public NIIP:** Thick dark blue line.\n\n---\n\n### Data Trends and Values (Approximate)\n\nThe chart is divided into two sections by the zero line. The Private NIIP and Overall NIIP remain in positive territory, while the Public NIIP remains in negative territory.\n\n| Period | Public NIIP (Blue Line) | Private NIIP (Red Line) | Overall NIIP (Blue Area) |\n| :--- | :--- | :--- | :--- |\n| **2016 Q1** | ~ -60 | ~ 110 | ~ 55 |\n| **2017 Q1** | ~ -75 | ~ 115 | ~ 40 |\n| **2018 Q1** | ~ -95 | ~ 115 | ~ 20 |\n| **2018 Q3** | ~ -110 | ~ 180 (Sharp increase) | ~ 70 |\n| **2019 Q3** | ~ -125 | ~ 240 (Sharp increase) | ~ 115 |\n| **2021 Q1** | ~ -130 | ~ 255 (Peak) | ~ 125 |\n| **2023 Q1** | ~ -120 | ~ 220 | ~ 120 |\n| **2023 Q3** | ~ -130 | ~ 220 | ~ 110 |\n\n### Key Observations\n\n1.  **Public NIIP:** Showed a steady downward trend (increasing net liability) from 2016 through 2020, dropping from roughly -$60 billion to a low of approximately -$130 billion. It has remained relatively volatile but stable between -$110 and -$130 billion since 2020.\n2.  **Private NIIP:** Remained stable around $110 billion until mid-2018. It experienced two significant jumps: one in late 2018 (reaching ~$180 billion) and another in late 2019 (reaching ~$240 billion). It peaked in early 2021 at approximately $255 billion before beginning a slight decline to roughly $220 billion by late 2023.\n3.  **Overall NIIP:** The net position (shaded area) followed a similar pattern to the Private NIIP. It dipped to its lowest point of approximately $20 billion in early 2018 before rising sharply in tandem with private assets, eventually stabilizing between $100 billion and $125 billion from 2020 through 2023.",
+    "page": 38,
+    "idx": 26,
+    "bounds": [
+      0.5358823529411765,
+      0.13363636363636364,
+      0.8505882352941176,
+      0.3518181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 27 here",
+    "parsedData": "This chart illustrates the \"Current Account Outstanding FX Backlog\" in billions of US dollars from 2020 through April 2024.\n\n### Chart Components\n*   **Vertical Axis (Y):** Represents value in Billions of US$, ranging from 0 to 70 in increments of 10.\n*   **Horizontal Axis (X):** Represents time periods: 2020, 2021, 2022, 2023, and Apr-24.\n*   **Data Series:**\n    *   **Importers' debt (Light Blue bar):** Represents the bulk of the backlog.\n    *   **Dividend backlog 1/ (Dark Blue bar):** A stacked component on top of the importers' debt.\n    *   **Avg. import financing level 2/ (Horizontal dashed line):** A reference line fixed at the **30 billion** mark.\n\n### Data Estimates\nThe following table provides approximate values based on the chart's scale:\n\n| Year / Period | Importers' Debt (US$bn) | Dividend Backlog (US$bn) | Total Backlog (US$bn) |\n| :--- | :---: | :---: | :---: |\n| **2020** | ~22 | ~0 | ~22 |\n| **2021** | ~23 | ~1 | ~24 |\n| **2022** | ~30 | ~1 | ~31 |\n| **2023** | ~43 | ~3 | ~46 |\n| **Apr-24** | ~48 | ~4 | ~52 |\n\n### Key Observations\n*   **Growth Trend:** The total outstanding backlog has more than doubled between 2020 (~$22B) and April 2024 (~$52B).\n*   **Reference Level:** Until 2022, the total backlog remained near or below the \"Avg. import financing level\" of **30 billion**. Starting in 2023, the backlog significantly exceeded this average level.\n*   **Dividend Increase:** The dividend backlog portion, while small, shows a visible increase in size during 2023 and April 2024 compared to previous years.",
+    "page": 39,
+    "idx": 27,
+    "bounds": [
+      0.4835294117647059,
+      0.16590909090909092,
+      0.8376470588235294,
+      0.3577272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 28 here",
+    "parsedData": "This chart, titled **\"Economic Activity,\"** tracks two indices from December 2019 to March 2024, using January 2020 as a base of 100 (seasonally adjusted).\n\n### **Chart Overview**\n*   **Y-Axis:** Index values from 70 to 130.\n*   **X-Axis:** Timeline from Dec-19 to Mar-24 in three-month intervals.\n*   **Data Series:**\n    *   **Economic activity (Dark Blue line):** Represents overall economic activity.\n    *   **Non-agro (Light Blue line):** Represents activity in the non-agricultural sector.\n\n### **Key Data Observations**\nThe chart shows a major decline in mid-2020, followed by a recovery that peaked in mid-2022, and a recent downturn starting in late 2023.\n\n| Date | Economic Activity (Index) | Non-agro (Index) |\n| :--- | :--- | :--- |\n| **Dec-19** | ~100 | ~100 |\n| **Jun-20 (Trough)** | ~76 | ~71 |\n| **Dec-20** | ~97 | ~97 |\n| **Dec-21** | ~108 | ~106 |\n| **Jun-22 (Peak)** | ~109 | ~109 |\n| **Jun-23** | ~104 | ~101 |\n| **Sep-23** | ~107 | ~107 |\n| **Mar-24 (End)** | ~100 | ~98 |\n\n### **Summary of Trends**\n*   **Initial Shock:** Both indices plummeted in the first half of 2020, with the non-agricultural sector hitting a lower trough (approx. 71) than total economic activity (approx. 76).\n*   **Recovery:** A steady recovery occurred through 2021, surpassing the 100-point baseline by early 2022.\n*   **Volatility and Decline:** After peaking in mid-2022, the indices fluctuated between 100 and 110. A notable contraction began in late 2023, with the non-agricultural sector (light blue) leading the decline down to approximately 98 by March 2024.",
+    "page": 40,
+    "idx": 28,
+    "bounds": [
+      0.12352941176470589,
+      0.1459090909090909,
+      0.4435294117647059,
+      0.3527272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 29 here",
+    "parsedData": "### Chart Description: Real Wage Index\n\nThis line chart tracks the **Real Wage Index** from February 2020 to February 2024, using October 2016 as the base period ($100$). The chart displays four distinct categories of wages, all showing a general downward trend with a significant sharp decline towards the end of 2023.\n\n#### **Chart Components**\n*   **Vertical Axis (Y):** Index values ranging from 30 to 120.\n*   **Horizontal Axis (X):** Timeline from Feb-20 to Feb-24 at 4-month intervals.\n*   **Legend Categories:**\n    *   **All** (Dark blue line)\n    *   **Private, formal** (Medium blue line)\n    *   **Private, informal** (Grey line)\n    *   **Public, formal** (Light blue line)\n\n#### **Estimated Data Points (Index Values)**\n\n| Date | Private, formal | All | Public, formal | Private, informal |\n| :--- | :---: | :---: | :---: | :---: |\n| **Feb-20** (Start) | ~92 | ~86 | ~82 | ~79 |\n| **Oct-21** (Mid-point) | ~88 | ~82 | ~81 | ~70 |\n| **Oct-23** (Pre-drop) | ~82 | ~77 | ~78 | ~50 |\n| **Feb-24** (End) | ~72 | ~62 | ~62 | ~36 |\n\n#### **Key Observations and Trends**\n*   **Highest Wages:** The \"Private, formal\" sector consistently maintained the highest real wage index throughout the period, though it fell from ~92 to ~72.\n*   **Most Significant Decline:** The \"Private, informal\" sector experienced the most drastic loss in value, dropping from nearly 80 at the start to approximately 36 by February 2024, representing more than a 50% decrease in real wages.\n*   **Recent Sharp Contraction:** All sectors show a steep, synchronized drop starting after October 2023. By early 2024, the \"Public, formal\" and \"All\" wage categories converged at an index of approximately 62.\n*   **Overall Trend:** Real wages across all sectors failed to return to early 2020 levels, indicating a sustained and accelerating loss of purchasing power over the four-year period.",
+    "page": 40,
+    "idx": 29,
+    "bounds": [
+      0.1388235294117647,
+      0.3859090909090909,
+      0.4535294117647059,
+      0.5959090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 30 here",
+    "parsedData": "The provided image is a line chart titled **\"Imports and Exports Volume\"** with the subtitle **\"(Index, Mar 2017 = 100)\"**.\n\n### Chart Components\n*   **Y-Axis (Vertical):** Represents the Index value, ranging from 50 to 170 in increments of 20 (50, 70, 90, 110, 130, 150, 170).\n*   **X-Axis (Horizontal):** Represents time from September 2017 (Sep-17) to March 2024 (Mar-24), with data points marked every six months.\n*   **Legend:**\n    *   **Light Blue Line:** Imports\n    *   **Dark Blue Line:** Exports\n\n### Data Table (Estimated Values)\nBecause the chart contains multiple data points per month, the following table reflects the approximate values at the specific six-month intervals labeled on the x-axis:\n\n| Date | Imports Index (Approx.) | Exports Index (Approx.) |\n| :--- | :--- | :--- |\n| **Sep-17** | 115 | 118 |\n| **Mar-18** | 102 | 111 |\n| **Sep-18** | 82 | 106 |\n| **Mar-19** | 71 | 112 |\n| **Sep-19** | 77 | 131 |\n| **Mar-20** | 54 | 103 |\n| **Sep-20** | 80 | 113 |\n| **Mar-21** | 95 | 110 |\n| **Sep-21** | 88 | 125 |\n| **Mar-22** | 102 | 115 |\n| **Sep-22** | 105 | 125 |\n| **Mar-23** | 91 | 82 |\n| **Sep-23** | 104 | 104 |\n| **Mar-24** | 75 | 118 |\n\n### Key Observations\n*   **Overall Trend:** Both imports and exports show significant volatility over the 6.5-year period.\n*   **Imports Trough:** Imports reached their lowest point around March 2020, dropping to an index value of approximately 54.\n*   **Exports Peak:** Exports reached their highest peak mid-way between March 2021 and September 2021, hitting an index value of approximately 144.\n*   **Recent Activity:** Toward the end of the chart (Mar-24), exports are on a sharp upward trend (index ~118), while imports have recently declined from a peak in late 2023 to an index of approximately 75.\n\nNo other content from the background of the source document is included in this description.",
+    "page": 40,
+    "idx": 30,
+    "bounds": [
+      0.13058823529411764,
+      0.6336363636363637,
+      0.45588235294117646,
+      0.8468181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 31 here",
+    "parsedData": "This chart illustrates the components contributing to Real GDP growth on a quarterly basis from early 2022 through late 2023.\n\n### **Chart Overview**\n*   **Title:** Real GDP Growth Contribution\n*   **Units:** Percentage point, quarter-on-quarter (q/q); Seasonally Adjusted (SA)\n*   **Y-Axis:** Ranges from -8 to 14 percentage points.\n*   **X-Axis:** Quarterly time intervals from 2022Q1 to 2023Q4.\n*   **Legend/Categories:** \n    *   **Private Consumption:** Light Blue\n    *   **Public Consumption:** Medium Blue\n    *   **Investment:** Dark Blue\n    *   **Exports:** Yellow\n    *   **Imports:** Light Gray\n    *   **Others:** Hatched pattern\n    *   **Total Real GDP Growth:** Represented by black dots with white outlines.\n\n### **Data Extraction (Visual Estimates)**\n\nThe following table provides estimated percentage point contributions based on the chart's scale:\n\n| Quarter | Private Consumption | Public Consumption | Investment | Exports | Imports | Others | Total Growth (Black Dot) |\n| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n| **2022Q1** | +1.5 | +0.2 | +0.5 | +0.2 | -1.2 | -0.4 | **~ +0.8** |\n| **2022Q2** | +2.0 | +0.2 | +0.6 | +0.7 | -0.1 | -1.4 | **~ +2.0** |\n| **2022Q3** | +1.0 | +0.1 | -0.1 | -1.1 | 0.0 | +0.2 | **~ 0.0** |\n| **2022Q4** | +0.1 | -0.2 | -1.0 | +1.6 | +1.7 | -3.5 | **~ -1.8** |\n| **2023Q1** | +0.8 | +0.4 | +0.4 | -2.2 | -2.2 | +3.4 | **~ +0.5** |\n| **2023Q2** | -0.3 | +0.3 | +0.1 | -1.0 | -0.4 | -1.3 | **~ -2.5** |\n| **2023Q3** | +0.3 | +0.3 | +0.1 | +0.5 | +0.1 | +1.1 | **~ +2.2** |\n| **2023Q4** | -1.1 | -0.6 | -2.4 | +1.1 | +2.8 | -1.7 | **~ -1.9** |\n\n### **Summary of Trends**\n*   **Volatile Growth:** Total growth (black dots) fluctuated significantly, peaking in 2022Q2 and 2023Q3, with notable contractions in 2022Q4, 2023Q2, and 2023Q4.\n*   **Investment & Consumption Decline:** By the final quarter (2023Q4), Private Consumption, Public Consumption, and Investment all contributed negatively to GDP. Investment showed the sharpest decline in this period at approximately -2.4 percentage points.\n*   **Trade Impact:** Imports and Exports frequently offset each other. In 2023Q4, a large positive contribution from Imports (reducing import levels adds to GDP) was offset by negative contributions in other sectors.\n*   **\"Others\" Category:** This category was highly volatile, providing a massive positive boost in 2023Q1 (+3.4) and a significant drag in 2022Q4 (-3.5).",
+    "page": 40,
+    "idx": 31,
+    "bounds": [
+      0.5447058823529412,
+      0.1459090909090909,
+      0.8405882352941176,
+      0.35
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 32 here",
+    "parsedData": "The chart titled **\"Unemployment Rate (Percent of active population, 31 urban centers)\"** tracks two key labor market indicators from 2017Q4 to 2023Q4.\n\n### **Chart Overview**\n*   **X-axis:** Time period by quarter, from 2017Q4 to 2023Q4.\n*   **Y-axis (Left - LHS):** Unemployment Rate percentage, ranging from 4 to 16.\n*   **Y-axis (Right - RHS):** Employment Rate percentage, ranging from 30 to 50.\n*   **Legend:**\n    *   **Light Blue Bars:** Unemployment rate (measured on the LHS).\n    *   **Dark Blue Line:** Employment rate (measured on the RHS).\n\n### **Extracted Data (Approximate Values)**\nThe following table provides estimated numerical values based on the chart's scales:\n\n| Period | Unemployment Rate (%) [LHS] | Employment Rate (%) [RHS] |\n| :--- | :---: | :---: |\n| **2017Q4** | 7.2 | 43.1 |\n| **2018Q1** | 9.1 | 42.5 |\n| **2018Q2** | 9.6 | 42.1 |\n| **2018Q3** | 9.0 | 42.7 |\n| **2018Q4** | 9.1 | 42.5 |\n| **2019Q1** | 10.1 | 42.6 |\n| **2019Q2** | 10.6 | 42.8 |\n| **2019Q3** | 9.7 | 42.8 |\n| **2019Q4** | 8.9 | 43.1 |\n| **2020Q1** | 10.4 | 42.5 |\n| **2020Q2** | **13.1 (Peak)** | **33.5 (Trough)** |\n| **2020Q3** | 11.7 | 37.5 |\n| **2020Q4** | 11.0 | 40.2 |\n| **2021Q1** | 10.2 | 42.1 |\n| **2021Q2** | 9.6 | 42.0 |\n| **2021Q3** | 8.2 | 43.0 |\n| **2021Q4** | 7.0 | 43.8 |\n| **2022Q1** | 7.0 | 43.6 |\n| **2022Q2** | 6.9 | 44.6 |\n| **2022Q3** | 7.1 | 44.2 |\n| **2022Q4** | 6.3 | 44.6 |\n| **2023Q1** | 6.9 | 45.0 |\n| **2023Q2** | 6.2 | 44.6 |\n| **2023Q3** | 5.7 | 45.3 |\n| **2023Q4** | **5.7 (Low)** | **45.5 (Peak)** |\n\n### **Key Trends**\n*   **The 2020 Shock:** There is a dramatic inverse movement in 2020Q2, where unemployment spiked to its highest point (approx. 13.1%) and employment hit its lowest point (approx. 33.5%).\n*   **Post-2020 Recovery:** Since the 2020 shock, the unemployment rate has steadily declined, ending at a series low of 5.7% in 2023Q4.\n*   **Employment Growth:** The employment rate has trended upward since 2021, reaching its highest level of approximately 45.5% by the end of 2023.",
+    "page": 40,
+    "idx": 32,
+    "bounds": [
+      0.5217647058823529,
+      0.38681818181818184,
+      0.8635294117647059,
+      0.595
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 33 here",
+    "parsedData": "### Chart Description: Goods Trade Balance\n\nThe chart illustrates the developments in the goods trade balance, exports, and imports from August 2017 to April 2024. Values are expressed in **Billions of US$**, as a **3-month moving average (3m m.a.)**, and are **Seasonally Adjusted (S.A.)**.\n\n#### **Axes and Legend**\n*   **Left Y-Axis (LHS):** Measures value for Exports and Imports, ranging from **2 to 10** billion US$.\n*   **Right Y-Axis (RHS):** Measures the Trade Balance, ranging from **-2 to 4** billion US$.\n*   **X-Axis:** Timeline from **Aug-17 to Apr-24**.\n*   **Data Series:**\n    *   **Exports:** Light blue line (LHS).\n    *   **Imports:** Dark blue line (LHS).\n    *   **Trade Balance (rhs):** Gray vertical bars (RHS).\n\n---\n\n#### **Key Data Points and Trends**\n\n| Time Period | Exports (LHS) | Imports (LHS) | Trade Balance (RHS) |\n| :--- | :--- | :--- | :--- |\n| **Aug-17 (Start)** | ~4.8 | ~5.5 | ~-0.7 (Deficit) |\n| **Oct-18** | ~5.1 | ~4.8 | ~0.3 (Turning to surplus) |\n| **Late 2019** | ~5.9 | ~3.7 | ~+2.3 (Peak surplus period) |\n| **Mid-2020** | ~4.5 | ~3.0 (Lowest) | ~+1.5 (Surplus) |\n| **Mar-22** | ~7.8 (Peak) | ~7.2 | ~+0.6 (Surplus) |\n| **Aug-22** | ~7.2 | ~7.6 (Peak) | ~-0.4 (Deficit) |\n| **Jun-23** | ~5.5 | ~6.8 | ~-1.4 (Deepest deficit) |\n| **Apr-24 (End)** | ~6.3 | ~4.9 | ~+1.4 (Return to surplus) |\n\n#### **Summary of Trends:**\n*   **Trade Balance:** The trade balance was mostly in deficit from late 2017 to late 2018. It experienced a sustained period of surplus from 2019 through late 2022. A significant deficit occurred throughout most of 2023, reaching a low of approximately **-$1.4 billion** in June 2023. By early 2024, it recovered to a surplus of roughly **+$1.4 billion**.\n*   **Exports:** Peaked in early 2022 at approximately **$7.8 billion**. Following a sharp decline in 2023 (bottoming around **$5.5 billion**), they have shown a recent recovery toward **$6.3 billion**.\n*   **Imports:** Reached their highest point in August 2022 at approximately **$7.6 billion**. Since mid-2023, there has been a sharp contraction, falling below **$5 billion** by April 2024.",
+    "page": 40,
+    "idx": 33,
+    "bounds": [
+      0.5276470588235294,
+      0.6318181818181818,
+      0.8588235294117647,
+      0.8459090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 34 here",
+    "parsedData": "The chart displays month-over-month (m/m) inflation data from February 2022 to April 2024.\n\n### **Chart Overview**\n- **Title:** Inflation Components\n- **Y-Axis:** Percent (m/m), ranging from 0 to 30.\n- **X-Axis:** Monthly timeline from Feb-22 to Apr-24.\n- **Series:** \n    - **Headline Inflation** (Dark blue line)\n    - **Core Inflation** (Light blue line)\n\n### **Data Observations**\nThe following table provides approximate monthly values based on the chart's visual representation:\n\n| Month | Headline (%) | Core (%) |\n| :--- | :---: | :---: |\n| Feb-22 | 3.9 | 4.0 |\n| Mar-22 | 6.7 | 6.5 |\n| Apr-22 | 6.0 | 6.7 |\n| May-22 | 5.1 | 5.1 |\n| Jun-22 | 5.3 | 5.1 |\n| Jul-22 | 7.4 | 7.3 |\n| Aug-22 | 7.0 | 6.8 |\n| Sep-22 | 6.2 | 5.5 |\n| Oct-22 | 6.3 | 5.5 |\n| Nov-22 | 4.9 | 4.8 |\n| Dec-22 | 5.1 | 5.3 |\n| Jan-23 | 6.0 | 5.4 |\n| Feb-23 | 6.6 | 7.7 |\n| Mar-23 | 7.7 | 7.2 |\n| Apr-23 | 8.4 | 8.4 |\n| May-23 | 7.8 | 7.9 |\n| Jun-23 | 6.0 | 6.5 |\n| Jul-23 | 6.3 | 6.5 |\n| Aug-23 | 12.4 | 13.8 |\n| Sep-23 | 12.7 | 13.4 |\n| Oct-23 | 8.3 | 8.5 |\n| Nov-23 | 12.8 | 13.0 |\n| **Dec-23 (Peak)** | **25.5** | **28.3** |\n| Jan-24 | 20.6 | 20.2 |\n| Feb-24 | 13.2 | 12.3 |\n| Mar-24 | 11.0 | 9.4 |\n| Apr-24 | 8.8 | 6.3 |\n\n### **Summary of Trends**\n*   **Stability Phase (Feb-22 to Jul-23):** Inflation fluctuated between roughly 4% and 8%.\n*   **Initial Surge (Aug-23):** Both components doubled, jumping above 12%.\n*   **Major Peak (Dec-23):** Inflation spiked sharply to its highest levels in the period shown, with Core inflation notably exceeding Headline inflation.\n*   **Sharp Decrease (Jan-24 to Apr-24):** Both figures have declined rapidly following the December peak, with Core inflation falling faster than Headline inflation in the final months.",
+    "page": 41,
+    "idx": 34,
+    "bounds": [
+      0.14,
+      0.14363636363636365,
+      0.4588235294117647,
+      0.35
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 35 here",
+    "parsedData": "The provided chart, titled **\"Rate of Crawl and Inflation,\"** displays monthly percentage changes (m/m) for two metrics from February 2022 to April 2024.\n\n### **Chart Overview**\n*   **Vertical (Y) Axis:** Represents the percentage rate, ranging from 0 to 40.\n*   **Horizontal (X) Axis:** Monthly timeline from Feb-22 to Apr-24.\n*   **Legend:**\n    *   **Light Blue Bar:** Rate of Crawl\n    *   **Dark Blue Bar:** Inflation\n\n### **Data Extraction**\nBelow is an estimation of the monthly values based on the chart's visual indicators. Note that for December 2023, the Rate of Crawl bar extends beyond the vertical axis and is labeled with a specific figure.\n\n| Month | Rate of Crawl (%) | Inflation (%) |\n| :--- | :---: | :---: |\n| Feb-22 | ~2.2 | ~4.7 |\n| Mar-22 | ~3.3 | ~6.7 |\n| Apr-22 | ~3.8 | ~6.1 |\n| May-22 | ~4.2 | ~5.1 |\n| Jun-22 | ~4.1 | ~5.3 |\n| Jul-22 | ~4.8 | ~7.4 |\n| Aug-22 | ~5.6 | ~6.9 |\n| Sep-22 | ~6.2 | ~6.2 |\n| Oct-22 | ~6.5 | ~6.3 |\n| Nov-22 | ~6.6 | ~4.9 |\n| Dec-22 | ~5.9 | ~5.1 |\n| Jan-23 | ~5.5 | ~6.0 |\n| Feb-23 | ~5.4 | ~6.6 |\n| Mar-23 | ~6.0 | ~7.7 |\n| Apr-23 | ~6.5 | ~8.4 |\n| May-23 | ~7.6 | ~7.8 |\n| Jun-23 | ~7.2 | ~6.0 |\n| Jul-23 | ~7.2 | ~6.3 |\n| Aug-23 | ~27.0 | ~12.4 |\n| Sep-23 | ~0.0 | ~12.7 |\n| Oct-23 | ~0.0 | ~8.3 |\n| Nov-23 | ~2.9 | ~12.8 |\n| **Dec-23** | **124.0** | ~25.5 |\n| Jan-24 | ~2.1 | ~20.6 |\n| Feb-24 | ~1.8 | ~13.2 |\n| Mar-24 | ~1.7 | ~11.0 |\n| Apr-24 | ~2.2 | ~8.8 |\n\n### **Key Trends**\n*   **Stability Period:** From February 2022 to July 2023, both rates remained relatively low, fluctuating between approximately 2% and 9%.\n*   **August 2023 Spike:** There was a significant jump in the Rate of Crawl to approximately 27%, while inflation also rose to over 12%.\n*   **December 2023 Outlier:** This month saw a massive spike in the Rate of Crawl to **124%** (as explicitly labeled). Inflation also peaked during this period at approximately 25.5%.\n*   **Recent Trend:** Since the December 2023 spike, the Rate of Crawl has returned to low levels (~2%), while Inflation, though still elevated, has shown a steady month-on-month decline through April 2024.",
+    "page": 41,
+    "idx": 35,
+    "bounds": [
+      0.14470588235294118,
+      0.3836363636363636,
+      0.4588235294117647,
+      0.5909090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 36 here",
+    "parsedData": "### Chart Description: Real BCRA Liabilities\n\nThe provided chart is a line graph titled \"**Real BCRA Liabilities**\" with a subtitle indicating the data is indexed to **Jan 2022 = 100**. It tracks the value of these liabilities over time from February 2022 to April 2024.\n\n#### **Axis Information**\n*   **Y-axis:** Represents the index value, ranging from **50 to 130** in increments of 10.\n*   **X-axis:** Represents time in months, with labels every two months from **2/1/2022 to 4/1/2024**.\n\n#### **Data Trends**\nThe overall trend shows a sharp decline in real BCRA liabilities, falling from a peak of nearly 120 in early 2022 to its lowest levels below 60 by early 2024. There are notable local spikes in December 2022 and December 2023, followed by steep drops.\n\n#### **Extracted Data Points (Estimated)**\nThe following table provides approximate index values based on the x-axis labels:\n\n| Date Label | Estimated Index Value |\n| :--- | :--- |\n| 2/1/2022 | 118 |\n| 4/1/2022 | 105 |\n| 6/1/2022 | 103 |\n| 8/1/2022 | 101 |\n| 10/1/2022 | 88 |\n| 12/1/2022 | 96 |\n| 2/1/2023 | 90 |\n| 4/1/2023 | 78 |\n| 6/1/2023 | 74 |\n| 8/1/2023 | 72 |\n| 10/1/2023 | 62 |\n| 12/1/2023 | 71 |\n| 2/1/2024 | 57 |\n| 4/1/2024 | 57 |\n\n*Note: Background text outside the chart frame is excluded as per instructions.*",
+    "page": 41,
+    "idx": 36,
+    "bounds": [
+      0.14,
+      0.6209090909090909,
+      0.4588235294117647,
+      0.8218181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 37 here",
+    "parsedData": "This chart, titled **\"Inflation Expectations (Percent, y/y)\"**, illustrates projected year-over-year headline and core inflation rates for three different periods: End-2024, End-2025, and End-2026. The data is based on survey/forecast dates ranging from September 2023 to April 2024.\n\n### **Chart Components:**\n*   **Y-Axis:** Percent, year-over-year (y/y), ranging from 0 to 300.\n*   **X-Axis:** Forecasted end-of-year periods (End-2024, End-2025, End-2026) segmented by the date the expectation was recorded.\n*   **Legend:**\n    *   **Blue Bars:** Headline inflation expectations.\n    *   **Black Dots (•):** Core inflation expectations.\n\n### **Data Table (Estimated Values)**\nThe values below are estimated based on the chart's vertical scale.\n\n| Forecast Date | Target Period | Headline Expectations (%) | Core Expectations (%) |\n| :--- | :--- | :--- | :--- |\n| Sep-23 | **End-2024** | ~135 | ~135 |\n| Oct-23 | **End-2024** | ~160 | ~160 |\n| Nov-23 | **End-2024** | ~195 | ~195 |\n| Dec-23 | **End-2024** | ~215 | ~245 |\n| Jan-24 | **End-2024** | ~230 | ~235 |\n| Feb-24 | **End-2024** | ~210 | ~210 |\n| Mar-24 | **End-2024** | ~190 | ~180 |\n| Apr-24 | **End-2024** | ~160 | ~145 |\n| | | | |\n| Sep-23 | **End-2025** | ~50 | ~50 |\n| Oct-23 | **End-2025** | ~65 | ~65 |\n| Nov-23 | **End-2025** | ~65 | ~65 |\n| Dec-23 | **End-2025** | ~65 | ~65 |\n| Jan-24 | **End-2025** | ~60 | ~55 |\n| Feb-24 | **End-2025** | ~55 | ~55 |\n| Mar-24 | **End-2025** | ~55 | ~55 |\n| Apr-24 | **End-2025** | ~50 | ~45 |\n| | | | |\n| Sep-23 | **End-2026** | ~50 | Not recorded |\n| Oct-23 | **End-2026** | ~65 | Not recorded |\n| Nov-23 | **End-2026** | ~60 | Not recorded |\n| Dec-23 | **End-2026** | ~65 | ~30 |\n| Jan-24 | **End-2026** | ~60 | ~25 |\n| Feb-24 | **End-2026** | ~58 | ~25 |\n| Mar-24 | **End-2026** | ~55 | ~25 |\n\n### **Summary of Trends:**\n*   **End-2024 Expectations:** Peaked in forecasts made around December 2023 and January 2024, showing a significant decline in more recent (April 2024) expectations.\n*   **End-2025 Expectations:** Remain relatively stable but much lower than 2024, generally hovering between 50% and 65%.\n*   **End-2026 Expectations:** Show a further decline compared to earlier years, with core inflation expectations significantly lower (around 25%) than headline expectations (around 55-65%).",
+    "page": 41,
+    "idx": 37,
+    "bounds": [
+      0.5288235294117647,
+      0.14363636363636365,
+      0.8458823529411764,
+      0.3518181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 38 here",
+    "parsedData": "### Chart Description: Policy Rate and Inflation\n\nThis chart tracks three economic indicators over time, measured in monthly percentage changes (Percent, m/m).\n\n**Chart Components:**\n*   **Title:** Policy Rate and Inflation\n*   **Unit:** (Percent, m/m)\n*   **Y-Axis:** 0 to 30 (increments of 5)\n*   **X-Axis:** Time periods from 1-Aug to 27-May\n*   **Legend:**\n    *   **LELIQ:** Solid dark blue line (ends mid-December)\n    *   **Pases ON:** Dashed medium blue line\n    *   **Inflation:** Solid light blue line\n\n---\n\n### Extracted Data Values (Approximate)\n\nThe data follows a \"step\" pattern, remaining constant between the dates listed on the X-axis.\n\n| Date Period (Approx.) | Inflation (%) | LELIQ (%) | Pases ON (%) |\n| :--- | :---: | :---: | :---: |\n| 1-Aug | ~7.5 | ~6.0 | ~8.0 |\n| 11-Aug to 30-Sep | ~12.5 | ~10.0 | ~9.8 |\n| 30-Sep to 10-Oct | ~8.5 | ~10.0 | ~9.8 |\n| 10-Oct to 30-Oct | ~8.5 | ~11.2 | ~11.0 |\n| 30-Oct to 9-Dec | ~13.0 | ~11.2 | ~11.0 |\n| 9-Dec to 19-Dec | ~25.5 | ~11.2 | ~11.0 |\n| 19-Dec to 29-Dec | ~25.5 | (Not plotted) | ~8.8 |\n| 29-Dec to 28-Jan | ~20.5 | (Not plotted) | ~8.8 |\n| 28-Jan to 27-Feb | ~13.5 | (Not plotted) | ~8.8 |\n| 27-Feb to 8-Mar | ~11.0 | (Not plotted) | ~8.8 |\n| 8-Mar to 28-Mar | ~11.0 | (Not plotted) | ~7.0 |\n| 28-Mar to 7-Apr | ~9.0 | (Not plotted) | ~7.0 |\n| 7-Apr to 17-Apr | ~9.0 | (Not plotted) | ~6.0 |\n| 17-Apr to 27-Apr | ~9.0 | (Not plotted) | ~5.2 |\n| 27-Apr to 17-May | (Not plotted) | (Not plotted) | ~4.2 |\n| 17-May to 27-May | (Not plotted) | (Not plotted) | ~3.5 |\n\n---\n\n### Summary of Trends\n*   **Inflation:** Remained relatively stable near 12.5% until a significant spike to over 25% in December. It has since steadily declined, ending the period near 9%.\n*   **LELIQ:** This policy rate increased in steps from 6% to roughly 11.2% before the data series ended in mid-December.\n*   **Pases ON:** Closely followed the LELIQ rate until December. Since late December, it has undergone a series of sharp decreases, falling from nearly 9% to approximately 3.5% by late May.",
+    "page": 41,
+    "idx": 38,
+    "bounds": [
+      0.5288235294117647,
+      0.3836363636363636,
+      0.8488235294117648,
+      0.59
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 39 here",
+    "parsedData": "The provided image is a line chart titled **\"Real Money Balance (Index, Jan 2022=100)\"**. It tracks three economic indicators from February 2022 to April 2024. All three indicators show a significant overall downward trend over the period.\n\n### Chart Components:\n*   **Y-Axis:** Represents the index value, ranging from **30 to 130** in increments of 10.\n*   **X-Axis:** Represents time in two-month intervals from **Feb-22 to Apr-24**.\n*   **Legend:**\n    *   **Monetary Base:** Solid medium-blue line.\n    *   **M2:** Solid light-blue line.\n    *   **M3:** Dashed dark-blue line.\n\n### Data Table (Estimated Values):\nThe following table provides estimated index values based on the data points plotted on the chart.\n\n| Date | Monetary Base | M2 | M3 |\n| :--- | :---: | :---: | :---: |\n| **Feb-22** | ~96 | ~98 | ~98 |\n| **Apr-22** | ~78 | ~80 | ~85 |\n| **Jun-22** | ~73 | ~79 | ~84 |\n| **Aug-22** | ~76 | ~83 | ~90 |\n| **Oct-22** | ~66 | ~78 | ~88 |\n| **Dec-22** | ~68 | ~85 | ~95 |\n| **Feb-23** | ~68 | ~86 | ~95 |\n| **Apr-23** | ~56 | ~75 | ~86 |\n| **Jun-23** | ~50 | ~71 | ~82 |\n| **Aug-23** | ~49 | ~71 | ~81 |\n| **Oct-23** | ~45 | ~71 | ~76 |\n| **Dec-23** | ~43 | ~66 | ~66 |\n| **Feb-24** | ~37 | ~58 | ~58 |\n| **Apr-24** | ~35 | ~47 | ~49 |\n\n### Summary of Trends:\n*   **Monetary Base:** This indicator shows the most aggressive decline, falling from nearly 100 in early 2022 to approximately 35 by April 2024.\n*   **M2 and M3:** These broader measures of money supply remained higher than the Monetary Base for most of the period but followed a similar downward trajectory, with a notable convergence of all three lines toward the end of the period (late 2023 to early 2024).",
+    "page": 41,
+    "idx": 39,
+    "bounds": [
+      0.5288235294117647,
+      0.62,
+      0.8458823529411764,
+      0.83
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 40 here",
+    "parsedData": "### Chart Description: FX Intervention in Official Market\n\nThis line chart tracks the cumulative foreign exchange (FX) intervention in an official market, measured in billions of US dollars, starting from the end of July through the end of May.\n\n#### **Key Chart Information**\n*   **Title:** FX Intervention in Official Market\n*   **Unit:** Billions of US$, cumulative since end-Jul\n*   **Y-Axis:** Cumulative value in billions (0 to 20, increments of 2).\n*   **X-Axis:** Time intervals (July 5th to May 30th).\n\n#### **Data Trends**\n*   **Initial Period (July – mid-Dec):** The cumulative intervention remained low and volatile, fluctuating between $0 and $2 billion.\n*   **Growth Period (mid-Dec – May):** Starting around December 17th, there is a sharp and steady increase in cumulative intervention, rising from approximately $2 billion to nearly $19 billion by the end of May.\n\n#### **Extracted Axis Values and Estimated Data Points**\n\n| X-Axis Date | Y-Axis Value (Billions of US$) |\n| :--- | :--- |\n| 5-Jul | 0 |\n| 20-Jul | 0 |\n| 4-Aug | ~0.5 |\n| 19-Aug | ~1.0 |\n| 3-Sep | ~1.5 |\n| 18-Sep | ~2.0 |\n| 3-Oct | ~2.0 |\n| 18-Oct | ~1.2 |\n| 2-Nov | ~1.8 |\n| 17-Nov | ~2.2 |\n| 2-Dec | ~2.0 |\n| 17-Dec | ~2.5 |\n| 1-Jan | ~4.5 |\n| 16-Jan | ~6.0 |\n| 31-Jan | ~7.5 |\n| 15-Feb | ~9.0 |\n| 1-Mar | ~10.2 |\n| 16-Mar | ~12.0 |\n| 31-Mar | ~12.8 |\n| 15-Apr | ~15.0 |\n| 30-Apr | ~16.2 |\n| 15-May | ~17.8 |\n| 30-May | ~18.5 |\n\n**Background/Non-Chart Content:** The text \"Purchases...\" appears at the top left outside the main chart frame. Additional charts and labels are present in the full document reference image but are excluded from this description as per instructions.",
+    "page": 42,
+    "idx": 40,
+    "bounds": [
+      0.1388235294117647,
+      0.15772727272727272,
+      0.46058823529411763,
+      0.3659090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 41 here",
+    "parsedData": "### Chart Description: EMBIG Sovereign Spread\n\nThis line chart tracks the sovereign spreads (measured in basis points) for Emerging Markets and Argentina from July 2023 to May 2024. It utilizes a dual-axis system to compare the two datasets.\n\n#### Chart Metadata\n| Element | Details |\n| :--- | :--- |\n| **Title** | EMBIG Sovereign Spread |\n| **Unit** | Basis points |\n| **Primary Y-Axis (Left)** | Emerging Markets (Scale: 250 to 500) |\n| **Secondary Y-Axis (Right)** | Argentina (Scale: 1100 to 3100) |\n| **X-Axis (Bottom)** | Time (Monthly intervals: Jul-23 to May-24) |\n\n#### Legend and Axes Values\n| Legend Item | Color | Corresponding Y-Axis | Values Shown on Axis |\n| :--- | :--- | :--- | :--- |\n| **Emerging markets** | Dark Blue | Left | 250, 300, 350, 400, 450, 500 |\n| **Argentina (rhs)** | Light Blue | Right (rhs) | 1100, 1600, 2100, 2600, 3100 |\n\n#### X-Axis Labels (Timeline)\n*   Jul-23\n*   Aug-23\n*   Sep-23\n*   Oct-23\n*   Nov-23\n*   Dec-23\n*   Jan-24\n*   Feb-24\n*   Mar-24\n*   Apr-24\n*   May-24\n\n#### Visual Trends and Data Summary\n*   **Emerging Markets (Dark Blue Line):** Starts near 350 basis points in July 2023, peaking around 420 in late September/October 2023. It then follows a general downward trend, reaching a low of approximately 280 in April 2024, before ending May 2024 with an uptick toward 340.\n*   **Argentina (Light Blue Line):** Fluctuates around 2000-2100 basis points initially. It sees a significant peak above 2600 in September 2023. Following this, it shows a sharp and sustained decline, narrowing significantly compared to general emerging markets. It hits a low point near 1100-1200 basis points in late April/early May 2024, finishing the period slightly higher near 1300-1400.\n*   **Correlation:** While both lines follow a broadly similar downward trajectory starting in late 2023, the decline in Argentina's spread is much steeper relative to its own scale, indicating a \"narrowing\" as suggested by the context.",
+    "page": 42,
+    "idx": 41,
+    "bounds": [
+      0.5158823529411765,
+      0.15772727272727272,
+      0.8405882352941176,
+      0.3668181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 42 here",
+    "parsedData": "This chart, titled **Exchange Rate Gaps**, displays the percentage difference of two parallel exchange rates relative to the official exchange rate over time.\n\n### Chart Metadata\n*   **Title:** Exchange Rate Gaps\n*   **Subtitle:** (Percent, relative to the official exchange rate)\n*   **Y-Axis:** Percent (0 to 250, in increments of 50)\n*   **X-Axis:** Timeline from August 4 to May 30\n*   **Legend:**\n    *   **CCL gap:** Dark blue line\n    *   **BLUE gap:** Light blue line\n\n### Data Summary\nThe chart shows two distinct phases: a period of high, volatile gaps (August to mid-December) followed by a sharp devaluation-linked drop and subsequent stabilization at much lower levels (mid-December to May).\n\n| Date (Approx.) | CCL gap (Dark Blue) | BLUE gap (Light Blue) | Key Observation |\n| :--- | :--- | :--- | :--- |\n| **4-Aug** | ~100% | ~105% | Starting levels |\n| **18-Oct** | ~175% | ~200% | Peak of BLUE gap |\n| **17-Nov** | ~175% | ~195% | Sustained high volatility |\n| **17-Dec** | ~20% | ~20% | Sharp vertical drop (convergence) |\n| **16-Jan** | ~60% | ~50% | Brief post-drop peak |\n| **16-Mar** | ~25% | ~15% | Lowest levels in the series |\n| **30-May** | ~35% | ~35% | Ending levels with a slight uptick |\n\n### Visual Narrative\n1.  **Pre-December Volatility:** From August to early December, both gaps fluctuated significantly, mostly staying between 100% and 200%. The BLUE gap generally remained higher than the CCL gap during this period.\n2.  **The Mid-December Shift:** Around December 17, there is a dramatic, near-vertical plunge in both gaps, dropping from roughly 180% to near 20% almost instantly.\n3.  **Post-December Stabilization:** Following the sharp drop, the gaps remained significantly lower and more closely aligned, fluctuating within a range of approximately 15% to 60% through the end of May.",
+    "page": 42,
+    "idx": 42,
+    "bounds": [
+      0.14,
+      0.3986363636363636,
+      0.46058823529411763,
+      0.605
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 43 here",
+    "parsedData": "The chart illustrates the **Evolution of Market Devaluation Expectations** based on ROFEX future contracts, measured in percent month-over-month (m/m).\n\n### Chart Specifications\n*   **Title:** Evolution of Market Devaluation Expectations\n*   **Subtitle:** (ROFEX future contracts, percent, m/m)\n*   **Vertical Axis (Y):** Percent, ranging from 0 to 18 in increments of 2.\n*   **Horizontal Axis (X):** Monthly timeline for the year 2024 (Jan-24 to Dec-24).\n*   **Data Series:**\n    *   **end-Dec (Light Gray):** Expectations as of the end of December 2023.\n    *   **end-Feb (Light Blue):** Expectations as of the end of February 2024.\n    *   **end-May (Dark Blue):** Expectations as of the end of May 2024.\n\n### Data Points (Estimated)\nThe table below provides approximate values extracted from the chart's data points:\n\n| Month (2024) | end-Dec (%) | end-Feb (%) | end-May (%) |\n| :--- | :---: | :---: | :---: |\n| Jan | 4.9 | - | - |\n| Feb | 5.8 | - | - |\n| Mar | 11.4 | 4.6 | - |\n| Apr | 10.5 | 7.0 | - |\n| May | 9.6 | 6.7 | 2.1 |\n| Jun | 7.2 | 7.6 | 3.1 |\n| Jul | 7.3 | 8.7 | 3.5 |\n| Aug | 6.9 | 7.3 | 4.0 |\n| Sep | 6.4 | 7.2 | 4.2 |\n| Oct | 6.7 | 5.9 | 4.1 |\n| Nov | 6.9 | 6.3 | 4.2 |\n| Dec | - | 5.6 | 4.2 |\n\n### General Trends\n*   **Reduction in Expectations:** There is a clear downward trend in devaluation expectations over time. The \"end-May\" series is significantly lower than the previous \"end-Dec\" and \"end-Feb\" projections.\n*   **Peaks:** The \"end-Dec\" expectations peaked sharply in March 2024 at over 11%. The \"end-Feb\" expectations peaked later, in July 2024, at approximately 8.7%.\n*   **Stabilization:** By the end of 2024, the most recent \"end-May\" data shows expectations stabilizing at a much lower level of approximately 4.2% m/m.",
+    "page": 42,
+    "idx": 43,
+    "bounds": [
+      0.5435294117647059,
+      0.39590909090909093,
+      0.8535294117647059,
+      0.6018181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 44 here",
+    "parsedData": "This is a description of the chart titled **\"Official Exchange Rate and REER (AR$/US$).\"** \n\n### Chart Overview\nThe chart tracks two metrics over time from August 5th to May 31st:\n1.  **Official ER (Official Exchange Rate):** Represented by a dark blue line, measured against the left Y-axis (AR$/US$).\n2.  **REER (Real Effective Exchange Rate):** Represented by a light blue line, measured against the right-hand side (rhs) Y-axis. The legend notes that an increase in value (+) represents depreciation.\n\n### Axes Scales\n*   **X-Axis (Time):** Dates ranging from 5-Aug to 31-May in approximately bi-weekly increments.\n*   **Left Y-Axis (AR$/US$):** Units from 200 to 1000 in increments of 100.\n*   **Right Y-Axis (REER):** Units from 50 to 190 in increments of 20.\n\n### Data Trends and Key Figures\nThe following table summarizes the significant shifts and approximate values observed in the chart:\n\n| Date Period | Official ER (Dark Blue Line - Left Axis) | REER (Light Blue Line - Right Axis) |\n| :--- | :--- | :--- |\n| **5-Aug** | Starts just below 300. | Starts near 100. |\n| **Mid-August** | Jumps to 350. | Jumps to approx. 115-120. |\n| **Mid-Aug to Dec 17** | Remains flat at 350. | Trends steadily downward (appreciates) to approx. 75-80. |\n| **18-Dec (Major Shift)** | Jumps sharply to **800**. | Spikes sharply to approx. **170** (depreciation). |\n| **Jan to May 31** | Trends upward (crawling peg), ending near **900**. | Trends steadily downward (appreciates), ending near **90**. |\n\n### Summary of Content\nThe chart illustrates a significant devaluation event occurring on December 18th, where the official exchange rate was adjusted from 350 to 800 AR$/US$. Following this event, the official rate has undergone a steady, gradual increase, while the Real Effective Exchange Rate (REER) has shown a consistent trend of appreciation (declining values on the right axis) after the initial spike.",
+    "page": 42,
+    "idx": 44,
+    "bounds": [
+      0.1388235294117647,
+      0.6286363636363637,
+      0.4588235294117647,
+      0.8377272727272728
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 45 here",
+    "parsedData": "This chart provides a monthly overview of monetary policy and inflation dynamics from June 2022 to May 2024.\n\n### **Chart Overview**\n*   **Title:** Policy Rate and Core Inflation\n*   **Units:** Percent, month-on-month (m/m)\n*   **Legend:**\n    *   **Real interest rate (ex-post):** Represented by light grey bars.\n    *   **Policy rate (monthly effective terms):** Represented by a dark blue line.\n    *   **Core inflation:** Represented by a light blue line.\n\n### **Key Trends**\n*   **Core Inflation:** Remained relatively stable between 5% and 8% until mid-2023. It saw a massive spike starting in late 2023, peaking at approximately **28% in December 2023**, before trending downward toward **6% by April 2024**.\n*   **Policy Rate:** Maintained a steady climb from around **4.5%** in June 2022, peaking at **11%** in late 2023. It began to decrease in 2024, reaching approximately **3.5%** by May 2024.\n*   **Real Interest Rate:** Mostly negative throughout the period. The most significant negative real interest rate occurred in **December 2023 (approx. -15%)**, coinciding with the peak in core inflation.\n\n### **Data Extraction (Approximated Values)**\n\n| Month | Core Inflation (%) | Policy Rate (%) | Real Interest Rate (%) |\n| :--- | :---: | :---: | :---: |\n| **Jun-22** | 5.0 | 4.5 | -0.5 |\n| **Aug-22** | 7.0 | 6.0 | -1.0 |\n| **Oct-22** | 6.0 | 6.5 | 0.5 |\n| **Dec-22** | 5.5 | 6.5 | 1.0 |\n| **Feb-23** | 8.0 | 6.5 | -1.5 |\n| **Apr-23** | 8.5 | 8.0 | -0.5 |\n| **Jun-23** | 6.5 | 8.0 | 1.5 |\n| **Aug-23** | 14.0 | 10.0 | -4.0 |\n| **Oct-23** | 9.0 | 11.0 | 2.0 |\n| **Dec-23** | 28.0 | 8.5 | -15.0 |\n| **Feb-24** | 12.0 | 8.5 | -3.0 |\n| **Apr-24** | 6.5 | 5.0 | -1.0 |\n| **May-24** | — | 3.5 | — |\n\n*(Note: Intermediate months between axis labels were interpolated from the chart's data points.)*",
+    "page": 42,
+    "idx": 45,
+    "bounds": [
+      0.5305882352941177,
+      0.63,
+      0.8588235294117647,
+      0.835
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 46 here",
+    "parsedData": "This chart, titled \"**Overall Deficit (Cumulative, percent of GDP)**,\" tracks the monthly cumulative fiscal deficit as a percentage of GDP for the years 2021, 2022, 2023, and the beginning of 2024.\n\n### Chart Components\n*   **Vertical Axis (Y-axis):** Percent of GDP, ranging from **-1** to **6**.\n*   **Horizontal Axis (X-axis):** Calendar months from **Jan** to **Dec**.\n*   **Legend:** \n    *   **2021** (Gray line)\n    *   **2022** (Light blue line)\n    *   **2023** (Medium blue line)\n    *   **2024** (Dark blue line)\n\n### Data Observations\nThe years 2021 through 2023 show a consistent upward trend, indicating an increasing cumulative deficit throughout the year. In contrast, the available data for 2024 (January through April) shows a cumulative surplus (negative deficit).\n\n| Month | 2021 (Gray) | 2022 (Light Blue) | 2023 (Blue) | 2024 (Dark Blue) |\n| :--- | :---: | :---: | :---: | :---: |\n| **Jan** | ~0.0 | ~0.2 | ~0.3 | ~-0.1 |\n| **Feb** | ~0.2 | ~0.4 | ~0.6 | ~-0.15 |\n| **Mar** | ~0.4 | ~0.6 | ~0.8 | ~-0.2 |\n| **Apr** | ~0.5 | ~0.7 | ~1.0 | ~-0.2 |\n| **May** | ~0.7 | ~1.1 | ~1.3 | - |\n| **Jun** | ~1.1 | ~1.6 | ~1.7 | - |\n| **Jul** | ~1.5 | ~1.8 | ~2.1 | - |\n| **Aug** | ~2.0 | ~2.3",
+    "page": 43,
+    "idx": 46,
+    "bounds": [
+      0.12176470588235294,
+      0.14363636363636365,
+      0.4505882352941176,
+      0.365
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 47 here",
+    "parsedData": "Based on the chart provided, here is a detailed description and extraction of the data.\n\n### **Chart Overview**\n*   **Title:** Treasury Deposits at Central Bank\n*   **Units:** Billions of AR$\n*   **Type:** Monthly Bar Chart\n*   **X-Axis:** Time period from March 2022 to April 2024.\n*   **Y-Axis:** Numerical values in Billions of AR$, ranging from 0 to 3500 in increments of 500.\n\n### **Data Extraction**\nThe following values are visual approximations based on the y-axis scale provided in the chart.\n\n| Month | Estimated Deposit Value (Billions of AR$) |\n| :--- | :--- |\n| Mar-22 | 1,180 |\n| Apr-22 | 800 |\n| May-22 | 380 |\n| Jun-22 | 550 |\n| Jul-22 | 700 |\n| Aug-22 | 720 |\n| Sep-22 | 480 |\n| Oct-22 | 800 |\n| Nov-22 | 500 |\n| Dec-22 | 1,220 |\n| Jan-23 | 630 |\n| Feb-23 | 280 |\n| Mar-23 | 820 |\n| Apr-23 | 300 |\n| May-23 | 520 |\n| Jun-23 | 50 |\n| Jul-23 | 150 |\n| Aug-23 | 2,300 |\n| Sep-23 | 2,380 |\n| Oct-23 | 1,980 |\n| Nov-23 | 1,960 |\n| Dec-23 | 1,000 |\n| **Jan-24** | **3,180 (Peak)** |\n| Feb-24 | 1,650 |\n| Mar-24 | 1,300 |\n| Apr-24 | 1,800 |\n\n### **Summary of Key Figures**\n*   **Maximum Value:** Approximately 3,180 billion AR$ in January 2024.\n*   **Minimum Value:** Approximately 50 billion AR$ in June 2023.\n*   **Notable Trend:** There is a significant and sustained increase in deposits starting in August 2023 compared to the previous 18 months.\n\n**Background/Non-Chart Content:** The text above the chart \"has substantially improved...\" is part of the document background and is not included in the data extraction.",
+    "page": 43,
+    "idx": 47,
+    "bounds": [
+      0.10882352941176471,
+      0.3977272727272727,
+      0.45588235294117646,
+      0.62
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 48 here",
+    "parsedData": "This chart tracks cumulative bond purchases by the BCRA (Central Bank of the Argentine Republic) net of Treasury buybacks.\n\n### **Chart Overview**\n*   **Title:** BCRA Bond Purchases Net of Treasury Buyback\n*   **Units:** Billions of AR$, cumulative\n*   **Y-Axis:** Value from 0 to 12,000 (increments of 2,000)\n*   **X-Axis:** Time from June 2022 (Jun-22) to March 2024 (Mar-24)\n\n### **Key Data Points (Approximated from Visual Scale)**\n\n| Time Period | Approximate Cumulative Value (Billions of AR$) |\n| :--- | :--- |\n| **Jun-22** | 0 |\n| **Jul-22** | ~1,200 |\n| **Jan-23** | ~1,900 |\n| **Apr-23** | ~2,100 |\n| **Aug-23** | ~4,800 |\n| **Oct-23** | ~7,500 |\n| **Dec-23 (Peak)** | ~9,800 |\n| **Jan-24 (Post-drop)** | ~7,000 |\n| **Feb-24 (Low point)** | ~4,200 |\n| **Mar-24 (End of chart)** | ~7,000 |\n\n### **Trend Analysis**\n*   **Initial Growth (Jun-22 to Oct-22):** A sharp initial spike in July 2022 followed by a flat period holding steady near 1,300.\n*   **Moderate Increase (Nov-22 to Apr-23):** A steady, gradual climb reaching approximately 2,100 by April 2023.\n*   **Accelerated Growth (May-23 to Dec-23):** The rate of cumulative purchases increased significantly, peaking at nearly 10,000 billion AR$ in late December 2023.\n*   **High Volatility (Jan-24 to Mar-24):** The beginning of 2024 shows extreme fluctuations. There was a sharp drop to 7,000, followed by a sudden plunge in February to roughly 4,200, before a rapid rebound back to the 7,000 level by March 2024.",
+    "page": 43,
+    "idx": 48,
+    "bounds": [
+      0.11588235294117646,
+      0.6609090909090909,
+      0.4476470588235294,
+      0.8786363636363637
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 49 here",
+    "parsedData": "This chart, titled **Real Revenues and Primary Spending**, displays the year-over-year (y/y) percentage change in these two categories from January 2023 to April 2024. \n\n### Chart Overview\n*   **Vertical Axis:** Percentage change (y/y), ranging from -50% to 40%.\n*   **Horizontal Axis:** Time series by month from Jan-23 to Apr-24.\n*   **Legend:** \n    *   **Dark Blue Bars:** Real revenue\n    *   **Light Blue Bars:** Real primary spending\n\n### Data Table (Estimated Values)\nBased on the visual representation, the approximate percentage changes are:\n\n| Month | Real Revenue (%) | Real Primary Spending (%) |\n| :--- | :---: | :---: |\n| **Jan-23** | -3 | +6 |\n| **Feb-23** | -8 | -4 |\n| **Mar-23** | -21 | -17 |\n| **Apr-23** | -18 | -10 |\n| **May-23** | -2 | -7 |\n| **Jun-23** | +1 | -3 |\n| **Jul-23** | -3 | +2 |\n| **Aug-23** | +6 | -8 |\n| **Sep-23** | -14 | -4 |\n| **Oct-23** | -2 | -2 |\n| **Nov-23** | +5 | -5 |\n| **Dec-23** | -16 | -6 |\n| **Jan-24** | +1 | -40 |\n| **Feb-24** | -6 | -36 |\n| **Mar-24** | -9 | -29 |\n| **Apr-24** | -6 | -24 |\n\n### Summary of Key Findings\n*   **Primary Spending Cuts:** There is a drastic and sustained contraction in real primary spending beginning in January 2024. For the first four months of 2024, spending dropped by approximately 24% to 40% year-over-year.\n*   **Revenue Volatility:** Real revenue fluctuated throughout 2023, with significant dips in March and April. In 2024, while revenues remained mostly in negative growth, they did not experience the same extreme sharp decline seen in spending.\n*   **Divergence:** A major divergence is visible starting in January 2024, where massive spending cuts far outpace the changes in revenue, indicating a significant fiscal adjustment.",
+    "page": 43,
+    "idx": 49,
+    "bounds": [
+      0.5288235294117647,
+      0.14181818181818182,
+      0.8676470588235294,
+      0.365
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 50 here",
+    "parsedData": "This chart, titled **\"Monetary Financing and Debt Service,\"** displays cumulative financial data in billions of Argentine Pesos (AR$) starting from January 2022 through early 2024.\n\n### Chart Components\n*   **Title:** Monetary Financing and Debt Service\n*   **Subtitle:** (Billions of AR$, cumulative since 2022)\n*   **X-axis:** Monthly timeline from Jan-22 to Jan-24.\n*   **Primary Y-axis (Left):** Values for Monetary Financing (0 to 3000 Billions AR$).\n*   **Secondary Y-axis (Right - rhs):** Values for Domestic debt service (0 to 30,000 Billions AR$).\n*   **Legend:**\n    *   **Dark Blue Bars:** Domestic debt service (measured against the right-hand axis).\n    *   **Light Blue Line:** Monetary Financing (measured against the left-hand axis).\n\n### Data Values (Estimated from Chart)\n\nThe values below are estimates based on the axes provided in the chart image.\n\n| Month | Domestic Debt Service (Bars, rhs) [Billions AR$] | Monetary Financing (Line, lhs) [Billions AR$] |\n| :--- | :--- | :--- |\n| Jan-22 | ~200 | ~125 |\n| Feb-22 | ~600 | ~125 |\n| Mar-22 | ~1,000 | ~125 |\n| Apr-22 | ~2,100 | ~200 |\n| May-22 | ~3,100 | ~50 |\n| Jun-22 | ~3,300 | ~450 |\n| Jul-22 | ~3,700 | ~650 |\n| Aug-22 | ~4,000 | ~620 |\n| Sep-22 | ~4,300 | ~620 |\n| Oct-22 | ~4,600 | ~620 |\n| Nov-22 | ~5,100 | ~620 |\n| Dec-22 | ~5,600 | ~620 |\n| Jan-23 | ~6,100 | ~620 |\n| Feb-23 | ~6,600 | ~620 |\n| Mar-23 | ~7,500 | ~750 |\n| Apr-23 | ~8,600 | ~850 |\n| May-23 | ~9,800 | ~1,300 |\n| Jun-23 | ~11,000 | ~2,000 |\n| Jul-23 | ~12,300 | ~2,600 |\n| Aug-23 | ~13,300 | ~2,300 |\n| Sep-23 | ~14,200 | ~2,300 |\n| Oct-23 | ~15,600 | ~2,300 |\n| Nov-23 | ~17,200 | ~2,300 |\n| Dec-23 | ~17,500 | ~2,300 |\n| Jan-24 | ~20,600 | ~2,300 |\n| Feb-24* | ~26,100 | ~2,300 |\n\n*\\*Note: The final data point shown in the chart occurs after Jan-24.*\n\n### Summary of Trends\n*   **Domestic Debt Service:** Shows a consistent, accelerating upward trend, starting near zero in Jan-22 and rising to approximately 26,000 billion AR$ by early 2024.\n*   **Monetary Financing:** Remained relatively flat through much of 2022 and early 2023 (around 620 billion AR$), saw a sharp spike between March 2023 and July 2023 (peaking at ~2,600 billion AR$), and has remained flat at approximately 2,300 billion AR$ since August 2023.",
+    "page": 43,
+    "idx": 50,
+    "bounds": [
+      0.5258823529411765,
+      0.39590909090909093,
+      0.8717647058823529,
+      0.6186363636363637
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 51 here",
+    "parsedData": "### Chart Description: Inflation-Linked Instruments Weighted Average Life\n\nThis line chart tracks the weighted average life (in months) of inflation-linked instruments from July 2022 through early 2024.\n\n**Chart Metadata and Axes:**\n\n| Element | Details |\n| :--- | :--- |\n| **Title** | Inflation-Linked Instruments Weighted Average Life (Months) |\n| **Y-Axis (Scale)** | Values from 3 to 33 (Increments: 3, 8, 13, 18, 23, 28, 33) |\n| **X-Axis (Time)** | Monthly intervals from Jul-22 to Jan-24 |\n| **Benchmark** | A dashed horizontal line representing the 2023 average |\n| **Annotation** | \"Average 2023: 7.00\" |\n\n**Data Trends and Observations:**\n\n*   **Initial Period (Jul-22 to Mar-23):** The weighted average life began near 8 months in July 2022 and showed a steady decline, bottoming out near the 3-month mark between January and March 2023.\n*   **Mid-2023 Volatility:** From March 2023, the value fluctuated, rising to nearly 8 in May, dipping slightly, and then peaking around 11-12 months in July and November 2023. \n*   **2023 Average:** The dashed benchmark line indicates that for the duration of 2023, the average life was **7.00 months**.\n*   **Recent Sharp Movement:** After a sharp drop back toward the 3-month level in early January 2024, the chart shows a dramatic and near-vertical spike, ending at approximately **28 months** by the final data point.\n\n**Summary of Detected Figures:**\n*   **Y-Axis Marks:** 3, 8, 13, 18, 23, 28, 33\n*   **X-Axis Marks:** Jul-22, Sep-22, Nov-22, Jan-23, Mar-23, May-23, Jul-23, Sep-23, Nov-23, Jan-24\n*   **Key Constant:** 7.00 (2023 Average)\n*   **Terminal Value:** ~28 months",
+    "page": 43,
+    "idx": 51,
+    "bounds": [
+      0.5364705882352941,
+      0.6609090909090909,
+      0.8576470588235294,
+      0.875
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 52 here",
+    "parsedData": "### Chart Description: Liquidity in Domestic and Foreign Currency\n\nThis chart tracks the liquidity of the banking sector in Argentina from August 2018 to February 2024, measured as a percentage of total deposits.\n\n#### Chart Components\n*   **Vertical Axis (Y-axis):** Percent of deposits, ranging from 0 to 140 in increments of 20.\n*   **Horizontal Axis (X-axis):** Time, labeled at approximately six-month intervals from Aug-18 to Feb-24.\n*   **Data Series:**\n    *   **BCRA papers (Light Blue Bars):** Represents liquidity held in central bank securities.\n    *   **Current account in BCRA (Dark Blue Bars):** Represents liquidity held in current accounts at the central bank. Together with BCRA papers, these form a stacked bar chart representing domestic currency liquidity.\n    *   **USD reserves (Dark Blue Dashed Line):** Represents liquidity in foreign currency.\n\n#### Estimated Data Values\nThe following table provides estimated values based on the chart's grid lines at the specific intervals labeled on the x-axis.\n\n| Date | Current account in BCRA (Dark Blue Bar) | BCRA papers (Light Blue Bar) | Total Liquidity (Top of Bar) | USD reserves (Dashed Line) |\n| :--- | :--- | :--- | :--- | :--- |\n| **Aug-18** | ~20% | ~25% | ~45% | ~53% |\n| **Feb-19** | ~22% | ~35% | ~57% | ~56% |\n| **Aug-19** | ~18% | ~40% | ~58% | ~57% |\n| **Feb-20** | ~18% | ~43% | ~61% | ~70% |\n| **Aug-20** | ~15% | ~46% | ~61% | ~84% |\n| **Feb-21** | ~12% | ~48% | ~60% | ~86% |\n| **Aug-21** | ~11% | ~54% | ~65% | ~83% |\n| **Feb-22** | ~12% | ~51% | ~63% | ~89% |\n| **Aug-22** | ~9% | ~57% | ~66% | ~91% |\n| **Feb-23** | ~8% | ~65% | ~73% | ~89% |\n| **Aug-23** | ~7% | ~73% | ~80% | ~80% |\n| **Feb-24** | ~7% | ~75% | ~82% | ~82% |\n\n#### Key Observations\n*   **Total Liquidity Growth:** Combined liquidity (the stacked bars) shows a steady upward trend, increasing from approximately 45% of deposits in August 2018 to over 80% by early 2024.\n*   **Shift in Composition:** There is a significant shift in domestic liquidity. The \"Current account in BCRA\" (dark blue) has generally declined as a share, while \"BCRA papers\" (light blue) have grown substantially, becoming the dominant component of liquidity.\n*   **USD Reserves Volatility:** USD reserves as a percentage of deposits increased steadily from 2018 to a peak of approximately 91% in late 2022, before experiencing volatility and a slight decline toward the end of the period shown.",
+    "page": 44,
+    "idx": 52,
+    "bounds": [
+      0.1264705882352941,
+      0.14,
+      0.43588235294117644,
+      0.3427272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 53 here",
+    "parsedData": "### Chart Description: Lending and Deposit Rates (Percent)\n\nThe chart displays trends in Argentina's banking interest rates from **March 2018 to March 2024**. It tracks three metrics across two Y-axes: the left axis measures nominal interest percentages (20% to 140%), and the right axis (rhs) measures the rate spread (0% to 50%).\n\n#### Key Components:\n*   **Lending rate to individuals (Dark blue dashed line):** Represents the interest rate charged on loans.\n*   **Deposit rates (Solid black line):** Represents the interest rate paid on deposits.\n*   **Lending-deposit rate spread (Light blue bars, rhs):** The difference between the lending and deposit rates.\n\n#### Data Trends and Summary:\n1.  **2018 – Late 2019:** Rates rose significantly, with the lending rate peaking near **85%** and deposit rates near **60%** in late 2019. The spread reached a high of approximately **30%** (rhs).\n2.  **2020 – Mid-2022:** Rates stabilized at a lower level. From early 2021 to early 2022, deposit rates remained flat at roughly **35%**, while lending rates hovered just above **40%**, resulting in a narrow spread of about **5-8%**.\n3.  **Late 2022 – Late 2023:** A massive surge occurred. Both rates peaked around late 2023, with lending rates reaching approximately **135%** and deposit rates hitting **130%**.\n4.  **Early 2024:** There is a sharp decline in both rates. As of **March 2024**, the lending rate fell to about **105%** and the deposit rate to about **85%**, causing the spread to spike back up to approximately **20%** (rhs).\n\n#### Estimated Key Figures:\n\n| Date | Lending Rate to Individuals (%) | Deposit Rates (%) | Lending-Deposit Rate Spread (rhs, %) |\n| :--- | :--- | :--- | :--- |\n| **Mar-18** | ~35 | ~22 | ~10 |\n| **Sep-19** | ~85 | ~58 | ~28 |\n| **Jun-20** | ~35 | ~25 | ~8 |\n| **Dec-21** | ~42 | ~35 | ~8 |\n| **Sep-22** | ~75 | ~68 | ~5 |\n| **Sep-23** | ~135 | ~128 | ~8 |\n| **Mar-24** | ~105 | ~85 | ~22 |\n\n***\n\n*Note: Background/Non-Chart images were not parsed as per instructions.*",
+    "page": 44,
+    "idx": 53,
+    "bounds": [
+      0.10882352941176471,
+      0.3759090909090909,
+      0.46058823529411763,
+      0.6018181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 54 here",
+    "parsedData": "This is a stacked bar chart detailing the composition of banking assets over time.\n\n### **Chart Overview**\n*   **Title:** Assets by Type\n*   **Unit of Measurement:** Percent of total assets\n*   **Y-Axis:** Percentage scale from 0 to 150 (though all bars represent a total of 100%).\n*   **X-Axis:** Timeline from December 2019 to February 2024.\n*   **Data Categories (Legend):**\n    *   **Claims on the BCRA:** Dark Blue\n    *   **Government securities:** Medium Blue\n    *   **Private sector credit:** Light Blue\n    *   **Others:** Light Grey\n\n### **Data Extraction (Estimated Percentages)**\nThe following table provides estimated values for each asset category based on the visual proportions in the chart (each bar sums to 100%).\n\n| Date | Claims on the BCRA (%) | Government securities (%) | Private sector credit (%) | Others (%) | Total (%) |\n| :--- | :---: | :---: | :---: | :---: | :---: |\n| **Dec-19** | 41 | 10 | 43 | 6 | 100 |\n| **Dec-20** | 41 | 12 | 37 | 10 | 100 |\n| **Dec-21** | 41 | 15 | 34 | 10 | 100 |\n| **Dec-22** | 44 | 15 | 30 | 11 | 100 |\n| **Mar-23** | 44 | 14 | 30 | 12 | 100 |\n| **Jun-23** | 38 | 13 | 31 | 18 | 100 |\n| **Sep-23** | 31 | 13 | 30 | 26 | 100 |\n| **Oct-23** | 31 | 13 | 31 | 25 | 100 |\n| **Nov-23** | 33 | 14 | 33 | 20 | 100 |\n| **Dec-23** | 30 | 17 | 28 | 25 | 100 |\n| **Jan-24** | 28 | 17 | 26 | 29 | 100 |\n| **Feb-24** | 26 | 24 | 26 | 24 | 100 |\n\n### **Key Observations**\n*   **Claims on the BCRA:** Remained the largest single component for most of the period but showed a significant decline starting in mid-2023, dropping from roughly 44% in March 2023 to approximately 26% by February 2024.\n*   **Private sector credit:** This category has seen a steady overall decline from its peak of roughly 43% in December 2019 down to 26% in early 2024.\n*   **Government securities:** Remained relatively stable between 10-15% for much of the period, before increasing significantly to approximately 24% by February 2024.\n*   **Others:** This category grew substantially over the timeline, starting at roughly 6% in December 2019 and peaking near 29% in January 2024.",
+    "page": 44,
+    "idx": 54,
+    "bounds": [
+      0.11352941176470588,
+      0.6359090909090909,
+      0.44882352941176473,
+      0.8518181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 55 here",
+    "parsedData": "This chart, titled **\"Private Sector NPLs and CARs,\"** illustrates the relationship between capital adequacy ratios and non-performing loans in the private sector from August 2018 to February 2024. The data is measured in **Percent**.\n\n### Chart Components:\n*   **Left Y-Axis (0 to 10):** Measures Non-performing loans (represented by the dark blue line).\n*   **Right Y-Axis (rhs) (0 to 40):** Measures Capital adequacy (represented by the light blue bars).\n*   **X-Axis:** Timeline from August 2018 to February 2024.\n\n### Data Overview:\nThe following table provides approximate values based on the chart's major time intervals:\n\n| Date | Capital Adequacy (rhs) (%) | Non-performing Loans (%) |\n| :--- | :--- | :--- |\n| **Aug-18** | ~14 | ~2.2 |\n| **Feb-19** | ~16 | ~3.8 |\n| **Aug-19** | ~17 | ~4.8 |\n| **Feb-20** | ~21 | ~6.2 (Series Peak) |\n| **Aug-20** | ~23 | ~5.0 |\n| **Feb-21** | ~24 | ~3.8 |\n| **Aug-21** | ~26 | ~5.4 |\n| **Feb-22** | ~27 | ~4.2 |\n| **Aug-22** | ~28 | ~3.1 |\n| **Feb-23** | ~31 | ~3.2 |\n| **Aug-23** | ~31 | ~3.1 |\n| **Feb-24** | ~38 (Series Peak) | ~2.0 |\n\n### Key Observations:\n*   **Capital Adequacy (Bars):** Shows a consistent upward trend over the entire period, starting at approximately 14% in late 2018 and reaching its highest point of nearly 38% in February 2024.\n*   **Non-performing Loans (Line):** This metric was more volatile. It peaked in February 2020 at approximately 6.2%, followed by a general downward trend. Despite a secondary smaller spike in mid-2021 (approx. 5.4%), it reached its lowest point of roughly 2% by February 2024.",
+    "page": 44,
+    "idx": 55,
+    "bounds": [
+      0.5358823529411765,
+      0.14181818181818182,
+      0.8505882352941176,
+      0.3427272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 56 here",
+    "parsedData": "### Chart Description: Private Sector Deposits in Real Terms\n\nThis line chart tracks private sector deposits in real terms using an index where January 2018 equals 100. It compares two types of deposits over time.\n\n**General Information:**\n*   **Title:** Private Sector Deposits in Real Terms\n*   **Unit of Measure:** Index (Jan-2018=100)\n*   **Y-Axis:** Index values ranging from 60 to 160 in increments of 10.\n*   **X-Axis:** Timeline from August 2018 to February 2024 in 6-month increments.\n*   **Data Series:**\n    *   **Time deposits:** Represented by a dashed dark blue line.\n    *   **Sight deposits:** Represented by a solid light blue line.\n\n**Key Trends:**\n*   **Sight Deposits:** Experienced a decline throughout late 2018 and 2019, hitting a low of approximately 75 in late 2019. It saw a sharp recovery in early 2020, peaking near 130 in late 2020. Since then, it has remained volatile between 105 and 130 before a sharp drop in late 2023, ending near 80 in February 2024.\n*   **Time Deposits:** Remained relatively stable or increased slightly through early 2019 (~115), followed by a dip in late 2019. Like sight deposits, they rose in 2020 and fluctuated around the 120-level through 2021 and 2022. They reached a peak of approximately 135 in early 2023 but suffered a precipitous crash starting in late 2023, dropping to approximately 65 by February 2024.\n\n**Approximate Data Values (Extracted from Chart Grid):**\n\n| Date | Time Deposits (Index) | Sight Deposits (Index) |\n| :--- | :--- | :--- |\n| **Aug-18** | ~100 | ~93 |\n| **Feb-19** | ~115 | ~83 |\n| **Aug-19** | ~105 | ~75 |\n| **Feb-20** | ~95 | ~95 |\n| **Aug-20** | ~125 | ~120 |\n| **Feb-21** | ~120 | ~110 |\n| **Aug-21** | ~118 | ~115 |\n| **Feb-22** | ~118 | ~120 |\n| **Aug-22** | ~122 | ~112 |\n| **Feb-23** | ~132 | ~115 |\n| **Aug-23** | ~130 | ~105 |\n| **Feb-24** | ~65 | ~80 |",
+    "page": 44,
+    "idx": 56,
+    "bounds": [
+      0.5088235294117647,
+      0.3759090909090909,
+      0.8447058823529412,
+      0.6
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 57 here",
+    "parsedData": "The chart titled **\"Real Private Sector Credit in Domestic Currency\"** tracks the month-on-month (m/m) and year-on-year (y/y) percentage changes in credit from August 2018 to February 2024.\n\n### **Chart Components**\n*   **Left Y-Axis (Percent):** Represents the **m/m** change, shown as light blue bars. The scale ranges from **-20 to 20**.\n*   **Right Y-Axis (rhs):** Represents the **y/y** change, shown as a dark blue line. The scale ranges from **-50 to 40**.\n*   **X-Axis:** Timeline from **Aug-18 to Feb-24**, with major intervals every six months.\n\n### **Data Summary**\nThe following table provides approximate values based on the visual data points in the chart:\n\n| Date | m/m (%) [Left Axis] | y/y (%) [Right Axis] |\n| :--- | :--- | :--- |\n| **Aug-18** | ~ -3% | ~ +10% |\n| **Feb-19** | ~ -4% | ~ -15% |\n| **Aug-19** | ~ -1% | ~ -38% |\n| **Feb-20** | ~ +3% | ~ -25% |\n| **Aug-20** | ~ +1% | ~ +8% |\n| **Feb-21** | ~ -3% | ~ +10% |\n| **Aug-21** | ~ +2% | ~ -8% |\n| **Feb-22** | ~ +2% | ~ +2% |\n| **Aug-22** | ~ -4% | ~ +5% |\n| **Feb-23** | ~ -1% | ~ -18% |\n| **Aug-23** | ~ -2% | ~ -12% |\n| **Nov/Dec-23**| ~ -17.5% (Record low) | ~ -35% (Sharp drop) |\n| **Feb-24** | ~ -4% | ~ -40% |\n\n### **Key Trends**\n*   **Significant Volatility:** Real credit experienced deep contractions (2019 and late 2023) and a brief period of expansion throughout 2020.\n*   **Sharp Recent Decline:** There is a drastic downward spike starting in late 2023, where the month-on-month change hit a low of approximately **-17.5%**, leading the annual (y/y) change to plunge to **-40%** by February 2024.",
+    "page": 44,
+    "idx": 57,
+    "bounds": [
+      0.5158823529411765,
+      0.635,
+      0.8676470588235294,
+      0.8618181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 58 here",
+    "parsedData": "The chart, titled **\"10-yr Fanchart (pct of GDP)\"**, illustrates debt-to-GDP trends and projections from 2019 to 2033.\n\n### Chart Components\n*   **Vertical (Y) Axis:** Represents percent of GDP, scaled from **0 to 180** in increments of **20**.\n*   **Horizontal (X) Axis:** Represents years from **2019 to 2033**.\n*   **Legend/Series:**\n    *   **Actual:** Indicated by a solid red line for historical data (up to 2023) and a dashed red line for projections.\n    *   **Probability Bands (Fan):** \n        *   **5-25 pct:** Lightest grey band (bottom).\n        *   **25-50 pct:** Light grey band.\n        *   **50-75 pct:** Medium grey band.\n        *   **75-95 pct:** Darkest grey band (top).\n\n### Data Points (Estimated Values)\n\nThe \"Actual\" path shows a significant peak in 2023 before a projected steady decline.\n\n| Year | Actual/Projected Debt (pct of GDP) |\n| :--- | :--- |\n| **2019** | ~90 |\n| **2020** | ~104 |\n| **2021** | ~81 |\n| **2022** | ~85 |\n| **2023** | **~157 (Peak)** |\n| **2024** | ~92 |\n| **2025** | ~78 |\n| **2026** | ~68 |\n| **2027** | ~60 |\n| **2028** | ~54 |\n| **2029** | ~49 |\n| **2030** | ~43 |\n| **2031** | ~37 |\n| **2032** | ~32 |\n| **2033** | ~27 |\n\n### Fan Chart Range in 2033\nThe fan chart expands over time, indicating increasing uncertainty. By the final projected year (2033), the potential debt-to-GDP outcomes are:\n*   **95th percentile (Upper limit):** ~112%\n*   **75th percentile boundary:** ~54%\n*   **50th percentile boundary:** ~24%\n*   **25th percentile boundary:** ~8%\n*   **5th percentile (Lower limit):** Hits 0% (reaches the baseline around 2030).",
+    "page": 65,
+    "idx": 58,
+    "bounds": [
+      0.5758823529411765,
+      0.39,
+      0.8635294117647059,
+      0.575
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 59 here",
+    "parsedData": "The provided image is a stacked area chart depicting Argentina's public debt as a percentage of its GDP from 2014 to 2033.\n\n### **Chart Overview**\n*   **Title (from context):** Debt by Currency (Percent of GDP)\n*   **Country (from context):** Argentina\n*   **X-axis:** Years from 2014 to 2033.\n*   **Y-axis:** Percentage of GDP, ranging from 0 to 180.\n*   **Legend:**\n    *   **Light Blue:** Foreign currency debt.\n    *   **Dark Blue:** Local currency debt.\n*   **Projection:** A horizontal black line indicates that data from 2024 to 2033 are projected values.\n\n### **Data Analysis**\nThe chart shows a significant spike in total debt peaking in 2023 at approximately 156% of GDP. Foreign currency debt consistently makes up the larger portion of the total debt throughout the period. From 2024 onwards, both foreign and local currency debts are projected to decline steadily.\n\n### **Estimated Values (Percent of GDP)**\nThe following table provides estimated numerical values extracted from the chart's visual representation.\n\n| Year | Foreign Currency | Local Currency | Total Debt (% of GDP) | Notes |\n| :--- | :---: | :---: | :---: | :--- |\n| 2014 | ~31 | ~14 | ~45 | |\n| 2015 | ~37 | ~16 | ~53 | |\n| 2016 | ~37 | ~16 | ~53 | |\n| 2017 | ~39 | ~18 | ~57 | |\n| 2018 | ~66 | ~19 | ~85 | |\n| 2019 | ~70 | ~20 | ~90 | |\n| 2020 | ~80 | ~24 | ~104 | |\n| 2021 | ~58 | ~23 | ~81 | |\n| 2022 | ~58 | ~26 | ~84 | |\n| **2023** | **~112** | **~44** | **~156** | **Historical Peak** |\n| 2024 | ~55 | ~35 | ~90 | Projection starts |\n| 2025 | ~54 | ~26 | ~80 | Projection |\n| 2026 | ~48 | ~22 | ~70 | Projection |\n| 2027 | ~44 | ~18 | ~62 | Projection |\n| 2028 | ~41 | ~14 | ~55 | Projection |\n| 2029 | ~38 | ~12 | ~50 | Projection |\n| 2030 | ~35 | ~10 | ~45 | Projection |\n| 2031 | ~32 | ~8 | ~40 | Projection |\n| 2032 | ~28 | ~5 | ~33 | Projection |\n| 2033 | ~20 | ~6 | ~26 | Projection |\n\n**Background/Non-Chart Images:** The second provided image contains additional charts (\"Public Debt by Holder\", \"Public Debt by Governing Law, 2023\", \"Debt by Instruments\", and \"Public Debt by Maturity\") and a commentary box, which were used for context but not parsed for numerical data as per instructions.",
+    "page": 69,
+    "idx": 59,
+    "bounds": [
+      0.20588235294117646,
+      0.14363636363636365,
+      0.821764705882353,
+      0.31272727272727274
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 60 here",
+    "parsedData": "This chart is a stacked area graph titled **\"Public Debt by Holder (percent of GDP)\"**, covering the period from **2017 to 2023**. It tracks the composition of public debt across five different categories of creditors.\n\n### Chart Components\n*   **Vertical (Y) Axis:** Represents percentage of GDP, ranging from **0 to 200**.\n*   **Horizontal (X) Axis:** Represents the years from **2017 to 2023**.\n*   **Legend (Bottom to Top):**\n    *   **Grey:** Domestic central bank\n    *   **Dark Blue:** Domestic commercial banks\n    *   **Light Blue:** Domestic other creditors\n    *   **Orange:** External official creditors\n    *   **Red:** External private creditors\n\n### Data Extraction\nThe following table provides estimated values for each category based on the visual data points in the chart.\n\n| Year | Domestic central bank | Domestic commercial banks | Domestic other creditors | External official creditors | External private creditors | Estimated Total (% of GDP) |\n| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n| **2017** | 18 | 6 | 7 | 6 | 19 | **56** |\n| **2018** | 16 | 8 | 17 | 15 | 28 | **84** |\n| **2019** | 20 | 9 | 13 | 21 | 26 | **89** |\n| **2020** | 24 | 5 | 22 | 25 | 27 | **103** |\n| **2021** | 22 | 5 | 23 | 16 | 15 | **81** |\n| **2022** | 25 | 6 | 24 | 18 | 12 | **85** |\n| **2023** | 81 | 6 | 8 | 35 | 26 | **156** |\n\n### Key Observations\n*   **Overall Trend:** Total public debt as a percentage of GDP remained relatively stable between 80% and 100% from 2018 to 2022, after an initial rise from 2017.\n*   **2023 Surge:** There is a sharp increase in total debt in 2023, reaching approximately **156% of GDP**. This spike is predominantly driven by the **Domestic central bank** (grey area), which jumped from ~25% to over 80% of GDP.\n*   **Creditor Shifts:** In 2023, while domestic central bank and external official creditor holdings increased significantly, \"Domestic other creditors\" saw a noticeable decrease.",
+    "page": 69,
+    "idx": 60,
+    "bounds": [
+      0.24294117647058824,
+      0.35,
+      0.5029411764705882,
+      0.5359090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 61 here",
+    "parsedData": "Based on the provided chart image and its context, here is the description of the data:\n\n### **Chart Description: Public Debt by Governing Law, 2023 (percent)**\nThe chart is a pie chart illustrating the distribution of public debt categorized by governing law. It contains three distinct segments and a corresponding legend.\n\n| Category | Color | Visual Proportion (Estimated) |\n| :--- | :--- | :--- |\n| **Domestic law** | Dark Blue | Approximately 53% (Largest share) |\n| **International law** | Red | Approximately 26% (Second largest share) |\n| **Multilateral** | Orange/Yellow | Approximately 21% (Smallest share) |\n\n**Notes on Figures:**\n*   **Explicit Numbers:** No specific numerical values or percentages are printed directly on the chart or within the legend.\n*   **Relative Size:** The \"Domestic law\" segment occupies slightly more than half of the total chart, while the \"International law\" and \"Multilateral\" segments combined make up the remaining portion.",
+    "page": 69,
+    "idx": 61,
+    "bounds": [
+      0.5505882352941176,
+      0.3559090909090909,
+      0.7905882352941176,
+      0.5309090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 62 here",
+    "parsedData": "Based on the provided image, here is a description of the chart.\n\n### Chart Overview\nThis is a stacked bar chart titled **Debt by Instruments (percent of GDP)** (based on the context of the full document). It illustrates the projected decline of two types of debt from 2023 through 2029.\n\n*   **Y-Axis:** Represents the percentage of GDP, ranging from 0 to 180 in increments of 20.\n*   **X-Axis:** Represents the years from 2023 to 2029.\n*   **Legend:**\n    *   **Blue bars:** Marketable debt\n    *   **Orange bars:** Nonmarketable debt\n*   **Projection Line:** A solid black horizontal line labeled \"**Proj.**\" spans from 2024 to 2029 at approximately the 168 level on the Y-axis.\n\n### Data Extraction\nThe values below are estimated based on the visual height of the stacked bars relative to the Y-axis scale.\n\n| Year | Marketable debt (Blue) | Nonmarketable debt (Orange) | Total Debt (% of GDP) |\n| :--- | :--- | :--- | :--- |\n| **2023** | ~84 | ~73 | **~157** |\n| **2024** | ~46 | ~34 | **~80** |\n| **2025** | ~43 | ~35 | **~78** |\n| **2026** | ~38 | ~31 | **~69** |\n| **2027** | ~33 | ~27 | **~60** |\n| **2028** | ~29 | ~25 | **~54** |\n| **2029** | ~25 | ~24 | **~49** |\n\n### Key Observations\n*   **Downward Trend:** There is a significant projected decrease in total debt as a percentage of GDP between 2023 and 2029, dropping from approximately 157% to 49%.\n*   **Debt Composition:** In 2023, marketable debt and nonmarketable debt are relatively close in value. By 2029, while both have decreased, they remain nearly equal in their smaller proportions.\n*   **Significant Drop:** The largest single-year decrease occurs between 2023 and 2024.\n\n***Note:** The background of the first image contains no additional content; only the chart itself is present.*",
+    "page": 69,
+    "idx": 62,
+    "bounds": [
+      0.24294117647058824,
+      0.59,
+      0.5005882352941177,
+      0.7927272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 63 here",
+    "parsedData": "Based on the provided chart and the context from the full document, here is a description of the data.\n\n### **Chart Title: Public Debt by Maturity (percent of GDP)**\n\nThis stacked bar chart illustrates the projected composition of Argentina's central government public debt from 2023 to 2029, categorized by the length of time until maturity.\n\n**General Elements:**\n*   **Y-Axis:** Represents percent of GDP, ranging from 0 to 180.\n*   **X-Axis:** Represents years from 2023 to 2029.\n*   **Projection Line (\"Proj\"):** A black horizontal line at the 160 level indicates a projection baseline spanning from 2024 to 2029.\n*   **Text Note:** \"Residual maturity: 6. years\" is noted at the bottom.\n*   **Data Note:** The perimeter shown is central government.\n\n**Data Breakdown (Estimated Values):**\n\n| Year | ≤ 1 year (Red) | 1-5 years (Yellow) | > 5 years (Blue) | Total Approx. (% of GDP) |\n| :--- | :--- | :--- | :--- | :--- |\n| **2023** | 50 | 48 | 60 | 158 |\n| **2024** | 25 | 35 | 22 | 82 |\n| **2025** | 8 | 36 | 34 | 78 |\n| **2026** | 16 | 26 | 28 | 70 |\n| **2027** | 10 | 30 | 20 | 60 |\n| **2028** | 11 | 27 | 16 | 54 |\n| **2029** | 7 | 30 | 11 | 48 |\n\n**Background/Non-Chart Images:** Not parsed as per instructions.",
+    "page": 69,
+    "idx": 63,
+    "bounds": [
+      0.5364705882352941,
+      0.5927272727272728,
+      0.7988235294117647,
+      0.7959090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 64 here",
+    "parsedData": "The chart, titled **\"Public Debt Creating Flows\"** (based on the provided context), displays the components contributing to the change in public sector debt as a percentage of GDP for two periods: the \"Past 5 years\" and the \"Next 5 years.\"\n\n### **Chart Overview**\nThe chart uses stacked bars to represent various economic factors that either increase (positive values) or decrease (negative values) public debt. A red dot with a blue outline represents the net **Change in public sector debt**.\n\n### **Data Extracted from the Chart**\n\n| Component | Color | Past 5 years (approx. value) | Next 5 years (approx. value) |\n| :--- | :--- | :--- | :--- |\n| **Primary deficit** | Dark Blue | +15 | -15 |\n| **Real interest rate** | Green | -160 | -175 |\n| **Real GDP growth** | Light Blue | (Not clearly visible) | -10 |\n| **Exch. rate depreciation**| Yellow | (Not visible) | (Not visible) |\n| **Residual** | Orange | +220 | +90 |\n| **Change in public sector debt** | **Red Dot** | **+75** | **-110** |\n\n### **Key Observations**\n*   **Past 5 years:** The net change in debt was positive (approx. **+75% of GDP**), driven primarily by a large positive \"Residual\" factor (~220) and a small primary deficit, which outweighed the debt-reducing effect of the \"Real interest rate\" (~ -160).\n*   **Next 5 years:** The net change in debt is projected to be negative (approx. **-110% of GDP**). This reduction is driven by a strong negative contribution from the \"Real interest rate\" (~ -175) and a primary surplus (indicated by the negative \"Primary deficit\" bar), which more than offset the debt-increasing \"Residual\" factor (~90).\n*   **Y-Axis Scales:** The scale for the \"Past 5 years\" ranges from **-200 to 300**, while the scale for the \"Next 5 years\" ranges from **-250 to 150**.",
+    "page": 70,
+    "idx": 64,
+    "bounds": [
+      0.20647058823529413,
+      0.25181818181818183,
+      0.45647058823529413,
+      0.3836363636363636
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 65 here",
+    "parsedData": "This chart, titled **3-Year Debt Reduction (Percent of GDP)**, is a histogram showing the frequency distribution of various levels of debt reduction over a three-year period.\n\n### **Chart Components and Labels**\n\n| Feature | Description / Value |\n| :--- | :--- |\n| **Title** | 3-Year Debt Reduction (Percent of GDP) |\n| **Y-Axis Scale** | 0 to 12 (represents frequency or percentage of occurrences) |\n| **X-Axis Scale** | Range from approximately -12 to over 28; marked at intervals of 4 (-8, -4, 0, 4, 8, 12, 16, 20, 24, 28). |\n| **Percentile Rank** | **100** |\n| **75th Percentile Threshold** | **5.9 ppts of GDP** (indicated by a bracket over the yellow bars). |\n| **Red Triangle Symbol** | Labeled as **\"Max. 3-year reduction\"**; located on the bar at approximately 6 on the x-axis. |\n| **Red Diamond Symbol** | Labeled as **\"3-year reduction\"**; located at the far-right outlier bar (x > 28). |\n\n### **Distribution Data (Estimated from Visual)**\n\nThe bars are divided into two colors based on the 75th percentile threshold: **blue bars** for the lower 75% and **yellow bars** for the top 25%.\n\n*   **Peak Frequency:** The distribution peaks at **0** on the x-axis with a height of **10** on the y-axis.\n*   **Left Outlier:** A bar at the extreme left (approx. -12) has a frequency height of **4**.\n*   **Right Outlier:** A bar at the extreme right (approx. 30) has a frequency height of roughly **3.8**. The \"3-year reduction\" red diamond is placed here.\n*   **Central Distribution:** Most data points cluster between -8 and +8.\n*   **Specific Bar Heights (Approximate):**\n    *   At -8: ~5.5\n    *   At -4: ~7.2\n    *   At 0 (Peak): 10.0\n    *   At 4: ~6.5\n    *   At 8: ~4.0\n    *   At 12: ~3.1\n    *   At 16: ~1.5",
+    "page": 70,
+    "idx": 65,
+    "bounds": [
+      0.19588235294117648,
+      0.4109090909090909,
+      0.46352941176470586,
+      0.5409090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 66 here",
+    "parsedData": "This chart illustrates historical and projected growth paths (in percent) alongside fiscal adjustments (in percentage points of GDP) from 2019 to 2026. The period from 2023 to 2026 is highlighted with a grey background, indicating a forecast period.\n\n### Chart Components\n*   **X-Axis:** Years from 2019 to 2026.\n*   **Left Y-Axis (LHS):** \"In percent\" (ranges from -15 to 15), corresponding to the line graphs.\n*   **Right Y-Axis (RHS):** \"In percentage points of GDP\" (ranges from -1 to 6), corresponding to the blue bars.\n*   **Legend (Lines - Growth Paths):**\n    *   **Baseline:** Solid black line.\n    *   **Multiplier=0.5:** Dashed green line.\n    *   **Multiplier=1:** Dotted blue line.\n    *   **Multiplier=1.5:** Dashed orange line.\n*   **Legend (Bars):**\n    *   **Fiscal adjustment (rhs):** Solid blue bars.\n\n### Data Extraction (Estimated Values)\n\n| Year | Baseline (LHS %) | Multiplier 0.5 (LHS %) | Multiplier 1 (LHS %) | Multiplier 1.5 (LHS %) | Fiscal Adjustment (RHS ppts GDP) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **2019** | -2.0 | N/A | N/A | N/A | N/A |\n| **2020** | -10.0 | N/A | N/A | N/A | N/A |\n| **2021** | 10.5 | N/A | N/A | N/A | N/A |\n| **2022** | 5.0 | N/A | N/A | N/A | N/A |\n| **2023** | -1.5 | -1.5 | -1.5 | -1.5 | ~0 |\n| **2024** | -3.5 | -2.5 | -5.0 | -8.0 | 5.5 |\n| **2025** | 5.0 | -1.5 | -3.5 | -6.0 | 0.5 |\n| **2026** | 4.8 | -1.0 | -2.0 | -3.5 | -0.1 |\n\n### Summary of Trends\n*   **Historical (2019-2022):** The baseline shows significant volatility, with a sharp decline in 2020 followed by a strong rebound in 2021.\n*   **Forecast (2023-2026):** A massive fiscal adjustment of approximately 5.5 percentage points of GDP is projected for 2024.\n*   **Growth Projections:** Under different multiplier assumptions (0.5 to 1.5), growth paths diverge significantly starting in 2024. Higher multipliers result in significantly deeper growth contractions following the large 2024 fiscal adjustment compared to the baseline.",
+    "page": 70,
+    "idx": 66,
+    "bounds": [
+      0.19588235294117648,
+      0.5818181818181818,
+      0.4747058823529412,
+      0.7018181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 67 here",
+    "parsedData": "The chart illustrates projected bond issuances and interest rates from 2024 to 2029. It uses a dual-axis system: the **left-hand side (LHS)** measures average marginal interest rates in percent, while the **right-hand side (RHS)** measures debt issuances as a percentage of GDP.\n\n### **Chart Components**\n*   **Lines (LHS - %):**\n    *   **Domestic Real Rate (Blue line):** Starts extremely low at approximately -80% in 2024, rises sharply to around -8% in 2025, and stabilizes between 1% and 3% from 2027 through 2029.\n    *   **Spread (External) (",
+    "page": 70,
+    "idx": 67,
+    "bounds": [
+      0.4764705882352941,
+      0.25181818181818183,
+      0.8064705882352942,
+      0.375
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 68 here",
+    "parsedData": "This chart, titled \"**3-Year Adjustment in Cyclically-Adjusted Primary Balance (percent of GDP)**,\" displays a distribution of fiscal adjustments across various economies.\n\n### Key Metrics and Callouts\n*   **Percentile Rank:** 91\n*   **Adjustment Threshold:** The chart highlights that a 3-year adjustment above the 75th percentile is equal to **2 ppts (percentage points) of GDP**.\n*   **Max 3-Year Adjustment:** Indicated by a red triangle icon located on the bar corresponding to approximately **5.5** on the x-axis.\n\n### Legend and Visual Indicators\n*   **Blue Bars (Distribution 3/):** Represents the sample distribution below the 75th percentile.\n*   **Yellow Bars:** Represents the sample distribution above the 75th percentile (adjustments > 2 ppts of GDP).\n*   **Red Diamond:** Symbol for \"3-year adjustment\" (not explicitly placed on a specific bar in this view, though the triangle is present).\n*   **Red Triangle:** Symbol for \"Max. 3-year adjustment.\"\n\n### Data Distribution\nThe y-axis represents the percentage of the sample (ranging from 0 to 12). The x-axis represents the 3-year adjustment in percent of GDP (ranging from -7.5 to 7.5+).\n\n| X-Axis (Percent of GDP) | Approximate Frequency (% of Sample) | Bar Color |\n| :--- | :--- | :--- |\n| -7.5 | 6.0 | Blue |\n| -7.0 | 0.5 | Blue |\n| -6.5 | 1.0 | Blue |\n| -6.0 | 0.8 | Blue |\n| -5.5 | 1.0 | Blue |\n| -5.0 | 1.1 | Blue |\n| -4.5 | 1.4 | Blue |\n| -4.0 | 1.8 | Blue |\n| -3.5 | 2.3 | Blue |\n| -3.0 | 2.8 | Blue |\n| -2.5 | 3.8 | Blue |\n| -2.0 | 4.0 | Blue |\n| -1.5 | 5.1 | Blue |\n| -1.0 | 5.8 | Blue |\n| -0.5 | 6.8 | Blue |\n| 0.0 | 7.3 | Blue |\n| 0.5 | 7.1 | Blue |\n| 1.0 | 7.2 | Blue |\n| 1.5 | 5.5 | Blue |\n| 2.0 | 4.2 | Yellow |\n| 2.5 | 3.8 | Yellow |\n| 3.0 | 3.7 | Yellow |\n| 3.5 | 2.1 | Yellow |\n| 4.0 | 2.3 | Yellow |\n| 4.5 | 1.5 | Yellow |\n| 5.0 | 1.2 | Yellow |\n| **5.5 (Max Adjustment)** | **1.1** | **Yellow** |\n| 6.0 | 1.0 | Yellow |\n| 6.5 | 0.8 | Yellow |\n| 7.0 | 1.0 | Yellow |\n| 7.5 | 0.6 | Yellow |\n| >7.5 (Outlier) | 6.1 | Yellow |",
+    "page": 70,
+    "idx": 68,
+    "bounds": [
+      0.4958823529411765,
+      0.4127272727272727,
+      0.7717647058823529,
+      0.5427272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 69 here",
+    "parsedData": "The provided image is a line and bar chart titled \"Real GDP Growth (in percent)\" showing economic projections and historical data from 2013 to 2029. It uses two Y-axes: a Left-Hand Side (LHS) for growth percentages and a Right-Hand Side (RHS) for the output gap.\n\n### Chart Components\n*   **X-axis:** Years from 2013 to 2029.\n*   **Left Y-axis (LHS):** Real growth percentage, ranging from -20 to 20.\n*   **Right Y-axis (RHS):** Output gap, ranging from -15 to 30.\n*   **10-yr avg. real growth (Dashed Black Line):** Remains constant at approximately 0% (LHS).\n\n### Data Table (Estimated Visual Values)\n\n| Year | Baseline real growth (LHS %) | Baseline real potential growth (LHS %) | Implicit real growth without adjustment (LHS %) | Output gap (RHS) |\n| :--- | :--- | :--- | :--- | :--- |\n| **2013** | ~2 | ~2 | ~-1 | ~-2 |\n| **2014** | ~-2 | ~0 | ~-2 | ~-4 |\n| **2015** | ~3 | ~0 | ~0 | ~-2 |\n| **2016** | ~-2 | ~0 | ~4 | ~-3 |\n| **2017** | ~3 | ~0 | ~5 | ~-2 |\n| **2018** | ~-3 | ~0 | ~5 | ~-3 |\n| **2019** | ~-2 | ~-1 | ~3 | ~-4 |\n| **2020** | ~-10 | ~-4 | ~4 | ~-12 |\n| **2021** | ~10 | ~3 | ~3 | ~-4 |\n| **2022** | ~3 | ~1 | ~2 | ~2 |\n| **2023** | ~-2 | ~1 | ~1 | ~0 |\n| **2024** | ~-4 | ~2 | ~1 | ~-8 |\n| **2025** | ~5 | ~3 | ~5 | ~-5 |\n| **2026** | ~5 | ~2 | ~5 | ~-3 |\n| **2027** | ~4 | ~2 | ~4 | ~-1 |\n| **2028** | ~3 | ~2 | ~3 | 0 |\n| **2029** | ~2 | ~2 | ~2 | 0 |\n\n### Summary of Key Visual Trends\n*   **Volatility:** Baseline real growth shows significant volatility, particularly with a sharp decline in 2020 followed by a sharp rebound in 2021.\n*   **Output Gap:** The output gap remains predominantly negative throughout the period, with the largest deficit occurring in 2020 (approx. -12 on the RHS scale).\n*   **Convergence:** Towards the end of the projection period (2027-2029), the baseline growth, potential growth, and implicit growth without adjustment all converge toward a range of 2% to 3%.\n*   **Long-term Average:** The 10-year average real growth remains flat at 0% across the entire timeline.",
+    "page": 70,
+    "idx": 69,
+    "bounds": [
+      0.5105882352941177,
+      0.5718181818181818,
+      0.8005882352941176,
+      0.7018181818181818
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 70 here",
+    "parsedData": "The chart, titled **\"Contribution to Change in Public Debt\"**, illustrates the annual percentage change in public debt relative to GDP and the various economic factors contributing to those changes from 2014 to 2033.\n\n### **Chart Overview**\n*   **Vertical Axis (Y-axis):** Percent of GDP, ranging from -150 to 150.\n*   **Horizontal Axis (X-axis):** Years from 2014 to 2032 (extended to 2033 in data).\n*   **Legend (Inferred from context):**\n    *   **Blue Line:** Total Change in public debt.\n    *   **Stacked Bars:** Represent contributors:\n        *   **Dark Blue:** Primary deficit\n        *   **Orange:** Real interest rate\n        *   **Red:** Real GDP growth\n        *   **Green:** Exchange rate depreciation\n        *   **Purple:** Other flows\n        *   **Grey:** Residual + relative inflation\n*   **Projection:** A black horizontal line and label indicate that data from **2024 to 2033** are projected figures.\n\n### **Key Data Points (Percent of GDP)**\nThe following table summarizes the total change in public debt based on the blue line and supporting data from the document:\n\n| Year | Change in Public Debt (%) | Notable Contributors |\n| :--- | :---: | :--- |\n| **2014-2017** | ~0 to 8 | Minimal fluctuations. |\n| **2018** | ~28 | Driven by residual/inflation (grey) and exchange rate depreciation (green). |\n| **2021** | ~ -22 | Large negative contribution from real interest rates (orange). |\n| **2023** | **72.1** | Massive spike primarily due to residual + relative inflation (grey). |\n| **2024 (Proj)** | **-65.7** | Significant projected drop, driven by real interest rates (orange). |\n| **2025 (Proj)** | -12.7 | Stabilization toward negative debt change. |\n| **2026 (Proj)** | -9.2 | Continued gradual reduction. |\n| **2027 (Proj)** | -8.7 | Continued gradual reduction. |\n| **2028-2033 (Proj)** | ~ -6.2 to -5.4 | Debt continues to decline at a steady, lower rate. |\n\n### **Summary of Trends**\n*   **Historical Volatility:** Between 2018 and 2023, the debt levels experienced high volatility, with 2023 seeing the largest increase in debt (over 70% of GDP).\n*   **Major Reversal:** The projection starting in 2024 marks a sharp reversal, where public debt is expected to decrease significantly, primarily influenced by the real interest rate component.\n*   **Long-term Outlook:** Beyond 2025, the chart projects a period of stability with consistent, small annual reductions in public debt relative to GDP.",
+    "page": 71,
+    "idx": 70,
+    "bounds": [
+      0.1535294117647059,
+      0.605,
+      0.5547058823529412,
+      0.7909090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 71 here",
+    "parsedData": "This chart illustrates the cumulative contributions of various economic factors to the change in public debt as a percentage of GDP.\n\n### **Cumulative Contribution to Change in Public Debt**\n\nThe chart is a stacked bar graph with a net total marker, showing data for a \"Cumulative\" period on an axis ranging from -250 to 150 percent of GDP.\n\n| Component | Value (percent of GDP) |\n| :--- | :---: |\n| Residual + relative inflation (Grey) | 88 |\n| Other flows (Purple) | 0 |\n| Real GDP growth (Red) | -12 |\n| Real interest rate (Orange) | -184 |\n| Primary deficit (Dark Blue) | -26 |\n| **Change in public debt (Light Blue Dot)** | **-130** |\n\n**Additional Legend Information:**\n*   **Exch. rate depreciation (Green):** Listed in the legend, but no specific numerical value or visible segment is present in this cumulative chart.\n*   The net **Change in public debt** is highlighted by a light blue dot with a callout box pointing to the value of **-130**.",
+    "page": 71,
+    "idx": 71,
+    "bounds": [
+      0.5676470588235294,
+      0.615,
+      0.8135294117647058,
+      0.7927272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 72 here",
+    "parsedData": "### Chart Description: Final Fanchart (pct of GDP)\n\nThis chart illustrates the historical and projected debt-to-GDP ratio from 2019 to 2029.\n\n**Layout and Axis:**\n*   **Title:** Final Fanchart (pct of GDP)\n*   **X-axis (Time):** 2019 to 2029 in two-year increments.\n*   **Y-axis (Percentage):** Ranges from 0 to 180. Note: The labels above 80 (00, 20, 40, 60, 80) represent 100%, 120%, 140%, 160%, and 180% respectively.\n\n**Legend and Data Series:**\n*   **Actual (Solid Red/Pink Line):** Shows historical data up to 2023, peaking at approximately 158% of GDP. From 2024 onwards, the solid pink line represents the projected path.\n*   **Baseline (Dashed Red Line):** The projected baseline starting after the 2023 peak.\n*   **Fanchart Shaded Areas:** Represent probability distributions for the projections:\n    *   **5-25 pct:** Lightest gray (bottom band)\n    *   **25-50 pct:** Medium-light gray\n    *   **50-75 pct:** Medium-dark gray\n    *   **75-95 pct:** Darkest gray (top band)\n\n**Key Data Points (Approximate):**\n\n| Year | Actual / Projection (Solid Line) | Baseline (Dashed Line) |\n| :--- | :--- | :--- |\n| 2019 | 90% | N/A |\n| 2020 | 105% | N/A |\n| 2021 | 80% | N/A |\n| 2022 | 85% | N/A |\n| 2023 | 158% (Peak) | 158% |\n| 2024 | 82% | 90% |\n| 2025 | 86% | 78% |\n| 2027 | 65% | 62% |\n| 2029 | 52% | 48% |\n\n**Projected Ranges for 2029:**\nBy 2029, the uncertainty width (fanchart) expands significantly:\n*   **Upper Bound (95th percentile):** ~158% of GDP\n*   **Lower Bound (5th percentile):** ~35% of GDP\n*   The baseline and actual projections both trend downward toward approximately 50% of GDP by 2029.",
+    "page": 72,
+    "idx": 72,
+    "bounds": [
+      0.12176470588235294,
+      0.3409090909090909,
+      0.43058823529411766,
+      0.5259090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 73 here",
+    "parsedData": "This chart illustrates the **Gross Financing Needs (as a percentage of GDP)** over a period from 2019 to 2029.\n\n### Chart Components\n*   **Vertical Axis (Y-axis):** Represents percentage of GDP, ranging from 0 to 40 in increments of 10.\n*   **Horizontal Axis (X-axis):** Represents years from 2019 to 2029.\n*   **Legend/Series:**\n    *   **Financing provided by banks:** Dark blue vertical bars (starting in 2025).\n    *   **Actual:** Solid red line (2019–2023).\n    *   **Baseline:** Dashed red line (2024–2029).\n    *   **Stress scenario:** Dotted black line (2024–2029).\n    *   **Pink/Purple Line:** (Per context, represents Contingent Liabilities scenario) Solid pink line branching from the baseline after 2023.\n\n### Data Table (Estimated Values)\n\nValues are approximate based on the visual position against the Y-axis.\n\n| Year | Actual (Solid Red) | Baseline (Dashed Red) | Contingent Liab. (Pink) | Stress Scenario (Dotted Black) | Bank Financing (Blue Bar) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **2019** | 15 | | | | |\n| **2020** | 20 | | | | |\n| **2021** | 18 | | | | |\n| **2022** | 16.5 | | | | |\n| **2023** | 9 | | | | |\n| **2024** | | 3 | 3 | 3 | |\n| **2025** | | 15 | 18.5 | 16 | 2 |\n| **2026** | | 7 | 7.5 | 16.5 | 4 |\n| **2027** | | 11.5 | 14 | 17.5 | 4.5 |\n| **2028** | | 8 | 9 | 18.5 | 5.5 |\n| **2029** | | 9.5 | 11 | 18.5 | 5.5 |\n\n### Summary of Trends\n*   **Actual Data (2019-2023):** Financing needs peaked in 2020 at 20% of GDP and declined significantly to approximately 9% by 2023.\n*   **Projections (2024-2029):** All scenarios show a sharp drop to roughly 3% in 2024 before rebounding. \n*   **Scenarios:** The \"Stress scenario\" remains consistently high (between 16% and 18.5%) from 2025 onward. The \"Baseline\" and \"Contingent Liabilities\" scenarios show higher volatility, with a significant spike in 2025 and another smaller peak in 2027.\n*   **Bank Financing:** Provided financing from banks is projected to start at 2% in 2025 and gradually increase to 5.5% by 2029.",
+    "page": 72,
+    "idx": 73,
+    "bounds": [
+      0.4435294117647059,
+      0.3409090909090909,
+      0.8405882352941176,
+      0.5259090909090909
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 74 here",
+    "parsedData": "Based on the provided chart, here is a concise description and extraction of the data:\n\n### **Chart Description**\nThe chart displays a **Medium-Term Index** from 2021 to 2024. It plots three lines against an index number scale ranging from 00 to 70:\n*   **Medium-term index:** A solid black line showing a downward trend initially, then a slight uptick in 2024.\n*   **Low risk:** A horizontal dotted green line serving as a constant threshold.\n*   **High risk:** A horizontal dashed red line serving as a constant threshold.\n\n### **Extracted Data**\n\n| Year | Medium-term index (approx.) | High risk threshold | Low risk threshold |\n| :--- | :--- | :--- | :--- |\n| **2021** | 60 | 40 | 25 |\n| **2022** | 49 | 40 | 25 |\n| **2023** | 46 | 40 | 25 |\n| **2024** | 48 | 40 | 25 |\n\n### **Legend and Axis Details**\n*   **Y-Axis (Index Number):** Increments of 10, labeled from 00 to 70.\n*   **X-Axis (Year):** Labeled 2021, 2022, 2023, and 2024.\n*   **Legend:**\n    *   **Solid Black Line:** Medium-term index\n    *   **Dotted Green Line:** Low risk\n    *   **Dashed Red Line:** High risk",
+    "page": 72,
+    "idx": 74,
+    "bounds": [
+      0.12176470588235294,
+      0.6186363636363637,
+      0.39,
+      0.75
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 75 here",
+    "parsedData": "|  | threshold | threhsold | MTI | Normalized ley |\n| --- | --- | --- | --- | --- |\n| Debt fanchart index | 1.1 | 2.1 | 0.5 | 0.7 |\n| GFN financeability index | 7.6 | 17.9 | 0.5 | 0.3 |\n| Medium-term index (MTI) | 0.3 | 0.4 | ... | 0.5, High |",
+    "page": 72,
+    "idx": 75,
+    "bounds": [
+      0.4435294117647059,
+      0.6186363636363637,
+      0.8405882352941176,
+      0.75
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 76 here",
+    "parsedData": "### Chart Description: EMBIG Sovereign Spreads\n\nThe chart displays sovereign spreads in basis points (bps) for \"Emerging markets\" and \"Argentina\" across two separate time-series panels.\n\n**General Information:**\n*   **Title:** EMBIG Sovereign Spreads\n*   **Unit:** Basis points (bps)\n*   **Series 1 (Dark Blue Line):** Emerging markets\n*   **Series 2 (Light Blue Line):** Argentina\n\n---\n\n### Panel 1: Historical Trend (Dec-23 to May-24)\nThis panel uses the **left-hand Y-axis**, ranging from **200 to 500 bps**.\n\n| Date | Emerging Markets (Approx. bps) | Argentina (Approx. bps) |\n| :--- | :--- | :--- |\n| **Dec-23** | Starts ~350 | Starts ~325 |\n| **Jan-24** | Peaks ~375, ends ~350 | Fluctuates between 310–350 |\n| **Feb-24** | Steady decline to ~320 | Decline to ~280 |\n| **Mar-24** | Steady decline to ~280 | Hits low of ~225, ends ~250 |\n| **Apr-24** | Sharp jump from ~285 to ~335 | Low of ~220, ends ~230 |\n| **May-24** | Fluctuates between 325–340 | Rises to ~260, ends ~240 |\n\n---\n\n### Panel 2: Recent Developments (June 1 to June 7)\nThis panel provides a zoomed-in view of early June, utilizing the **right-hand Y-axis (rhs)**, ranging from **1000 to 3000 bps**. \n\n*Note: While the legend indicates \"(rhs)\" for Argentina, both series in this specific panel appear to be plotted against the larger 1000–3000 scale.*\n\n| Date | Emerging Markets (Approx. bps) | Argentina (Approx. bps) |\n| :--- | :--- | :--- |\n| **1-Jun** | ~1900 | ~1400 |\n| **3-Jun** | ~2200 | ~1400 |\n| **5-Jun** | ~2350 | ~1650 |\n| **7-Jun** | ~2400 | ~1750 |\n\n---\n**Background/Non-Chart Images:** Noted as present in the supplementary reference but excluded from this extraction.",
+    "page": 105,
+    "idx": 76,
+    "bounds": [
+      0.18294117647058825,
+      0.3009090909090909,
+      0.46352941176470586,
+      0.4627272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 77 here",
+    "parsedData": "The following information is extracted from the provided chart titled **\"FX Gap and BCRA FX Purchases\"**.\n\n### **Chart Overview**\nThe chart consists of two panes showing time-series data for the \"CCL gap\" and \"FX purchases.\" It utilizes a dual-axis system.\n\n### **Axes and Legend Information**\n\n| Feature | Description / Values |\n| :--- | :--- |\n| **Title** | FX Gap and BCRA FX Purchases |\n| **Left Y-Axis (LHS)** | Scale: 0, 20, 40, 60, 80, 100 (Corresponds to CCL gap) |\n| **Right Y-Axis (RHS)** | Scale: 0, 4, 8, 12, 16, 20 (Corresponds to FX purchases) |\n| **X-Axis (Left Pane)** | Monthly intervals: Dec-23, Jan-24, Feb-24, Mar-24, Apr-24, May-24 |\n| **X-Axis (Right Pane)** | Daily intervals: 1-Jun, 3-Jun, 5-Jun, 7-Jun |\n| **Legend (Light Blue Line)** | CCL gap 1/ (measured on LHS) |\n| **Legend (Dark Blue Line)** | FX purchases (rhs) /2 (measured on RHS) |\n| **Source** | BCRA; Haver Analytics; IMF staff estimates |\n\n---\n\n### **Data Trends and Figures**\n\n#### **1. Long-Term View (Dec-23 to May-24)**\n*   **CCL gap (Light Blue):**\n    *   Started at approximately **20** in Dec-23.\n    *   Reached a peak of approximately **60** in early Jan-24.\n    *   Trended downward through Feb-24 and Mar-24, fluctuating between **20 and 30**.\n    *   Began rising again in May-24, ending the period near **40**.\n*   **FX purchases (Dark Blue):**\n    *   Shows a steady, nearly linear cumulative increase.\n    *   Started near **5** in Dec-23.\n    *   Reached approximately **17** by late May-24.\n\n#### **2. Short-Term Detailed View (June 1–7, 2024)**\n*   **CCL gap (Light Blue):**\n    *   Started at approximately **37** on 1-Jun.\n    *   Showed an upward trend, ending at approximately **45** by 7-Jun.\n*   **FX purchases (Dark Blue):**\n    *   Remained relatively flat during this week, holding steady at approximately **17**.\n\n---\n**Background/Non-Chart Images:** Noted but not parsed as per instructions.",
+    "page": 105,
+    "idx": 77,
+    "bounds": [
+      0.5547058823529412,
+      0.3009090909090909,
+      0.821764705882353,
+      0.4527272727272727
+    ]
+  },
+  {
+    "referenceIdx": "Insert table/media 78 here",
+    "parsedData": "This chart illustrates the percentage of cost recovery for electricity prices (PEST) across different user categories and timeframes/scenarios.\n\n### **Chart Details**\n*   **Title:** Electricity Prices (PEST) Cost Recovery 1/\n*   **Unit of Measurement:** Percent (%)\n*   **Y-Axis:** 0 to 140 in increments of 20.\n*   **X-Axis Categories:** \n    1. High Income Households and Commercial Users\n    2. Low/Middle Income Households 2/\n\n### **Data Breakdown**\n\n| User Category | Feb-Apr (%) | Jun-Jul (no policy change) (%) | Jun-Jul (Res. 93/2024) (%) |\n| :--- | :---: | :---: | :---: |\n| High Income Households and Commercial Users | 100 | ~63 | 80 |\n| Low/Middle Income Households 2/ | ~7 | ~4 | 30 |\n\n### **Summary of Findings**\n*   **High Income/Commercial Users:** Cost recovery was at 100% in the Feb-Apr period. Without policy changes, it would have dropped to approximately 63% in Jun-Jul, but under Resolution 93/2024, it reached 80%.\n*   **Low/Middle Income Households:** Cost recovery is significantly lower for this group. It was approximately 7% in Feb-Apr and would have fallen to roughly 4% without policy changes. Under Resolution 93/2024, cost recovery increased to 30%.\n\n***\n\n**Background/Non Chart:** The second provided image contains text and additional charts regarding \"Recent Developments and Policies\" in Argentina, which were not included in this extraction per instructions.",
+    "page": 105,
+    "idx": 78,
+    "bounds": [
+      0.6029411764705882,
+      0.64,
+      0.8676470588235294,
+      0.7877272727272727
+    ]
+  }
+]

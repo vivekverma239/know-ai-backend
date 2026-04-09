@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Document, Page } from "react-pdf";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
   getAdminDocumentPages,
   getAdminDocumentSections,
   getAdminDocumentTocMetadata,
+  reparseAdminDocument,
 } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { Button } from "@/components/ui/button";
@@ -351,6 +352,7 @@ function SectionAccordion({
 export function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const queryClient = useQueryClient();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("1");
@@ -358,6 +360,7 @@ export function DocumentDetailPage() {
   const [pdfLoadError, setPdfLoadError] = useState(false);
   const [activeTab, setActiveTab] = useState("parsed");
   const [pendingScrollPage, setPendingScrollPage] = useState<number | null>(null);
+  const [reparseFeedback, setReparseFeedback] = useState<string | null>(null);
   const parsedScrollRef = useRef<HTMLDivElement | null>(null);
   const parsedPageNodesRef = useRef<Map<number, HTMLDivElement>>(new Map());
   const sourcePdfScrollRef = useRef<HTMLDivElement | null>(null);
@@ -388,6 +391,31 @@ export function DocumentDetailPage() {
     queryKey: ["admin-document-toc-meta", accessToken, id],
     queryFn: () => getAdminDocumentTocMetadata(accessToken ?? "", id ?? ""),
     enabled: Boolean(accessToken && id),
+  });
+
+  const reparseMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken || !id) {
+        throw new Error("Missing admin session or document id.");
+      }
+      return reparseAdminDocument(accessToken, id);
+    },
+    onMutate: () => {
+      setReparseFeedback(null);
+    },
+    onSuccess: async (result) => {
+      setReparseFeedback(result.message);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-document-detail", accessToken, id] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-document-pages", accessToken, id] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-document-sections", accessToken, id] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-document-chapters", accessToken, id] }),
+        queryClient.invalidateQueries({ queryKey: ["admin-document-toc-meta", accessToken, id] }),
+      ]);
+    },
+    onError: (error) => {
+      setReparseFeedback(error instanceof Error ? error.message : "Failed to trigger reparsing.");
+    },
   });
 
   const parsedPagesQuery = useInfiniteQuery({
@@ -618,7 +646,24 @@ export function DocumentDetailPage() {
           </Link>
           <h2 className="m-0 text-lg font-semibold truncate">{document.name}</h2>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm flex-wrap justify-end">
+          {reparseFeedback ? (
+            <span
+              className={
+                reparseMutation.isError ? "text-destructive text-xs" : "text-muted-foreground text-xs"
+              }
+            >
+              {reparseFeedback}
+            </span>
+          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => reparseMutation.mutate()}
+            disabled={reparseMutation.isPending}
+          >
+            {reparseMutation.isPending ? "Reparsing..." : "Reparse"}
+          </Button>
           <Badge variant={document.status === "completed" ? "default" : document.status === "failed" ? "destructive" : "secondary"}>
             {document.status}
           </Badge>

@@ -80,7 +80,7 @@ const parseImageContent = async (
 
   try {
     const response = await generateText({
-      model: getLLM(MODELS.GEMINI_2_5_FLASH),
+      model: getLLM(MODELS.GEMINI_3_FLASH),
       messages: [
         {
           role: "user",

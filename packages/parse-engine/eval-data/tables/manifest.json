@@ -1,0 +1,128 @@
+[
+  {
+    "id": "metro-nested-table",
+    "image": "tables/images/metro-nested-table.png",
+    "reference": "tables/references/metro-nested-table.md",
+    "description": "Metro Bank strategy slide with nested commercial pipeline table"
+  },
+  {
+    "id": "imf-fiscal-outlook",
+    "image": "tables/images/imf-fiscal-outlook.png",
+    "reference": "tables/references/imf-fiscal-outlook.md",
+    "description": "IMF: Fiscal outlook comparison table (Dec-Apr 2022/23 vs 2023/24)"
+  },
+  {
+    "id": "imf-balance-of-payments",
+    "image": "tables/images/imf-balance-of-payments.png",
+    "reference": "tables/references/imf-balance-of-payments.md",
+    "description": "IMF: Balance of payments projection table"
+  },
+  {
+    "id": "imf-financial-indicators",
+    "image": "tables/images/imf-financial-indicators.png",
+    "reference": "tables/references/imf-financial-indicators.md",
+    "description": "IMF: Financial soundness indicators table (2015-2023)"
+  },
+  {
+    "id": "imf-external-financing",
+    "image": "tables/images/imf-external-financing.png",
+    "reference": "tables/references/imf-external-financing.md",
+    "description": "IMF: External financing requirements table (2024-2027)"
+  },
+  {
+    "id": "imf-selected-economic-indicators",
+    "image": "tables/images/imf-selected-economic-indicators.png",
+    "reference": "tables/references/imf-selected-economic-indicators.md",
+    "description": "IMF: Selected economic indicators comprehensive table"
+  },
+  {
+    "id": "imf-fiscal-operations",
+    "image": "tables/images/imf-fiscal-operations.png",
+    "reference": "tables/references/imf-fiscal-operations.md",
+    "description": "IMF: Federal government fiscal operations table"
+  },
+  {
+    "id": "imf-financial-soundness",
+    "image": "tables/images/imf-financial-soundness.png",
+    "reference": "tables/references/imf-financial-soundness.md",
+    "description": "IMF: Financial soundness indicators multi-year table"
+  },
+  {
+    "id": "imf-bop-detailed",
+    "image": "tables/images/imf-bop-detailed.png",
+    "reference": "tables/references/imf-bop-detailed.md",
+    "description": "IMF: Detailed balance of payments table"
+  },
+  {
+    "id": "imf-external-financing-detailed",
+    "image": "tables/images/imf-external-financing-detailed.png",
+    "reference": "tables/references/imf-external-financing-detailed.md",
+    "description": "IMF: Detailed external financing requirements"
+  },
+  {
+    "id": "imf-reviews-purchases",
+    "image": "tables/images/imf-reviews-purchases.png",
+    "reference": "tables/references/imf-reviews-purchases.md",
+    "description": "IMF: Schedule of reviews and purchases table"
+  },
+  {
+    "id": "metro-h1-results",
+    "image": "tables/images/metro-h1-results.png",
+    "reference": "tables/references/metro-h1-results.md",
+    "description": "Metro Bank H1'24 results: 8 key financial metrics across 3 periods"
+  },
+  {
+    "id": "metro-balance-sheet",
+    "image": "tables/images/metro-balance-sheet.png",
+    "reference": "tables/references/metro-balance-sheet.md",
+    "description": "Metro Bank balance sheet: capital accretion, provisions, portfolio composition"
+  },
+  {
+    "id": "metro-mortgages",
+    "image": "tables/images/metro-mortgages.png",
+    "reference": "tables/references/metro-mortgages.md",
+    "description": "Metro Bank mortgage overview: LTV splits, geographical distribution, IFRS9 staging"
+  },
+  {
+    "id": "metro-upgraded-guidance",
+    "image": "tables/images/metro-upgraded-guidance.png",
+    "reference": "tables/references/metro-upgraded-guidance.md",
+    "description": "Metro Bank upgraded guidance: RoTE, NIM, and cost:income projections"
+  },
+  {
+    "id": "sample-imf-financing",
+    "image": "tables/images/sample-imf-financing.png",
+    "reference": "tables/references/sample-imf-financing.md",
+    "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table"
+  },
+  {
+    "id": "sample-metro-cashflow",
+    "image": "tables/images/sample-metro-cashflow.jpg",
+    "reference": "tables/references/sample-metro-cashflow.md",
+    "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers"
+  },
+  {
+    "id": "sample-metro-proforma",
+    "image": "tables/images/sample-metro-proforma.jpg",
+    "reference": "tables/references/sample-metro-proforma.md",
+    "description": "Metro Bank pro forma adjustments — financial table with footnote refs"
+  },
+  {
+    "id": "sample-moodys-scorecard",
+    "image": "tables/images/sample-moodys-scorecard.jpg",
+    "reference": "tables/references/sample-moodys-scorecard.md",
+    "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors"
+  },
+  {
+    "id": "sample-moodys-esg",
+    "image": "tables/images/sample-moodys-esg.jpg",
+    "reference": "tables/references/sample-moodys-esg.md",
+    "description": "Moody's ESG integration — non-numeric table with dot/icon indicators"
+  },
+  {
+    "id": "sample-moodys-sovereign",
+    "image": "tables/images/sample-moodys-sovereign.jpg",
+    "reference": "tables/references/sample-moodys-sovereign.md",
+    "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns"
+  }
+]

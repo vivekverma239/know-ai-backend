@@ -4,13 +4,13 @@ import { sendQstashMessage } from "../qstash";
 
 export const enqueueDocumentParse = async (fileId: string): Promise<void> => {
   try {
-    await sendQstashMessage<DocumentParseData>("api/v1/document-parse-callback", {
+    await sendQstashMessage<DocumentParseData>("api/v1/document-parse-workflow", {
       type: "document_parse",
       data: { fileId },
     });
-    logger.info("Enqueued document parse", { fileId });
+    logger.info("Enqueued document parse workflow", { fileId });
   } catch (error) {
-    logger.error("Failed to enqueue document parse", {
+    logger.error("Failed to enqueue document parse workflow", {
       fileId,
       error: error instanceof Error ? error.message : String(error),
     });

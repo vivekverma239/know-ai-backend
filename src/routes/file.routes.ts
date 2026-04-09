@@ -23,11 +23,10 @@ import {
   UserFileSchema,
   UserFileWithMetaSchema,
 } from "../schemas/file.schema";
-import { parsePDF } from "../service/file/triggerParsing";
+import { enqueueDocumentParse } from "../service/file/enqueueDocumentParse";
 import { invalidateStoragePathCache, resolveExistingPdfStoragePath } from "../service/file/storagePath";
 import { getStorage } from "../service/googleStorage";
 import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "../utils/errorHandler";
-import { enqueueToCMetaParsing } from "../service/tocMetaQueue";
 import { logger } from "../utils/logger";
 
 // Helper function to check if user has access to a file
@@ -469,8 +468,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         userId: userId,
         orgId: orgId,
       });
-      await parsePDF(fileId);
-      await enqueueToCMetaParsing(fileId);
+      await enqueueDocumentParse(fileId);
       return reply.code(201).send(file);
     },
   });
@@ -541,9 +539,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         })
         .returning();
 
-      // Trigger parsing asynchronously
-      parsePDF(fileId).catch((error) => {
-        logger.error(`Error parsing file ${fileId}:`, error as Record<string, unknown>);
+      // Trigger parsing via parse-engine (async via QStash)
+      enqueueDocumentParse(fileId).catch((error) => {
+        logger.error(`Error enqueuing parse for file ${fileId}:`, error as Record<string, unknown>);
         getDb()
           .update(userFile)
           .set({ status: "failed" })
@@ -555,7 +553,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             );
           });
       });
-      await enqueueToCMetaParsing(fileId);
 
       return reply.code(201).send({
         fileId,
@@ -630,9 +627,9 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         })
         .returning();
 
-      // Trigger parsing asynchronously
-      parsePDF(fileId).catch((error) => {
-        logger.error(`Error parsing admin file ${fileId}:`, error as Record<string, unknown>);
+      // Trigger parsing via parse-engine (async via QStash)
+      enqueueDocumentParse(fileId).catch((error) => {
+        logger.error(`Error enqueuing parse for admin file ${fileId}:`, error as Record<string, unknown>);
         getDb()
           .update(userFile)
           .set({ status: "failed" })
@@ -644,7 +641,6 @@ const fileRoutes = async (fastify: FastifyInstance) => {
             );
           });
       });
-      await enqueueToCMetaParsing(fileId);
 
       return reply.code(201).send({
         fileId,

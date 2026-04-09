@@ -66,16 +66,30 @@ fi
 
 
 
-# Always include computed identifiers
-DEPLOY_ARGS+=(--set-env-vars GCLOUD_PROJECT="${PROJECT_ID}")
-DEPLOY_ARGS+=(--set-env-vars PROJECT_ID="${PROJECT_ID}")
-DEPLOY_ARGS+=(--set-env-vars REGION="${REGION}")
-
 # Default NODE_ENV if not set in env or file
 DEFAULT_NODE_ENV="${NODE_ENV:-production}"
+HAS_ADMIN_USERS_JSON=false
+TMP_ENV_VARS_FILE="$(mktemp)"
+trap 'rm -f "${TMP_ENV_VARS_FILE}"' EXIT
 
-# Parse and include from .env.prod if present
-env_vars_file=".env.dev" 
+append_env_var() {
+  local key="$1"
+  local value="$2"
+
+  if [[ "$key" == "ADMIN_USERS_JSON" ]]; then
+    HAS_ADMIN_USERS_JSON=true
+  fi
+
+  printf '%s: "%s"\n' "${key}" "$(printf '%s' "${value}" | sed 's/\\/\\\\/g; s/"/\\"/g')" >> "${TMP_ENV_VARS_FILE}"
+}
+
+# Always include computed identifiers
+append_env_var "GCLOUD_PROJECT" "${PROJECT_ID}"
+append_env_var "PROJECT_ID" "${PROJECT_ID}"
+append_env_var "REGION" "${REGION}"
+
+# Parse and include from env file if present
+env_vars_file="${ENV_VARS_FILE:-.env.dev}"
 if [[ -f "${env_vars_file}" ]]; then
   echo "Loading environment variables from ${env_vars_file}"
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -90,14 +104,20 @@ if [[ -f "${env_vars_file}" ]]; then
 
 
       value="${value%\'}"; value="${value#\'}"; value="${value%\"}"; value="${value#\"}"
-      DEPLOY_ARGS+=(--set-env-vars "${key}=${value}")
+      append_env_var "${key}" "${value}"
     fi
   done < "${env_vars_file}"
 else
-  if [[ -n "${ENV_VARS_FILE}" ]]; then
-    DEPLOY_ARGS+=(--env-vars-file "${ENV_VARS_FILE}")
-  fi
+  echo "No env file found at ${env_vars_file}; continuing with explicit env vars only"
 fi
+
+if [[ "${HAS_ADMIN_USERS_JSON}" == "false" && -f "data/admin-secrets.json" ]]; then
+  echo "Injecting ADMIN_USERS_JSON from data/admin-secrets.json"
+  admin_users_json="$(node -e 'const fs=require("fs"); const file=JSON.parse(fs.readFileSync("data/admin-secrets.json","utf8")); if(!Array.isArray(file.users)||file.users.length===0){process.exit(1)} process.stdout.write(JSON.stringify(file.users))')"
+  append_env_var "ADMIN_USERS_JSON" "${admin_users_json}"
+fi
+
+DEPLOY_ARGS+=(--env-vars-file "${TMP_ENV_VARS_FILE}")
 
 
 
@@ -116,5 +136,3 @@ gcloud run deploy "${SERVICE_NAME}" "${DEPLOY_ARGS[@]}" --quiet --allow-unauthen
 
 echo "Deployment complete. Service URL:"
 gcloud run services describe "${SERVICE_NAME}" --region "${REGION}" --format='value(status.url)'
-
-

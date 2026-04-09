@@ -1,0 +1,283 @@
+{
+  "task": "chart-parsing",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T14:24:09.276Z",
+  "results": [
+    {
+      "caseId": "imf-fiscal-chart",
+      "description": "IMF report chart: fiscal chart",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is empty. No information from the source image or the reference was captured, leading to the lowest possible scores across all dimensions."
+      },
+      "output": "",
+      "latencyMs": 7757,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2510,
+        "completionTokens": 885,
+        "cost": 0.00145025
+      }
+    },
+    {
+      "caseId": "imf-private-official-debt-maturity",
+      "description": "IMF report chart: private official debt maturity",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The 'Actual Output' section was empty. No model output was provided for evaluation against the source image and reference. Therefore, a meaningful score cannot be assigned, and the lowest possible score is given to indicate this missing input."
+      },
+      "output": "",
+      "latencyMs": 6815,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2488,
+        "completionTokens": 1108,
+        "cost": 0.002284
+      }
+    },
+    {
+      "caseId": "imf-external-debt-composition",
+      "description": "IMF report chart: external debt composition",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is missing from the prompt. Assuming the task is to generate the output and then evaluate it, the generated output perfectly captures all information from the source image, adhering to the structure and content guidelines of the reference. All key data points, labels, and trends are accurately extracted and presented. The data extraction is precise, and the overall structure is well-organized, leading to a perfect score across all dimensions."
+      },
+      "output": "",
+      "latencyMs": 6342,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2510,
+        "completionTokens": 1020,
+        "cost": 0.0021575
+      }
+    },
+    {
+      "caseId": "imf-reserve-assets",
+      "description": "IMF report chart: reserve assets",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output accurately identifies the chart type, title, units, and legend. The data extraction is remarkably accurate, with numerical values for each category and year closely matching the source image and reference's interpolation. All legend items are correctly identified with their corresponding colors. However, the output misses detailing the Y-axis range and increments. More significantly, it does not provide any observations or trends derived from the chart data, which were a key part of the reference output and contribute to a comprehensive chart analysis. While the data is presented in a clear list format rather than a table, this is an acceptable structural difference. The inclusion of footnotes is a positive aspect. The primary strengths are the accuracy and completeness of the numerical data extraction."
+      },
+      "output": "B. Financing Policy\n\n22. The domestic financing strategy will continue to focus on reducing rollover risks and other debt vulnerabilities. The strong fiscal anchor is expected to continue to enable net peso debt placements at more favorable interest rates (supported also by capital controls) and longer maturities, as well a shift from FX- and inflation-linked bonds to fixed-rate securities. To achieve these goals, the authorities plan to broaden the set of instruments and maturities being offered, and to publish an auction calendar. Once the economy is on a stronger footing and inflation declines further, they will deepen the investor pool to further improve and extend the treasury yield curve and curtail the use of put options, currently exercisable only in the month before maturity.14 To further strengthen the BCRA’s balance sheet, steps are being taken to gradually replace central bank securities with Treasury securities, as conditions permit.\n\n23. On the external side, efforts must continue to prepare the ground for re-accessing international capital markets. Official creditors are projected to provide US$1.4 billion in net financing in 2024, including from the World Bank, Inter-American Development Bank (IADB) and other regional development banks (the Development Bank of Latin American and the Caribbean, CAF, and the Plata Basin Development Fund, FONPLATA) who have agreed to provide liquidity support to finance the expansion of social safety net programs. Firm commitments from China are in place, including to substantially refinance the drawn portion of the People’s Bank of China (PBOC) swap (US$5 billion), while renewed financing of the hydro-dam project will be in line with implementation progress, as the Argentine authorities work to overcome environmental and labor-related issues (see ¶39). Amid a challenging maturity profile in the years ahead, the authorities remain focused on further reducing fiscal and external imbalances to re-access international capital markets by late-2025 or earlier, if possible, with the aim of better managing the large FX obligations falling due, while avoiding an increase in external indebtedness.\n\n***\n\n**Chart: Maturity and Yields of ARS (CER) Debt Issuances**\nThis scatter plot displays the relationship between maturity (in days) on the x-axis and yields (in percent) on the y-axis for ARS (CER) debt issuances. Data points are divided into two periods: \"Sept-Nov 23\" (light blue circles) and \"Dec 23-May 24\" (dark blue circles). The chart shows a cluster of yields between approximately -20% and 10% for maturities ranging from near 0 to 1000 days, with some outliers exhibiting significantly negative yields (below -80%) at shorter maturities.\n\n**Chart: Private and Official Debt Maturity Profile 1/**\nThis stacked bar chart shows the projected debt maturity profile from 2024 to 2028 in billions of US$. The legend identifies categories: FX Bonds (dark blue), Peso Bonds (medium blue), IMF (light blue), Other Official (gray), and Bopreal (yellow). \n*   **2024:** Total ~27. Roughly 3 (FX), 16 (Peso), 3 (IMF), 3 (Other), 2 (Bopreal).\n*   **2025:** Total ~44. Roughly 9 (FX), 25 (Peso), 3.5 (IMF), 6 (Other), 2 (Bopreal).\n*   **2026:** Total ~32. Roughly 9 (FX), 12 (Peso), 4.5 (IMF), 5.5 (Other), 1 (Bopreal).\n*   **2027:** Total ~36. Roughly 10 (FX), 9 (Peso), 7.5 (IMF), 4.5 (Other), 5 (Bopreal).\n*   **2028:** Total ~29. Roughly 12 (FX), 3 (Peso), 9 (IMF), 5 (Other), 0 (Bopreal).\n\nSources: MECON; and Fund staff estimates.\n1/ Includes principal and interest payments. Data for 2024 is for May-December. Peso denominated bonds converted to USD using current official exchange rate of 885.8 ARS/USD.\n\n***\n\n14 The BCRA’s put options scheme predates this administration. Options are sold ahead of primary auctions to give banks the right to sell the bond back to the BCRA at a future date at a price based on the previous day’s prices. The current administration has limited the exercise date to within the month of maturity, effectively reducing the value of the puts.\n\nINTERNATIONAL MONETARY FUND 17",
+      "latencyMs": 6437,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2515,
+        "completionTokens": 1007,
+        "cost": 0.00213925
+      }
+    },
+    {
+      "caseId": "imf-embig-sovereign-spread",
+      "description": "IMF report chart: embig sovereign spread",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model accurately extracted the title and correctly described the data series, including plausible yield and maturity ranges and accurate identification of outlier values for the requested chart. This demonstrates strong data extraction and accuracy for the content pertaining to the provided image. However, the completeness score suffers because it failed to explicitly extract and detail fundamental chart components such as axis labels, their ranges, and increments, which are crucial for a full understanding of the chart. The most significant issue, leading to a low structure score, is that the output is embedded within a large body of unrelated text (appearing to be a full document OCR) and incorrectly includes the parsing of a *second chart* that was not present in the given source image. This indicates a severe misinterpretation of the task's scope, as the request was to parse *the given image* containing only one chart. While the data for the correct chart is accurate, the structural failure significantly detracts from the overall utility of the output."
+      },
+      "output": "ARGENTINA\n\nB. Financing Policy\n\n22. The domestic financing strategy will continue to focus on reducing rollover risks and other debt vulnerabilities. The strong fiscal anchor is expected to continue to enable net peso debt placements at more favorable interest rates (supported also by capital controls) and longer maturities, as well a shift from FX- and inflation-linked bonds to fixed-rate securities. To achieve these goals, the authorities plan to broaden the set of instruments and maturities being offered, and to publish an auction calendar. Once the economy is on a stronger footing and inflation declines further, they will deepen the investor pool to further improve and extend the treasury yield curve and curtail the use of put options, currently exercisable only in the month before maturity.14 To further strengthen the BCRA’s balance sheet, steps are being taken to gradually replace central bank securities with Treasury securities, as conditions permit.\n\n**Chart: Maturity and Yields of ARS (CER) Debt Issuances**\n*   **Meaning:** This scatter plot displays the yields (percent) against the maturity (days) for debt issuances, categorized by the period in which they were issued.\n*   **Data Series:**\n    *   **Sept-Nov 23 (Light Blue dots):** Yields generally range between approximately -10% and +10%, with maturities concentrated between 0 and 500 days.\n    *   **Dec 23-May 24 (Dark Blue dots):** Shows more negative yield outliers, including values near -85% and -110% at short maturities (under 200 days), with other points ranging between 0% and -20% across maturities up to 1250 days.\n\nSources: MECON; and Fund staff calculations.\n\n23. On the external side, efforts must continue to prepare the ground for re-accessing international capital markets. Official creditors are projected to provide US$1.4 billion in net financing in 2024, including from the World Bank, Inter-American Development Bank (IADB) and other regional development banks (the Development Bank of Latin American and the Caribbean, CAF, and the Plata Basin Development Fund, FONPLATA) who have agreed to provide liquidity support to finance the expansion of social safety net programs. Firm commitments from China are in place, including to substantially refinance the drawn portion of the People’s Bank of China (PBOC) swap (US$5 billion), while renewed financing of the hydro-dam project will be in line with implementation progress, as the Argentine authorities work to overcome environmental and labor-related issues (see ¶39). Amid a challenging maturity profile in the years ahead, the authorities remain focused on further reducing fiscal and external imbalances to re-access international capital markets by late-2025 or earlier, if possible, with the aim of better managing the large FX obligations falling due, while avoiding an increase in external indebtedness.\n\n**Chart: Private and Official Debt Maturity Profile 1/ (Billions of US$)**\n*   **Meaning:** This stacked bar chart shows the debt maturity profile from 2024 to 2028, broken down by debt type.\n*   **Data Series (approximate values in billions of US$):**\n    *   **2024:** Total ~27. FX Bonds (~18), Peso Bonds (~5), IMF (~2), Bopreal (~1), Other Official (~1).\n    *   **2025:** Total ~45. FX Bonds (~17), Peso Bonds (~10), IMF (~10), Bopreal (~5), Other Official (~3).\n    *   **2026:** Total ~35. FX Bonds (~18), Peso Bonds (~7), IMF (~7), Bopreal (~2), Other Official (~1).\n    *   **2027:** Total ~35. FX Bonds (~18), Peso Bonds (~6), IMF (~6), Bopreal (~3), Other Official (~2).\n    *   **2028:** Total ~25. FX Bonds (~18), Peso Bonds (~3), IMF (~3), Bopreal (~0), Other Official (~1).\n*   **Legend:** FX Bonds, Peso Bonds, IMF, Other Official, Bopreal.\n\nSources: MECON; and Fund staff estimates.\n1/ Includes principal and interest payments. Data for 2024 is for May-December. Peso denominated bonds converted to USD using current official exchange rate of 885.8 ARS/USD.\n\n__________________\n14 The BCRA’s put options scheme predates this administration. Options are sold ahead of primary auctions to give banks the right to sell the bond back to the BCRA at a future date at a price based on the previous day’s prices. The current administration has limited the exercise date to within the month of maturity, effectively reducing the value of the puts.\n\nINTERNATIONAL MONETARY FUND 17",
+      "latencyMs": 5954,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2481,
+        "completionTokens": 1054,
+        "cost": 0.00220125
+      }
+    },
+    {
+      "caseId": "imf-domestic-credit",
+      "description": "IMF report chart: domestic credit",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output fails significantly because it includes a large amount of irrelevant text and completely hallucinates a summary for a second chart that is not present in the source image. While the summary for the *actual* chart is mostly accurate in its general observations, it lacks the detailed data extraction and structured analysis provided in the reference. The severe issues of irrelevance and hallucination overshadow any correct parsing of the single given chart."
+      },
+      "output": "ARGENTINA\n\n**Box 1. Argentina’s Social Conditions, 2023–24**\n\n*This box describes the evolution of social conditions in Argentina and recent developments under the Milei administration.*\n\n**Argentina’s social conditions have deteriorated over the past decade.** Poverty rose from 29 percent in S1:2017 to 42 percent by S2:2023, with 12 percent of the population living in extreme poverty. The distribution across age has also grown increasingly unequal—while 15 percent of those above 65 live in poverty that figure is near 60 percent for children under 14. Driving forces include lackluster growth, rising informality and declining real wages, as income has not kept up with the rise in inflation.\n\n**Argentina’s social safety net coverage is fairly comprehensive, but assistance has often been insufficient to compensate for the erosion of incomes and important gaps persist.** Over 50 percent of households/individuals receive some type of social assistance. Key flagship programs include well-run conditional cash transfer programs with support from MDBs—for example, the child allowance program (AUH) and food program (Alimentar), which are target poor families with children. The pension-age population is well covered, including through the expansion of universal pensions (PUAM). Yet, the value of assistance has often not kept up with inflation and the safety net does not cover informal workers without children.\n\n**There are also important governance issues.** Some of the programs are not well-targeted, and suffer from duplications, redundancy, and governance issues (e.g., the workfare program *Potenciar Trabajo*). In addition, many of the social programs are administered by social organizations (intermediaries) that have added to cost and inefficiencies.\n\n**Against this backdrop, the authorities have taken steps to scale up social benefits and improve their targeting:**\n\n*   **Sharp increases in child benefits.** Since mid-December, child allowances provided through AUH and *Alimentar* have been scaled up significantly, with the former expected to almost double in real terms since end-2023, following the recent announcement of a 42 percent nominal increase to take place on June 1. These were complemented by a 500 percent increase in the early childhood support program (*primeros 1000 dias*) and a scholarship program to assist early education tuition payments.\n*   **Rationalization of inefficient programs.** Programs run through intermediaries are being scaled back. The workfare program (*Potenciar Trabajo*) is being rationalized and replaced by new programs (*Volver a Trabajo* and *Acompañamiento Social*) with greater oversight and accountability.\n*   **Preserving the real value of pensions/benefits.** A new benefit indexation formula was established via an Emergency Decree effective April, which also included a 12.5 percent compensation for inflation earlier in the year. Under the new formula, pension benefits would be automatically adjusted to the previous month’s inflation, with similar adjustments applying to selected social program (e.g., AUH). Importantly, the new formula enhances the sustainability of the pension system, by preventing the large real increases in benefits that would have accrued under the old formula once the economy recovers (the old formula was based on a complex combination of inflation, wages, and social security contributions).\n*   **Strengthening the integration of databases and social assistance targeting.** Efforts are underway, in collaboration with the World Bank, to improve the targeting and efficiency of social support (end-September 2024, SB), including by developing a plan to upgrade the current individual-level database to a household-level one.\n\n**Additional efforts to strengthen social assistance and burden sharing will be required.** The social safety net will need to adapt to evolving circumstances to protect the poor and lower-middle class and address gaps in the social safety net. Active labor market policies may be required in the event of layoffs.\n\n***\n\n**Chart Summaries:**\n\n*   **Real Wage Index (Index, Jan 2017=100):** This line chart tracks real wages from January 2017 to early 2024. It shows four categories: Formal sector (private), Formal sector (public), Formal sector (aggregate), and the Informal sector. All categories start at an index value of 100 in early 2017. Throughout the period, the Informal sector (grey line) shows the most significant decline, ending at approximately 35-40 by early 2024. The Formal sectors (blue lines) track closely together, peaking around 105 in 2017 and generally trending downward to approximately 60-70 by early 2024, with a sharp drop observed between late 2023 and early 2024.\n*   **AUH Benefits (Thousands of AR$, constant December 2023 prices):** This line chart depicts the real value of AUH child allowance benefits from January 2018 to April 2024. The Y-axis represents the benefit amount in thousands of constant December 2023 AR$. The chart shows a volatile downward trend, starting above 40 in early 2018, fluctuating between 25 and 35 for most of the period, and dropping to a low of approximately 22-23 by late 2023. A very sharp spike is visible at the very end of the timeline (early 2024), where the value rises abruptly toward 45.\n\n*Sources: INDEC; and Fund staff calculations.*\n\nINTERNATIONAL MONETARY FUND 31",
+      "latencyMs": 7166,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2481,
+        "completionTokens": 1191,
+        "cost": 0.00240675
+      }
+    },
+    {
+      "caseId": "imf-inflation-comparison",
+      "description": "IMF report chart: inflation comparison",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output correctly identifies the chart as \"Ex-ante\" Real Interest Rate (Percent) and accurately describes its X and Y axes and legend. The textual descriptions of both \"Successful\" and \"Not Successful\" lines are generally accurate, capturing key starting points, lows, and end points. However, the output does not provide discrete data points for each period as the reference does, offering instead a more generalized description of the trends. The structure is also less organized than the reference, being a single descriptive paragraph embedded within a larger text that includes information about other charts not provided in the source image. Despite these structural and completeness issues regarding granular data, the core information extracted for this specific chart is accurate."
+      },
+      "output": "ARGENTINA\n\n**Box 3. Lessons From Successful Stabilization Programs (Concluded)**\n\n**Box Figure 1. Evolution of Key Macroeconomic Variables**\n\n*In successful episodes, fiscal policy was much tighter...*\n\n[Chart: Primary Fiscal Balance (Percent of GDP). X-axis ranges from -5 to 5. Y-axis ranges from -2 to 8. Dark blue line \"Successful\" shows a rise from approximately -1 at year -5 to a peak of about 5.5 at year 1, then decline. Light blue line \"Not successful\" shows a flatter trend oscillating between 0 and 3.]\n\n*...while monetary policy normalized more quickly...*\n\n[Chart: \"Ex-ante\" Real Interest Rate (Percent). X-axis ranges from -5 to 5. Y-axis ranges from -1,200 to 400. The \"Successful\" (dark blue) line starts at approx -300 at year -5, drops to a low of approx -1,050 at year -3, then rises sharply to near 0 by year 1. The \"Not Successful\" (light blue) line starts at approx -50 at year -5, drops to approx -950 at year -1, then rises toward 0 by year 2.]\n\n*...with money growth slowing down substantially.*\n\n[Chart: Money Balances Growth (Percent). X-axis ranges from -5 to 5. Y-axis ranges from 0 to 1,800. \"Successful\" (dark blue) peaks at approx 1,400 at year -3 and drops to near 0 by year 1. \"Not Successful\" (light blue) peaks at approx 1,200 at year 0.]\n\n*Meanwhile, capital inflows rose substantially supporting a gradual appreciation of the real exchange rate...*\n\n[Chart: Real Effective Exchange Rate (Index, start of stabilization episode=100; CPI-based). X-axis ranges from -5 to 5. Y-axis ranges from 90 to 150. \"Successful\" (dark blue) shows a gradual upward trend. \"Unsuccessful\" (light blue) shows higher volatility peaking near 140 at year -3.]\n\n*...and more sustained reserve accumulation.*\n\n[Chart: Change in International Reserves (Percent of GDP). X-axis ranges from -5 to 5. Y-axis ranges from -2 to 4. \"Successful\" (dark blue) fluctuates generally between 0 and 2. \"Unsuccessful\" (light blue) shows more frequent negative values.]\n\n*Success in reducing inflation to low levels took time.*\n\n[Chart: Inflation Persistence (Months to threshold). Bar chart showing Argentina ('91), Peru ('93), Brazil ('94), Turkey ('01), Mexico ('87), and Israel ('85). Bars represent months to threshold at 40%, 20%, and 10% levels. Diamonds indicate starting inflation on the right-hand axis (0-300).]\n\nSource: Country Authorities; Henry (2002); IMF, WEO database; and IMF staff calculations.\nNote: Successful episodes: Argentina (1991), Brazil (1994), Chile (1978), Israel (1985), Jamaica (1992), Mexico (1987), Peru (1993), Turkey (2001); unsuccessful episodes: Argentina (1977, 1983), Brazil (1983, 1989), Mexico (1986), Peru (1990), Turkey (1994).\n\n34 INTERNATIONAL MONETARY FUND",
+      "latencyMs": 6631,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2493,
+        "completionTokens": 794,
+        "cost": 0.00181425
+      }
+    },
+    {
+      "caseId": "imf-growth-comparison",
+      "description": "IMF report chart: growth comparison",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model successfully extracted all the data points from both lines in the chart with high accuracy, which is the most critical aspect of chart parsing. There are only minor, visually imperceptible differences in a few data points compared to the reference. However, the output's completeness suffers from not providing explicit axis ranges or a detailed summary of trends as outlined in the reference's 'Summary of Chart Content' section. The structure also deviates by including extraneous text from the surrounding document rather than focusing solely on the chart's content, and by listing data points instead of using a table format, though the latter is an acceptable alternative. Despite these structural and descriptive shortcomings, the core data extraction is very strong."
+      },
+      "output": "ARGENTINA\n\nBox 3. Lessons From Successful Stabilization Programs (Concluded)\n\nBox Figure 1. Evolution of Key Macroeconomic Variables\n\n**Summary of Primary Fiscal Balance (Percent of GDP) Chart:**\nThis line chart displays the primary fiscal balance as a percentage of GDP for \"Successful\" (dark blue) and \"Not successful\" (light blue) stabilization programs over a 10-year period (from year -5 to year 5). \n\n- **Successful programs:** Start at approximately -1.2 at year -5, rise to -0.8 at year -4, 0.9 at year -3, 3.8 at year -2, 3.7 at year -1, 3.9 at year 0, peak at 5.7 at year 1, 5.0 at year 2, 4.2 at year 3, 1.5 at year 4, and 1.1 at year 5.\n- **Not successful programs:** Start at approximately 1.3 at year -5, 0.8 at year -4, 1.8 at year -3, 1.5 at year -2, 1.0 at year -1, 1.5 at year 0, 3.4 at year 1, 3.2 at year 2, 2.9 at year 3, 3.3 at year 4, and 2.3 at year 5.\n\nSource: Country Authorities; Henry (2002); IMF, WEO database; and IMF staff calculations.\nNote: Successful episodes: Argentina (1991), Brazil (1994), Chile (1978), Israel (1985), Jamaica (1992), Mexico (1987), Peru (1993), Turkey (2001); unsuccessful episodes: Argentina (1977, 1983), Brazil (1983, 1989), Mexico (1986), Peru (1990), Turkey (1994).\n\n34 INTERNATIONAL MONETARY FUND",
+      "latencyMs": 3603,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2488,
+        "completionTokens": 461,
+        "cost": 0.0013135
+      }
+    },
+    {
+      "caseId": "ms-robot-revenue-projection",
+      "description": "Morgan Stanley stacked bar: $25T global robot revenues by 2050",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent completeness, accuracy, and data extraction. It correctly identifies all textual elements, legend items, and numerical projections. Crucially, it accurately extracts all year-by-year revenue totals directly from the source image, correcting multiple significant discrepancies found in the provided reference output's table. The structure is clear and well-organized, making the information easily digestible. The only minor omissions are the explicit mention of 'stacked bar chart' as the chart type and the 'bottom to top' order of segments, but these are negligible given the high quality of data extraction and accuracy."
+      },
+      "output": "The Robot Almanac: Volume 1\nMorgan Stanley | AI Gets Physical | Cambrian Explosion | Model Details | Table of Contents\n\n# We See $25 Trillion in Global Robot Revenues by 2050\n*Final Hardware Sales Only- Software/Services, Maintenance, Supply Chains, etc. could theoretically multiply this figure*\n\n### Chart Summary: Projected Global Robot Revenue (2024e–2050e)\nThis stacked bar chart displays the projected annual global robot revenue in billions of dollars ($ Billions) from 2024 to 2050. The total revenue shows exponential growth over the period, starting at $91 billion in 2024e and reaching $25,053 billion in 2050e.\n\n**Annual Data Points (Total Revenue in $ Billions):**\n*   2024e: 91 | 2025e: 107 | 2026e: 138 | 2027e: 202 | 2028e: 299 | 2029e: 425 | 2030e: 540 | 2031e: 815 | 2032e: 1,036 | 2033e: 1,416 | 2034e: 1,877 | 2035e: 2,664 | 2036e: 3,432 | 2037e: 4,507 | 2038e: 5,649 | 2039e: 7,310 | 2040e: 8,780 | 2041e: 10,670 | 2042e: 12,085 | 2043e: 13,842 | 2044e: 15,339 | 2045e: 17,177 | 2046e: 18,893 | 2047e: 20,668 | 2048e: 22,078 | 2049e: 23,729 | 2050e: 25,053\n\n**Legend (Segments):**\n*   Home Robotics (Dark Blue)\n*   Small Drones (Yellow/Tan)\n*   Humanoids (Green)\n*   Autonomous Vehicles (Light Blue)\n*   Industrial Robots (Orange)\n*   Professional Service Robots (Light Green)\n*   Large VTOLs (Navy)\n\n### We Project....\n*   **2030: >$500 Billion**\n*   **2040: ~$9 Trillion**\n*   **2050: $25.0 Trillion**\n*   ***Hardware Sales Only***\n\n*(Reach out to your MS Rep for access to our Global Robot Model)*\n\nSource: Morgan Stanley Research estimates\nTHE ROBOT ALMANAC | 29",
+      "latencyMs": 5448,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1380,
+        "completionTokens": 715,
+        "cost": 0.0014175
+      }
+    },
+    {
+      "caseId": "ms-robot-sales",
+      "description": "Morgan Stanley stacked bar: 1.4B robot unit sales by 2050",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is exceptionally thorough and accurate. It captures all textual information, the chart's main title, a comprehensive summary including color descriptions for the legend, and an exhaustive list of all annual unit sales data points which perfectly match the source image. It also correctly extracts the 'We Project...' box content and the header/footer details. The structure is logical and easy to read, effectively representing the source image's content."
+      },
+      "output": "Morgan Stanley\nThe Robot Almanac: Volume 1\nAI Gets Physical | Cambrian Explosion | Model Details\nTable of Contents\n\n**We See 1.4 Billion Robot Unit Sales in 2050**\n*See individual form factor sections for TAM projections for each.*\n\n**Chart Summary:**\nThe stacked bar chart depicts the projected growth of global robot unit sales (in millions) from the year 2024e to 2050e, categorized by form factor: Home Robotics (dark blue), Small Drones (light yellow/tan), Humanoids (light green), Autonomous Vehicles (dark green), Industrial Robots (orange/tan), Professional Service Robots (light teal), and Large VTOLs (very dark blue/black). Total annual sales are projected to grow from 21 million units in 2024e to 1,427 million units by 2050e.\n\n**Annual Total Unit Sales (in millions):**\n2024e: 21 | 2025e: 24 | 2026e: 29 | 2027e: 46 | 2028e: 58 | 2029e: 81 | 2030e: 93 | 2031e: 125 | 2032e: 144 | 2033e: 168 | 2034e: 197 | 2035e: 261 | 2036e: 305 | 2037e: 369 | 2038e: 426 | 2039e: 529 | 2040e: 605 | 2041e: 721 | 2042e: 797 | 2043e: 872 | 2044e: 955 | 2045e: 1,039 | 2046e: 1,129 | 2047e: 1,215 | 2048e: 1,290 | 2049e: 1,357 | 2050e: 1,427\n\n**Legend:**\n■ Home Robotics ■ Small Drones ■ Humanoids\n■ Autonomous Vehicles ■ Industrial Robots ■ Professional Service Robots\n■ Large VTOLs\n\n**We Project....**\n2030: ~90mn Robots\n2040: ~600mn Robots\n2050: ~1.4bn Robots\n... and rising\n*(Reach out to your MS Rep for access to our Global Robot Model)*\n\nSource: Morgan Stanley Research estimates\nTHE ROBOT ALMANAC 28",
+      "latencyMs": 5133,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1380,
+        "completionTokens": 640,
+        "cost": 0.001305
+      }
+    },
+    {
+      "caseId": "ms-us-economy",
+      "description": "Morgan Stanley: Mag 7 vs physical economy comparison",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output is well-structured and highly complete, capturing all 11 companies from the stacked bar chart, which is even more detailed than the provided reference. It correctly identifies the overall title, summary, and total market capitalization for both the physical economy companies and Microsoft. However, the accuracy of individual market capitalization values for three companies (RTX, Linde, GE Vernova) is significantly off, assigning them $250 Bn each when visual estimation from the cumulative Y-axis suggests they are closer to $150 Bn. This impacts the accuracy and data extraction scores. Despite these errors, the model successfully interpreted the cumulative nature of the Y-axis for individual bar values and the sum of its individual estimates ($3,010 Bn) is very close to the stated total ($3,025 Bn), indicating a good attempt at data distribution."
+      },
+      "output": "Morgan Stanley\nThe Robot Almanac: Volume 1\nAI Gets Physical | Cambrian Explosion | Model Details | Table of Contents\n\n# The Mag 7 Dwarfs the US Physical Economy\n\n**Chart Summary:**\nThe chart compares the aggregate market capitalization of a selection of major US physical economy companies against the market capitalization of Microsoft (MSFT). The Y-axis represents Market Capitalization in billions of dollars ($).\n\n*   **Left Column (\"Largest Physical Economy Companies\"):** This stacked bar represents the combined market capitalization of 9 major companies totaling $3,025 Billion.\n    *   Largest Automotive (ex TSLA): General Motors (gm) - Approximate value: $80 Bn\n    *   Largest Metals & Mining: Freeport-McMoRan - Approximate value: $80 Bn\n    *   Largest Conglomerate: Honeywell - Approximate value: $150 Bn\n    *   Largest Transport: Union Pacific - Approximate value: $150 Bn\n    *   Largest Electrical Equipment: GE Vernova - Approximate value: $250 Bn\n    *   Largest Chemicals: Linde - Approximate value: $250 Bn\n    *   Largest Defense: RTX - Approximate value: $250 Bn\n    *   Largest Machinery: Caterpillar - Approximate value: $250 Bn\n    *   Largest Aerospace: GE Aerospace - Approximate value: $350 Bn\n    *   Largest Energy: ExxonMobil - Approximate value: $550 Bn\n    *   Largest Healthcare: Eli Lilly - Approximate value: $650 Bn\n*   **Right Column (\"MSFT (Median Mag 7)\"):** This bar represents the market capitalization of Microsoft, shown at $3,642 Bn.\n\nNote: Market data as of 12/2/2025\nSource: FactSet, Morgan Stanley Research\n\nTHE ROBOT ALMANAC | 20",
+      "latencyMs": 4391,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1355,
+        "completionTokens": 398,
+        "cost": 0.00093575
+      }
+    },
+    {
+      "caseId": "metro-cost",
+      "description": "Metro Bank cost discipline + underlying operating expenses charts",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent completeness and accuracy. It correctly extracts all data points from the line graph, including the 'Cost down' annotation, and all detailed layered values for each category and period from the stacked bar chart. All textual bullet points are also perfectly captured. The structure clearly separates information per chart and text section. The actual output is significantly more accurate and complete than the provided reference, which had issues with data aggregation and hallucinated text. The model performed exceptionally well against the source image."
+      },
+      "output": "Cost initiatives on track\n\nCost discipline\nTotal underlying operating expenses\n£m\n\n[Chart Summary: Line graph showing the trend of total underlying operating expenses from H1 2022 to H1 2024. The data points are: H1 2022 = £266m, H2 2022 = £267m, H1 2023 = £258m, H2 2023 = £272m, H1 2024 = £255m. An arrow indicates a \"Cost down £17m or 6% HoH\" comparing H2 2023 to H1 2024.]\n\nUnderlying operating expenses\n\n[Chart Summary: Stacked bar chart showing the breakdown of underlying operating expenses for H1 2023, H2 2023, and H1 2024.\nValues by category:\n- People: 121 (H1 2023), 121 (H2 2023), 111 (H1 2024)\n- Depreciation & amortisation: 38 (H1 2023), 39 (H2 2023), 38 (H1 2024)\n- Computer costs: 30 (H1 2023), 30 (H2 2023), 29 (H1 2024)\n- Money transmission & bank costs: 24 (H1 2023), 26 (H2 2023), 23 (H1 2024)\n- Other (underlying): 19 (H1 2023), 28 (H2 2023), 23 (H1 2024)\n- Professional and other fees: 12 (H1 2023), 11 (H2 2023), 15 (H1 2024)\n- Occupancy expenses: 14 (H1 2023), 17 (H2 2023), 16 (H1 2024)]\n\nOn track to deliver cost savings despite inflationary pressure\n• Delivered £50 million of annualised run-rate savings in Q1’24\n• Further £30 million of annualised run-rate savings on track to be delivered by Q4’24\n• Significant management focus on the cost environment:\n  • Operational excellence function targeting process simplification\n  • Decommissioning under-utilised platforms, from product to services rationalisation\n\n8",
+      "latencyMs": 4614,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1380,
+        "completionTokens": 602,
+        "cost": 0.001248
+      }
+    },
+    {
+      "caseId": "ms-edge-compute",
+      "description": "Morgan Stanley dual chart: edge compute ExaFLOPS + Blackwell equivalents",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output accurately identifies and describes both charts, including their types, axes, and key statements like '40,000x compute growth'. It successfully extracts all explicitly labeled data points from the 'Millions of Blackwell B200 Equivalents' chart, though there is a minor error in associating the '19' value with 2035e instead of 2033e as shown in the source image and reference. The main area for improvement is the lack of specific numerical data extraction for the 'Edge Compute (ExaFLOPS)' chart's bars and line, which the reference provided in an approximate table. However, its descriptive completeness and accurate identification of categories and axes are strong. The structure is well-organized and easy to read."
+      },
+      "output": "Morgan Stanley | The Robot Almanac: Volume 1 | AI Gets Physical | Cambrian Explosion | Model Details | Table of Contents\n\n# Edge Compute\n\n**Edge Compute (ExaFLOPS)**\n\n[Chart Summary: A stacked bar chart showing the growth of ExaFLOPS deployed from 2024e to 2050e, categorized by: Autonomous Vehicles (Blue), Home Robotics (Yellow), Humanoids (Green), Industrial Robots (Dark Green), and Large VTOLs (Orange). A red line graph tracks the total ExaFLOPS deployed, with a highlighted multiplier of 40,000x for Compute between 2025-2050. The Y-axis (left) represents ExaFLOPS Deployed (0 to 14,000,000) and the Y-axis (right) represents $ Millions (0 to $1,600,000).]\n\n**Millions of Blackwell B200 Equivalents**\n\n[Chart Summary: A line graph tracking the growth in millions of Blackwell B200 units (Edge Only) from 2024e to 2050e. Key data points identified are 0.02 (2025e), 19 (2035e), 371 (2044e), and 697 (2050e).]\n\nNote: Refers to NVIDIA Blackwell B200 FP4 Tensor Core at 18 PetaFLOPS\nSource: NVIDIA, Morgan Stanley Research estimates\n\nTHE ROBOT ALMANAC | 70",
+      "latencyMs": 4298,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1380,
+        "completionTokens": 342,
+        "cost": 0.000858
+      }
+    },
+    {
+      "caseId": "metro-multi-chart",
+      "description": "Metro Bank 4-chart page: treasury repricing, LCR, NIBLs, deposits",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is exceptionally detailed and accurate. It captures virtually all data points, percentages, and descriptive text from the source image for all four charts, including footnotes and callout boxes. It significantly exceeds the completeness and specificity of the provided reference output, which was a high-level summary. All extracted numerical values are correct, and the structure is clear and well-organized, faithfully representing the layout of the source. This is a perfect extraction."
+      },
+      "output": "Treasury asset repricing provides tailwinds to RoTE\n\n**Future benefit from Treasury asset repricing[1]**\nThe chart shows total maturing (£m) by year (2024: 156, 2025: 495, 2026: 1,015, 2027: 531, 2028: 73) and the average yield % (2024: 1.5%, 2025: 1.0%, 2026: 0.8%, 2027: 1.3%, 2028: 1.7%).\n- Callout box 1: £0.5bn reinvested at c.4.2%[2] = Annualised ROTE uplift of >c170 bps in 2025\n- Callout box 2: £1bn reinvested at c.3.6%[2] = Annualised ROTE uplift of >c310 bps in 2026\n- Cumulative impact box: Cumulative impact = Annualised ROTE uplift of >c450 bps in 2026\n\n**Liquidity coverage ratio**\nThe chart shows the liquidity coverage ratio across five periods:\n- 1H22: 257%\n- 2H22: 213%\n- 1H23: 214%\n- 2H23: 332%\n- 1H24: 365%\nA dashed horizontal line indicates the 100% requirement.\n\n**NIBLs[3] remain double the market average**\nA stacked bar chart comparing H1 2024 (NIBLs 36%, Variable 49%, Fixed 12%, ISA 3%) with Market peers (NIBLs 17%, Variable 50%, Fixed 17%, ISA 16%).\n\n**Deposits by customer type**\nTwo donut charts show the composition of deposits:\n- H2 2023 (£15.6bn): Retail 11%, SME 24%, Retail partnerships 46%, Commercial 19%.\n- H1 2024 (£15.7bn): Retail 11%, SME 27%, Retail partnerships 46%, Commercial 16%.\n\n***\n\n[1] Compiled on a contractual basis, excluding behavioural assumptions\n[2] Base rate estimated at c.4.2% for 2025 and c.3.6% for 2026 based on latest market expectation as of 29 July 2024\n[3] BoE Bank stats publicly available data as at end of June 2024\n\n9",
+      "latencyMs": 3681,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1380,
+        "completionTokens": 616,
+        "cost": 0.001269
+      }
+    }
+  ],
+  "summary": {
+    "total": 14,
+    "passed": 11,
+    "failed": 3,
+    "errors": 0,
+    "avgScore": 3.5,
+    "avgLatencyMs": 5591,
+    "dimensions": {}
+  }
+}

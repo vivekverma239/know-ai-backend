@@ -119,6 +119,9 @@ importers:
       '@upstash/qstash':
         specifier: ^2.8.3
         version: 2.8.3
+      '@upstash/workflow':
+        specifier: ^1.2.0
+        version: 1.2.0(zod@4.1.11)
       adm-zip:
         specifier: ^0.5.16
         version: 0.5.16
@@ -2955,8 +2958,16 @@ packages:
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
+  '@upstash/qstash@2.10.1':
+    resolution: {integrity: sha512-LsTAPxPk0dFvhlEnRqwObRS94b8mmDHYaBlF3IaONUL+Scq6i9cZraA6936KSUVe+Vq3eNQle3CjOZkStPUFTw==}
+
   '@upstash/qstash@2.8.3':
     resolution: {integrity: sha512-SHf1mCGqZur0UTzXVx33phtFXIuLyjwDL1QsBE36gQFEx3rEG4fJc3qA2eD7jTUXEAYYrNkCQxMOtcteHFpwqw==}
+
+  '@upstash/workflow@1.2.0':
+    resolution: {integrity: sha512-91aOAnh5JsWzVajO+isU9BHdzQmWhOY++qSPeZcwEgvGIlhhIjH/IuKnLXLJhm4UIk0ntvY/w9rXUvD7UWDQvw==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
 
   '@vercel/functions@1.6.0':
     resolution: {integrity: sha512-R6FKQrYT5MZs5IE1SqeCJWxMuBdHawFcCZboKKw8p7s+6/mcd55Gx6tWmyKnQTyrSEA04NH73Tc9CbqpEle8RA==}
@@ -8794,11 +8805,22 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
+  '@upstash/qstash@2.10.1':
+    dependencies:
+      crypto-js: 4.2.0
+      jose: 5.10.0
+      neverthrow: 7.2.0
+
   '@upstash/qstash@2.8.3':
     dependencies:
       crypto-js: 4.2.0
       jose: 5.10.0
       neverthrow: 7.2.0
+
+  '@upstash/workflow@1.2.0(zod@4.1.11)':
+    dependencies:
+      '@upstash/qstash': 2.10.1
+      zod: 4.1.11
 
   '@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.28)':
     optionalDependencies:

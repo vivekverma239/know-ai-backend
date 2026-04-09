@@ -35,6 +35,7 @@ import structuredReportCallbackRoutes from "./routes/structuredReportCallback.ro
 import webSearchRoutes from "./routes/webSearch.routes";
 import tocMetaCallbackRoutes from "./routes/tocMetaCallback.routes";
 import documentParseCallbackRoutes from "./routes/documentParseCallback.routes";
+import documentParseWorkflowRoutes from "./routes/documentParseWorkflow.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
 const fastify = Fastify({ logger: false, ignoreTrailingSlash: true });
@@ -66,7 +67,7 @@ const start = async () => {
     global: false,
     encoding: "utf8",
     runFirst: true,
-    routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback", "/api/v1/toc-meta-callback"],
+    routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback", "/api/v1/toc-meta-callback", "/api/v1/document-parse-workflow"],
   });
   //   await fastify.register(multipartPlugin);
   // Swagger / OpenAPI
@@ -139,6 +140,9 @@ const start = async () => {
   });
   await fastify.register(documentParseCallbackRoutes, {
     prefix: "/api/v1/document-parse-callback",
+  });
+  await fastify.register(documentParseWorkflowRoutes, {
+    prefix: "/api/v1/document-parse-workflow",
   });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
   await fastify.register(ingestionRoutes, { prefix: "/api/v1" });

@@ -1,11 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/db";
 import { type SelectedRecommendation, structuredReports, userFile } from "@/db/schema";
-import { parsePDF } from "@/service/file/triggerParsing";
+import { enqueueDocumentParse } from "@/service/file/enqueueDocumentParse";
 import { getStorage } from "@/service/googleStorage";
 import { processWebpageContent } from "@/service/ingestion/webpageProcessing";
 import { sendQstashMessage } from "@/service/qstash";
-import { enqueueToCMetaParsing } from "@/service/tocMetaQueue";
 import { createContextLogger } from "@/utils/logger";
 import { eq, inArray } from "drizzle-orm";
 
@@ -137,8 +136,7 @@ const ingestRecommendation = async (
           sourceDocumentUrl: rec.url,
         });
 
-      await parsePDF(fileId);
-      await enqueueToCMetaParsing(fileId);
+      await enqueueDocumentParse(fileId);
     }
 
     return fileId;

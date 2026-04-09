@@ -1,0 +1,396 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-2.5-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T08:37:18.879Z",
+  "results": [
+    {
+      "caseId": "imf-fiscal-outlook",
+      "description": "IMF: Fiscal outlook comparison table (Dec-Apr 2022/23 vs 2023/24)",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output correctly extracts all data and headers from the image. Data accuracy is perfect, and header detection is also excellent. Structurally, the model correctly identifies the overall layout. The only significant drawback is the use of `[colspan=2]` for the 'Dec-Apr' header, which is not standard Markdown syntax. While it shows an understanding of the visual structure, it makes the output non-standard for markdown formatting."
+      },
+      "output": "| | Dec-Apr [colspan=2] | | Diff. |\n|:--------------------|:-----------:|:-----------:|:-------:|\n| | 2022/23 | 2023/24 | |\n| Accrual Based | | | |\n| Goods Trade Balance | -0.5 | 7.2 | 7.6 |\n| Goods Exports | 27.9 | 29.2 | 1.3 |\n| Goods Imports | 28.4 | 22.0 | -6.3 |\n| Services Balance\\* | -0.8 | -0.1 | 0.7 |\n| Cash Based | | | |\n| Goods Trade Balance | 4.3 | 15.5 | 11.2 |\n| Goods Exports | 28.3 | 24.7 | -3.6 |\n| Goods Imports | 24.0 | 9.2 | -14.7 |\n| Services Balance\\* | -3.1 | -0.5 | 2.7 |",
+      "latencyMs": 24237,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4140,
+        "cost": 0.0113751
+      }
+    },
+    {
+      "caseId": "metro-nested-table",
+      "description": "Metro Bank strategy slide with nested commercial pipeline table",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model failed to extract only the target table specified by the reference. Instead, it attempted to parse the entire document layout into a single, complex markdown table using 'colspan' and 'rowspan'. While the data within the embedded target table is largely accurate to the source image, the overall structural and formatting output does not match the expected single table extraction. The model significantly misunderstood the scope of the task."
+      },
+      "output": "| Delivering mid-to-high teen RoTE by 2027 [colspan=4] |\n|:---|:---|:---|:---|\n| Cost Discipline [rowspan=3] | M Continued cost discipline with £80 million of annualised run-rate savings on track to be delivered by Q4'24 [colspan=3] |\n| | M Reduced colleague numbers by > 1,000 or c.22% of FTE [colspan=3] |\n| | M Repositioned our store and call centre propositions [colspan=3] |\n| Asset Rotation [rowspan=10] | M £2.5 billion mortgage portfolio sale accelerates balance sheet repositioning [colspan=3] |\n| | M TFSME to be repaid from proceeds of mortgage sale eliminating any industry wide deposit funding headwinds going forward [colspan=3] |\n| | M Upon completion, a structurally higher NIM, with continued NIM expansion driven by asset rotation, and expect NIMs in 2024, 2025 and 2026 to be approaching 2.50%, 3.25% and 4.00%, respectively [colspan=3] |\n| | M Strong commercial pipeline at H1'24: [colspan=3] |\n| | **Commercial Teams** | **H1'24 credit approved pipeline %<br>of FY'23 drawdowns** | **H1'24 drawdowns % of FY'23<br>lending** |\n| | Corporate | 139% | 76% |\n| | Regional Commercial | 178% | 143% |\n| | Asset Finance | 60% | 60% |\n| | Invoice Finance | 168% | 159% |\n| | **Total** | **116%** | **81%** |\n| Reduce<br>Liquidity and<br>Improve CoD [rowspan=2] | M Deposits at H1'24 of £15.7 billion, actively managed down c.£0.8 billion since Feb'24 peak [colspan=3] |\n| | M LCR remains strong at 365%, with c.£4 billion of cash providing further opportunity to continue optimisation of funding [colspan=3] |\n| Asset Repricing [rowspan=2] | M Passage of time benefiting repricing of treasury assets and maturity of lower yielding residential mortgages [colspan=3] |\n| | M Annualised RoTE improves c.450 bps from c.£1.5 billion of treasury assets rolling off in 2025 and 2026 assuming reinvestment in cash [1] [colspan=3] |\n| Delivering RoTE of mid-to-upper single digit in 2025, double digit in 2026 and mid-to-upper teens thereafter [colspan=4] |",
+      "latencyMs": 19126,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 3678,
+        "cost": 0.0097557
+      }
+    },
+    {
+      "caseId": "imf-balance-of-payments",
+      "description": "IMF: Balance of payments projection table",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The data within the table's main cells is accurately extracted from the source image. However, the model significantly failed in structural accuracy and formatting. It attempted to represent multi-level headers using non-standard `[rowspan=2]` syntax, which is not valid in markdown tables and would cause incorrect rendering. The year '2022' was also misplaced in the first header row alongside the 'Rev' labels, instead of with the other years in the second header row as shown in the reference. This leads to a structurally malformed and incorrectly formatted markdown table, making it largely unusable."
+      },
+      "output": "Argentina: Selected Economic Indicators, 2022–25\n\n| [rowspan=2] | 2022 [rowspan=2] | 7th Rev | 8th Rev | 7th Rev | 8th Rev | 7th Rev | 8th Rev |\n|:---|---:|---:|---:|---:|---:|---:|---:|\n| | | 2023 | 2023 | 2024 | 2024 | 2025 | 2025 |\n|:---|---:|---:|---:|---:|---:|---:|---:|\n| GDP growth (avg, %) | 5.0 | -1.1 | -1.6 | -2.8 | -3.5 | 5.0 | 5.0 |\n| Non-agro GDP | 5.7 | -0.3 | -0.8 | -5.2 | -6.0 | 5.0 | 5.0 |\n| Inflation (eop, %) | 94.8 | 211.4 | 211.4 | 149.4 | 139.7 | 45.0 | 45.0 |\n| Primary fiscal balance (% of GDP) | -2.4 | -3.0 | -2.9 | 2.1 | 1.7 | 2.5 | 2.3 |\n| Overall fiscal balance (% GDP) | -4.2 | -5.2 | -4.6 | 0.0 | 0.0 | 0.4 | 0.5 |\n| Current account balance (% GDP) | -0.7 | -3.5 | -3.4 | 0.9 | 0.6 | 0.9 | 0.8 |\n| Change in net int'l reserves (US$bn)1/ | 4.8 | -16.4 | -16.4 | 7.0 | 7.0 | 6.0 | 5.0 |\n| Monetary financing (% GDP) 2/ | 3.1 | 5.0 | 5.0 | 0.0 | 0.0 | 0.0 | 0.0 |",
+      "latencyMs": 39148,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 8383,
+        "cost": 0.0219826
+      }
+    },
+    {
+      "caseId": "imf-financial-indicators",
+      "description": "IMF: Financial soundness indicators table (2015-2023)",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Invalid error response format: Gateway request failed"
+    },
+    {
+      "caseId": "imf-external-financing",
+      "description": "IMF: External financing requirements table (2024-2027)",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Invalid error response format: Gateway request failed"
+    },
+    {
+      "caseId": "imf-financial-soundness",
+      "description": "IMF: Financial soundness indicators multi-year table",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model demonstrated excellent data accuracy, extracting all numerical and textual values precisely as they appear in the source image, including special characters like '-' and '...'. Header detection was also strong, correctly identifying and bolding main headers and applying appropriate indentation for sub-items. However, the `[colspan=7]` attribute used for the unit rows (e.g., '(in billions of U.S. dollars)') is not standard markdown table syntax, and the inclusion of extra pipes `| | | | | | |` after this non-standard attribute creates an invalid markdown structure for those rows, impacting structural accuracy and formatting. Despite this, the overall output is highly usable due to the accuracy of the extracted data and the correct identification of most table components."
+      },
+      "output": "| | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 |\n|:---|---:|---:|---:|---:|---:|---:|---:|\n| | (in billions of U.S. dollars)[colspan=7] | | | | | | |\n| **Total Gross Federal Government Debt** | 320.9 | 332.2 | 323.4 | 335.7 | 364.5 | 394.1 | 367.9 |\n| **Debt Held by Official and Private Creditors** | 165.1 | 206.0 | 206.5 | 214.9 | 224.3 | 235.7 | 220.0 |\n| &nbsp;&nbsp;Official Sector | 29.6 | 57.9 | 73.4 | 76.6 | 72.8 | 78.3 | 78.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Multilateral | 21.3 | 51.0 | 68.0 | 71.1 | 68.0 | 73.7 | 74.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMF | - | 28.3 | 44.1 | 46.0 | 41.0 | 45.7 | 40.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other IFIs | 21.3 | 22.8 | 23.9 | 25.1 | 27.1 | 28.0 | 33.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Bilateral | 8.3 | 6.9 | 5.4 | 5.5 | 4.8 | 4.7 | 4.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paris Club 2/ | 5.5 | 3.7 | 2.1 | 2.4 | 1.9 | 2.0 | 1.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Non-Paris Club | 2.8 | 3.2 | 3.3 | 3.1 | 2.9 | 2.7 | 3.1 |\n| &nbsp;&nbsp;Private Sector 3/ | 135.5 | 148.0 | 133.1 | 138.3 | 151.5 | 157.3 | 141.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Foreign Law | 67.2 | 64.9 | 66.6 | 68.5 | 67.7 | 66.2 | 66.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bonds with new contractual clauses | 41.3 | 40.4 | 41.2 | 43.5 | 42.8 | 41.3 | 42.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bonds with old contractual clauses | 25.8 | 24.6 | 24.3 | 25.0 | 24.8 | 24.6 | 24.4 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other | 0.0 | 0.0 | 1.1 | 0.1 | 0.1 | 0.4 | 0.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Domestic Law | 65.5 | 80.3 | 64.1 | 69.8 | 81.2 | 88.8 | 74.4 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FX denominated | 41.1 | 45.4 | 27.6 | 21.2 | 26.2 | 24.0 | 28.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ARS denominated | 24.4 | 34.8 | 36.5 | 48.5 | 55.0 | 64.8 | 43.4 |\n| &nbsp;&nbsp;Pending Restructuring from 2005/10 4/ | 2.9 | 2.8 | 2.4 | 2.5 | 2.6 | 2.3 | 2.4 |\n| **Debt Held by the Public Sector 5/** | 155.8 | 126.2 | 116.9 | 120.9 | 140.3 | 158.5 | 147.9 |\n| | (Percent of GDP)[colspan=7] | | | | | | |\n| **Total Gross Federal Government Debt** | 56.5 | 85.2 | 89.8 | 103.8 | 80.8 | 84.7 | 156.7 |\n| **Debt Held by Official and Private Creditors** | 29.1 | 52.8 | 57.4 | 66.4 | 49.7 | 50.6 | 93.7 |\n| &nbsp;&nbsp;Official Sector | 5.2 | 14.9 | 20.4 | 23.7 | 16.1 | 16.8 | 33.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Multilateral | 3.8 | 13.1 | 18.9 | 22.0 | 15.1 | 15.8 | 31.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMF | - | 7.2 | 12.3 | 14.2 | 9.1 | 9.8 | 17.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other IFIs | 3.8 | 5.8 | 6.6 | 7.8 | 6.0 | 6.0 | 14.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Bilateral | 1.5 | 1.8 | 1.5 | 1.7 | 1.1 | 1.0 | 2.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paris Club | 1.0 | 1.0 | 0.6 | 0.7 | 0.4 | 0.4 | 0.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Non-Paris Club | 0.5 | 0.8 | 0.9 | 1.0 | 0.6 | 0.6 | 1.3 |\n| &nbsp;&nbsp;Private Sector 3/ | 23.9 | 38.0 | 37.0 | 42.8 | 33.6 | 33.8 | 60.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Foreign Law | 11.8 | 16.7 | 18.5 | 21.2 | 15.0 | 14.2 | 28.4 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bonds with new contractual clauses | 7.3 | 10.4 | 11.4 | 13.4 | 9.5 | 8.9 | 17.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bonds with old contractual clauses | 4.6 | 6.3 | 6.8 | 7.7 | 5.5 | 5.3 | 10.4 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other | 0.0 | 0.0 | 0.3 | 0.0 | 0.0 | 0.1 | 0.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Domestic Law | 11.5 | 20.6 | 17.8 | 21.6 | 18.0 | 19.1 | 31.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FX denominated | 7.2 | 11.7 | 7.7 | 6.6 | 5.8 | 5.2 | 12.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ARS denominated | 4.3 | 8.9 | 10.1 | 15.0 | 12.2 | 13.9 | 18.5 |\n| &nbsp;&nbsp;Pending Restructuring from 2005/10 4/ | 0.5 | 0.7 | 0.7 | 0.8 | 0.6 | 0.5 | 1.0 |\n| **Debt Held by the Public Sector 5/** | 27.4 | 32.4 | 32.5 | 37.4 | 31.1 | 34.1 | 63.0 |\n| **Memorandum Items:** | | | | | | | |\n| FX-Denominated Debt held by private and official sector | 140.7 | 171.1 | 170.0 | 168.8 | 169.2 | 170.8 | 176.7 |\n| &nbsp;&nbsp;(percent of GDP) | 24.8 | 43.9 | 47.2 | 52.2 | 37.5 | 36.7 | 75.3 |\n| Debt held by private sector nonresidents | 100.0 | 103.2 | 82.5 | 76.1 | 74.0 | 66.5 | 64.1 |\n| &nbsp;&nbsp;(percent of GDP) | 17.6 | 26.5 | 22.9 | 23.5 | 16.4 | 14.3 | 27.3 |\n| Provincial Debt | 35.6 | 29.1 | 26.6 | 26.6 | 26.9 | 24.2 | ... |\n| &nbsp;&nbsp;(percent of GDP) | 6.3 | 7.5 | 7.4 | 8.2 | 6.0 | 5.2 | ... |",
+      "latencyMs": 44290,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 9905,
+        "cost": 0.0257876
+      }
+    },
+    {
+      "caseId": "imf-fiscal-operations",
+      "description": "IMF: Federal government fiscal operations table",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "Data extraction is highly accurate, with all numerical values correctly identified. However, the model struggles significantly with capturing the hierarchical structure of the row labels, leading to inconsistent and often incorrect indentation. Additionally, a specific year label ('2026') is missing from the second header row, impacting structural accuracy. While the use of `colspan` for the top-level column headers is a good attempt at representing merged cells, the overall representation of the table's complex structure is flawed due to these issues."
+      },
+      "output": "| | 2022 | SR (Jan.) [colspan=2] | SR (Jan.) Proj. [colspan=2] | SR (Jan.) [colspan=2] | 2026 | Proj. [colspan=3] |\n|:---|:---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n| | | 2023 | 2023 | 2024 | 2024 | 2025 | 2025 | | 2027 | 2028 | 2029 |\n| (in billions of Argentine pesos) [colspan=12] |\n|**Revenues**|**14,854**|**31,946**|**32,032**|**122,261**|**103,400**|**201,756**|**181,030**|**251,596**|**306,452**|**350,433**|**390,970**|\n| Tax revenues|9,152|18,786|19,012|81,209|66,237|126,178|115,311|160,879|194,862|222,163|247,962|\n| &nbsp;&nbsp;&nbsp;&nbsp;Social security contributions|4,274|10,075|9,620|33,251|29,013|62,555|53,336|73,092|89,745|104,158|115,723|\n| &nbsp;&nbsp;&nbsp;&nbsp;Nontax revenues 1/|1,428|3,085|3,400|7,801|8,151|13,023|12,383|17,625|21,846|24,112|27,285|\n|**Primary Expenditures**|**16,809**|**37,626**|**37,485**|**108,444**|**93,177**|**173,768**|**156,880**|**215,436**|**262,449**|**300,117**|**334,413**|\n| Wages|2,450|6,114|6,309|17,163|16,486|28,981|27,090|36,989|45,238|51,434|57,424|\n| Goods and services|657|1,491|1,413|2,336|3,115|4,041|5,465|7,488|8,875|10,239|11,252|\n| Pensions|6,288|13,158|12,914|42,999|37,388|71,313|68,873|100,058|124,423|141,948|158,819|\n| Current transfers to private sector|5,203|11,284|11,449|38,014|30,599|60,877|49,328|62,703|73,529|84,905|94,212|\n| &nbsp;&nbsp;&nbsp;&nbsp;Social assistance|3,064|7,255|7,470|29,661|23,817|52,562|41,932|58,047|70,706|80,235|89,191|\n| &nbsp;&nbsp;&nbsp;&nbsp;Subsidies|2,139|4,064|4,015|8,353|6,782|8,315|7,396|4,656|2,823|4,669|5,021|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of which: energy|1,657|3,029|2,952|6,967|4,201|7,115|6,181|3,640|1,574|2,992|3,073|\n| Current transfers to public sector 2/|879|2,214|2,329|3,948|3,092|2,198|2,097|2,888|3,526|4,020|4,484|\n| Capital spending 3/|1,332|3,366|3,070|3,983|2,498|6,358|4,027|5,309|6,858|7,572|8,223|\n|**Primary Balance**|**-1,956**|**-5,680**|**-5,453**|**13,817**|**10,223**|**27,988**|**24,150**|**36,161**|**44,003**|**50,316**|**56,557**|\n|**Interest Payments**|**1,493**|**4,257**|**3,254**|**13,629**|**10,214**|**23,424**|**18,624**|**33,732**|**31,481**|**36,576**|**37,032**|\n|**Overall Balance**|**-3,449**|**-9,936**|**-8,707**|**189**|**-9**|**4,564**|**5,526**|**2,429**|**12,522**|**13,739**|**19,525**|\n|**Financing**|**3,449**|**9,936**|**8,707**|**-189**|**9**|**-4,564**|**-5,526**|**-2,429**|**-12,522**|**-13,739**|**-19,525**|\n| Treasury Deposits (+, drawdown) 4/|5,496|2,102|540|-1,117|-926|0|0|0|0|0|0|\n| External|812|-1,942|-3,071|3,173|2,889|58|563|1,088|-7,281|-14,484|-12,298|\n| &nbsp;&nbsp;&nbsp;&nbsp;IMF (net)|866|-1,491|-1,504|2,173|1,998|0|0|-2,621|-11,767|-19,189|-22,141|\n| &nbsp;&nbsp;&nbsp;&nbsp;Other official (net) 5/|239|327|330|1,456|1,201|2,227|1,867|3,063|2,230|1,062|3,033|\n| &nbsp;&nbsp;&nbsp;&nbsp;Private (net) 6/|-293|-779|-1,898|-456|-310|-2,170|-1,305|645|2,256|3,643|6,811|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Issuances|31|20|21|462|672|4,406|4,154|7,612|11,417|16,887|21,035|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amortization|324|799|1,918|918|982|6,576|5,459|6,966|9,161|13,244|14,224|\n| Domestic|-2,859|9,776|11,239|-2,245|-1,972|-4,622|-6,089|-3,517|-5,241|745|-7,754|\n| &nbsp;&nbsp;&nbsp;&nbsp;Private (net) 7/|-2,460|6,591|7,912|-2,245|-1,972|-4,622|-6,089|-3,517|-5,241|744|-7,754|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Issuance|2,475|18,653|19,297|3,957|9,942|94,662|92,429|34,496|81,568|63,192|72,166|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amortization|4,935|12,062|11,385|6,202|11,915|99,283|98,518|38,013|86,810|62,447|79,921|\n| &nbsp;&nbsp;&nbsp;&nbsp;Public entities (net)|90|3,185|3,326|0|0|0|0|0|0|0|0|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BCRA (net)|-82|2,934|3,019|0|0|0|0|0|0|0|0|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of which: BCRA transfers 8/|620|1,698|1,698|0|0|0|0|0|0|0|0|\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other public entities|172|250|308|0|0|0|0|0|0|0|0|\n| &nbsp;&nbsp;&nbsp;&nbsp;Other 9/|-489|0|0|0|0|0|0|0|0|0|0|",
+      "latencyMs": 42268,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 9626,
+        "cost": 0.0250901
+      }
+    },
+    {
+      "caseId": "imf-selected-economic-indicators",
+      "description": "IMF: Selected economic indicators comprehensive table",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model achieved perfect data accuracy, extracting all numerical and textual data points correctly, including ellipses. Row labels were also perfectly detected and their hierarchical structure (indentation) was captured. However, the model's attempt to create a multi-level column header using `colspan` was flawed. The `colspan` values were incorrect, and the top-most header row ended up with a different number of implied columns compared to the data rows and the year header row below it. This constitutes a severe structural and formatting error, as it would lead to a malformed or unrenderable table in standard markdown. While the content of the headers was detected, their structural implementation failed, leading to low scores in structural accuracy and formatting. The overall score is pulled down significantly by these critical header issues, despite the excellent data extraction."
+      },
+      "output": "| | SR (Jan.) [colspan=2] | | SR (Jan.) Proj. [colspan=4] | | | | SR (Jan.) [colspan=2] | | Proj. [colspan=3] | | |\n|:-----------------------------------------------------|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|\n| | 2022 | 2023 | 2023 | 2024 | 2024 | 2025 | 2025 | 2026 | 2027 | 2028 | 2029 |\n| (Annual percentage changes unless otherwise indicated) [colspan=12] | | | | | | | | | | | |\n| **National Income and Prices** | | | | | | | | | | | |\n| GDP at constant prices | 5.0 | -1.1 | -1.6 | -2.8 | -3.5 | 5.0 | 5.0 | 4.7 | 3.9 | 3.3 | 2.4 |\n| Non-agro GDP at constant prices | 5.7 | -0.3 | -0.8 | -5.2 | -5.7 | 5.0 | 5.2 | 4.9 | 4.1 | 3.4 | 2.5 |\n| Domestic demand | 7.8 | 3.1 | 0.4 | -11.0 | -11.3 | 5.2 | 5.1 | 4.7 | 3.8 | 3.1 | 2.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Consumption | 8.4 | 2.0 | 1.1 | -7.8 | -8.6 | 3.6 | 3.6 | 3.5 | 2.9 | 2.5 | 2.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Private | 9.7 | 1.6 | 1.1 | -6.7 | -6.8 | 3.5 | 3.9 | 3.5 | 3.2 | 2.7 | 2.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Public | 1.9 | 4.4 | 1.2 | -13.6 | -18.4 | 4.5 | 1.7 | 3.2 | 1.1 | 1.1 | 1.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Investment | 11.1 | 4.0 | -1.9 | -23.6 | -21.8 | 12.7 | 12.0 | 10.2 | 7.4 | 5.5 | 2.2 |\n| Exports | 5.8 | -12.7 | -6.7 | 26.8 | 21.7 | 6.5 | 4.5 | 4.6 | 4.9 | 5.0 | 5.1 |\n| Imports | 17.9 | 6.2 | 2.2 | -15.2 | -15.5 | 7.2 | 4.9 | 4.8 | 4.6 | 4.2 | 3.8 |\n| Net exports (percent contribution to real GDP) | -3.1 | -4.3 | -2.0 | 9.4 | 8.7 | -0.3 | -0.1 | 0.0 | 0.1 | 0.2 | 0.3 |\n| Output gap (percent of potential GDP) | 1.7 | -0.4 | -0.4 | -5.6 | -6.2 | -3.9 | -4.4 | -2.5 | -1.1 | -0.1 | 0.0 |\n| Inflation (eop) | 94.8 | 211.4 | 211.4 | 149.4 | 139.7 | 45.0 | 45.0 | 25.0 | 12.0 | 10.0 | 8.0 |\n| Inflation (avg) | 72.4 | 133.5 | 133.5 | 253.4 | 232.8 | 59.6 | 61.2 | 31.8 | 17.5 | 10.4 | 8.9 |\n| GDP deflator | 69.8 | 135.6 | 134.3 | 253.1 | 236.9 | 58.4 | 61.2 | 31.8 | 17.5 | 10.4 | 8.9 |\n| **Savings-Investment Balance** | | | | | | | | | | | |\n| (Percent of GDP unless otherwise indicated) [colspan=12] | | | | | | | | | | | |\n| Gross national savings | 17.2 | 16.2 | 15.7 | 17.8 | 17.3 | 18.6 | 18.6 | 19.8 | 21.0 | 21.9 | 22.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Private | 21.1 | 20.5 | 20.3 | 17.8 | 17.3 | 17.9 | 17.7 | 19.0 | 19.4 | 20.3 | 20.5 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Public | -3.9 | -4.2 | -4.6 | 0.0 | 0.0 | 0.7 | 0.9 | 0.8 | 1.6 | 1.6 | 1.7 |\n| Gross domestic investment | 17.9 | 19.7 | 19.1 | 16.9 | 16.7 | 17.7 | 18.0 | 19.1 | 20.0 | 20.7 | 20.8 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Private | 14.7 | 17.4 | 16.3 | 14.1 | 14.4 | 15.1 | 15.0 | 16.2 | 17.5 | 18.1 | 18.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Public | 3.2 | 2.3 | 2.8 | 2.8 | 2.3 | 2.6 | 3.0 | 2.9 | 2.6 | 2.6 | 2.6 |\n| **External Sector** | | | | | | | | | | | |\n| Current account balance | -0.7 | -3.5 | -3.4 | 0.9 | 0.6 | 0.9 | 0.6 | 0.8 | 1.0 | 1.3 | 1.5 |\n| Trade balance | 0.9 | -1.6 | -1.5 | 3.3 | 2.6 | 3.6 | 3.1 | 3.1 | 3.2 | 3.4 | 3.6 |\n| Foreign direct Investment (net) | 2.1 | 3.1 | 3.2 | 1.5 | 0.8 | 1.4 | 0.3 | 0.6 | 0.2 | 0.5 | 0.5 |\n| Total external debt | 57.4 | 113.7 | 112.6 | 56.8 | 54.6 | 57.3 | 54.3 | 48.7 | 43.9 | 41.4 | 39.3 |\n| Gross international reserves (US$ billions) | 44.6 | 23.1 | 23.1 | 30.1 | 27.2 | 36.1 | 33.2 | 41.2 | 49.2 | 59.2 | 69.2 |\n| Net international reserves (US$ billions) | 8.8 | -8.5 | -8.5 | -1.5 | -1.5 | 4.5 | 4.5 | 12.5 | 20.5 | 30.5 | 40.5 |\n| Terms of trade (percent change) 1/ | -3.2 | -6.5 | -6.6 | -8.3 | -6.8 | -1.6 | -2.2 | -2.2 | -2.3 | -2.3 | -2.5 |\n| **Federal Government Operations** | | | | | | | | | | | |\n| Revenues 2/ | 18.0 | 16.6 | 16.9 | 18.6 | 16.7 | 18.4 | 17.3 | 17.4 | 17.4 | 17.4 | 17.4 |\n| Primary expenditure 3/ | 20.4 | 19.5 | 19.8 | 16.5 | 15.1 | 15.8 | 15.0 | 14.9 | 14.9 | 14.9 | 14.9 |\n| Primary balance 4/ | -2.4 | -3.0 | -2.9 | 2.1 | 1.7 | 2.5 | 2.3 | 2.5 | 2.5 | 2.5 | 2.5 |\n| Overall balance | -4.2 | -5.2 | -4.6 | 0.0 | 0.0 | 0.4 | 0.5 | 0.2 | 0.7 | 0.7 | 0.9 |\n| Federal government debt | 84.7 | 154.5 | 156.7 | 86.2 | 91.0 | 79.5 | 78.3 | 69.1 | 60.4 | 54.3 | 48.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Official creditors | 16.8 | 36.5 | 33.6 | 17.2 | 17.4 | 17.4 | 17.4 | 15.4 | 13.2 | 11.3 | 9.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Private creditors | 33.8 | 56.0 | 60.1 | 27.7 | 38.6 | 26.1 | 34.3 | 30.3 | 26.9 | 24.9 | 22.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of which: FX-denominated debt | 19.9 | 40.8 | 40.5 | 19.9 | 19.1 | 19.7 | 18.7 | 16.6 | 15.0 | 14.3 | 13.8 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Public entities | 34.1 | 62.0 | 63.0 | 41.3 | 35.1 | 36.0 | 26.7 | 23.4 | 20.4 | 18.1 | 16.0 |\n| **Money and Credit** | | | | | | | | | | | |\n| Monetary base | 6.3 | 5.0 | 5.1 | 5.5 | 4.2 | 5.9 | 5.0 | 6.0 | 6.5 | 6.7 | 6.8 |\n| BCRA fiscal financing 5/ | 3.1 | 5.0 | 5.1 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |\n| BCRA securities | 12.7 | 16.1 | 16.4 | 9.2 | 8.4 | 8.7 | 8.2 | 7.4 | 5.9 | 5.7 | 5.4 |\n| BCRA quasi-fiscal cost | 5.2 | 6.1 | 6.4 | 3.9 | 3.2 | 2.9 | 2.5 | 2.0 | 1.0 | 0.5 | 0.2 |\n| **Memorandum Items** | | | | | | | | | | | |\n| Consolidated public sector balance (percent of GDP) 6/ | -9.0 | -10.4 | -11.0 | -3.9 | -3.3 | -2.2 | -1.6 | -1.2 | 0.6 | 1.2 | 1.5 |\n| Poverty rate (percent, H2) | 39.2 | ... | 41.7 | ... | ... | ... | ... | ... | ... | ... | ... |\n| Unemployment rate (avg, percent) | 6.8 | 6.6 | 6.1 | 8.0 | 8.2 | 7.5 | 7.6 | 7.2 | 7.0 | 7.0 | 7.0 |\n| GDP per capita (in US$, nominal) | 13,575 | ... | 13,745 | ... | ... | ... | ... | ... | ... | ... | ... |\n| Federal government debt (share of annualized Q4 GDP) | 67 | 102.1 | 106.0 | 71.4 | 75.2 | 68.9 | 69.1 | 65.3 | 58.7 | 53.5 | 48.1 |\n| Monetary base (share of annualized Q4 GDP) | 5.0 | 3.3 | 3.4 | 4.6 | 3.5 | 5.1 | 4.4 | 5.7 | 6.4 | 6.6 | 6.7 |\n| BCRA securities (share of annualized Q4 GDP) | 10.1 | 10.7 | 11.1 | 7.6 | 6.9 | 7.5 | 7.2 | 7.0 | 5.7 | 5.6 | 5.4 |",
+      "latencyMs": 94265,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 20284,
+        "cost": 0.0517351
+      }
+    },
+    {
+      "caseId": "imf-bop-detailed",
+      "description": "IMF: Detailed balance of payments table",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is nearly perfect. Structural accuracy is excellent, correctly identifying merged cells using `colspan` and representing hierarchical data with indentation. Data accuracy is flawless, with all numbers and text matching the source image precisely. Header detection is spot on, capturing all header information correctly. The formatting is also very good, producing a well-structured and readable markdown table."
+      },
+      "output": "| | In millions of US dollars [colspan=6] | In percent of GDP [colspan=6] |\n|:----------------------------------------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|\n| | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 |\n| Net IIP | 65,630 | 113,155 | 121,925 | 122,247 | 116,019 | 108,971 | 12.6 | 25.7 | 32.1 | 25.4 | 18.5 | 17.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Direct Investment | -30,362 | -27,630 | -44,386 | -57,438 | -71,878 | -80,556 | -5.8 | -6.3 | -11.7 | -11.9 | -11.5 | -12.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | -6,626 | -4,697 | -12,505 | -25,150 | -31,951 | -28,801 | -1.3 | -1.1 | -3.3 | -5.2 | -5.1 | -4.5 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | -23,735 | -22,933 | -31,881 | -32,288 | -39,927 | -51,755 | -4.5 | -5.2 | -8.4 | -6.7 | -6.4 | -8.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Portfolio Investment | -52,404 | -2,548 | 11,641 | 18,685 | 25,970 | 37,450 | -10.0 | -0.6 | 3.1 | 3.9 | 4.1 | 5.8 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | 22,433 | 31,840 | 37,919 | 47,267 | 35,911 | 29,397 | 4.3 | 7.2 | 10.0 | 9.8 | 5.7 | 4.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Securities | -74,838 | -34,388 | -26,278 | -28,581 | -9,940 | 8,053 | -14.3 | -7.8 | -6.9 | -5.9 | -1.6 | 1.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Financial Derivatives | -1,296 | -543 | -128 | -397 | -339 | -860 | -0.2 | -0.1 | 0.0 | -0.1 | -0.1 | -0.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Other Investment | 83,906 | 99,028 | 115,411 | 121,735 | 117,667 | 129,858 | 16.1 | 22.5 | 30.4 | 25.3 | 18.7 | 20.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other Equity | 3,074 | 3,223 | 3,364 | 3,520 | 3,684 | 3,913 | 0.6 | 0.7 | 0.9 | 0.7 | 0.6 | 0.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | 80,832 | 95,805 | 112,047 | 118,215 | 113,983 | 125,945 | 15.5 | 21.7 | 29.5 | 24.5 | 18.2 | 19.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Reserve Assets | 65,786 | 44,848 | 39,387 | 39,662 | 44,598 | 23,073 | 12.6 | 10.2 | 10.4 | 8.2 | 7.1 | 3.6 |\n| Assets | 377,521 | 397,180 | 399,135 | 417,768 | 424,777 | 437,398 | 72.2 | 90.1 | 105.1 | 86.7 | 67.7 | 68.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Direct Investment | 42,228 | 42,828 | 40,985 | 42,452 | 44,832 | 48,299 | 8.1 | 9.7 | 10.8 | 8.8 | 7.1 | 7.5 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | 42,228 | 42,828 | 40,985 | 42,452 | 44,832 | 48,299 | 8.1 | 9.7 | 10.8 | 8.8 | 7.1 | 7.5 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | 0 | 0 | 0 | 0 | 0 | 0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Portfolio Investment | 60,789 | 69,294 | 70,388 | 80,693 | 73,550 | 88,226 | 11.6 | 15.7 | 18.5 | 16.7 | 11.7 | 13.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | 33,370 | 39,500 | 41,676 | 51,600 | 41,512 | 42,006 | 6.4 | 9.0 | 11.0 | 10.7 | 6.6 | 6.5 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Securities | 27,419 | 29,794 | 28,712 | 29,093 | 32,038 | 46,220 | 5.2 | 6.8 | 7.6 | 6.0 | 5.1 | 7.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Financial Derivatives | 13 | 11 | 17 | 0 | 0 | 0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Other Investment | 208,705 | 240,198 | 248,358 | 254,961 | 261,795 | 277,793 | 39.9 | 54.5 | 65.4 | 52.9 | 41.7 | 43.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other Equity | 3,074 | 3,223 | 3,364 | 3,520 | 3,684 | 3,913 | 0.6 | 0.7 | 0.9 | 0.7 | 0.6 | 0.6 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | 205,631 | 236,975 | 244,994 | 251,441 | 258,111 | 273,880 | 39.4 | 53.8 | 64.5 | 52.2 | 41.1 | 42.7 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Reserve Assets | 65,786 | 44,848 | 39,387 | 39,662 | 44,598 | 23,073 | 12.6 | 10.2 | 10.4 | 8.2 | 7.1 | 3.6 |\n| Liabilities | 311,891 | 284,026 | 277,210 | 295,521 | 308,758 | 328,426 | 59.7 | 64.5 | 73.0 | 61.3 | 49.2 | 51.2 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Direct Investment | 72,589 | 70,458 | 85,371 | 99,890 | 116,710 | 128,855 | 13.9 | 16.0 | 22.5 | 20.7 | 18.6 | 20.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | 48,854 | 47,525 | 53,490 | 67,602 | 76,783 | 77,100 | 9.3 | 10.8 | 14.1 | 14.0 | 12.2 | 12.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | 23,735 | 22,933 | 31,881 | 32,288 | 39,927 | 51,755 | 4.5 | 5.2 | 8.4 | 6.7 | 6.4 | 8.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Portfolio Investment | 113,193 | 71,842 | 58,747 | 62,008 | 47,580 | 50,776 | 21.7 | 16.3 | 15.5 | 12.9 | 7.6 | 7.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equity and Investment Fund Shares | 10,937 | 7,661 | 3,757 | 4,333 | 5,601 | 12,609 | 2.1 | 1.7 | 1.0 | 0.9 | 0.9 | 2.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Securities | 102,257 | 64,182 | 54,990 | 57,674 | 41,979 | 38,167 | 19.6 | 14.6 | 14.5 | 12.0 | 6.7 | 5.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Financial Derivatives | 1,309 | 554 | 145 | 397 | 339 | 860 | 0.3 | 0.1 | 0.0 | 0.1 | 0.1 | 0.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Other Investment | 124,799 | 141,170 | 132,947 | 133,226 | 144,128 | 147,935 | 23.9 | 32.0 | 35.0 | 27.6 | 23.0 | 23.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other Equity | 0 | 0 | 0 | 0 | 0 | 0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debt Instruments | 124,799 | 141,170 | 132,947 | 133,226 | 144,128 | 147,935 | 23.9 | 32.0 | 35.0 | 27.6 | 23.0 | 23.0 |\n| Memorandum items | | | | | | | | | | | | |\n| &nbsp;&nbsp;&nbsp;&nbsp;Debt liabilities | 250,791 | 228,286 | 219,818 | 223,189 | 226,034 | 237,857 | 48.0 | 51.8 | 57.9 | 46.3 | 36.0 | 37.1 |",
+      "latencyMs": 58516,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 13357,
+        "cost": 0.0344176
+      }
+    },
+    {
+      "caseId": "imf-external-financing-detailed",
+      "description": "IMF: Detailed external financing requirements",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model extracted all data points perfectly, demonstrating excellent data accuracy. Header detection for row labels and section titles was also very good, including proper indentation. However, there are significant structural and formatting issues at the top of the table. The main column header row is missing an initial empty cell, causing misalignment of the first data column. Furthermore, the 'Total (2024-2032)' header is poorly structured; it attempts a rowspan for 'Total' but then places '(2024-2032)' in a subsequent, mostly empty data row, which is not a proper representation of a multi-line header in markdown and leads to an extra, malformed row. An unnecessary blank row is also present at the very top. These structural and formatting flaws in the header area significantly detract from the table's quality."
+      },
+      "output": "| | 2024 | 2025 | 2026 | 2027 | 2028 | 2029 | 2030 | 2031 | 2032 | Total[rowspan=2] |\n|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n| | | | | | | | | | | (2024-2032) |\n| Existing and Prospective drawings (30-month EFF) | 1,414 | ... | ... | ... | ... | ... | ... | ... | ... | |\n| (in percent of quota) | 44.4 | ... | ... | ... | ... | ... | ... | ... | ... | |\n| (Projected Debt Service to the Fund based on Existing and Prospective Drawings) 1/ [colspan=11] |\n| Amortization 1/ | 487.5 | 0.0 | 833.3 | 3,250.0 | 4,841.7 | 5,319.0 | 5,319.0 | 5,319.0 | 4,485.7 | 29,855.2 |\n| GRA charges 1/ | 1,210.5 | 1,627.0 | 1,625.2 | 1,545.7 | 1,348.8 | 1,085.9 | 815.2 | 543.6 | 276.0 | 10,077.9 |\n| GRA surcharges 1/ | 577.5 | 777.5 | 776.4 | 729.6 | 613.7 | 459.3 | 300.1 | 140.3 | 12.9 | 4,387.3 |\n| &nbsp;&nbsp;&nbsp;&nbsp;of which level-based | 385.0 | 518.3 | 517.6 | 486.4 | 409.2 | 306.2 | 200.1 | 93.6 | 8.6 | 2,924.9 |\n| &nbsp;&nbsp;&nbsp;&nbsp;time-based | 192.5 | 259.2 | 258.8 | 243.2 | 204.6 | 153.1 | 100.0 | 46.8 | 4.3 | 1,462.4 |\n| GRA service charge 1/ | 3.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 3.0 |\n| SDR assessments and charges 1/ | 147.3 | 207.2 | 207.3 | 207.3 | 207.4 | 207.2 | 207.3 | 207.3 | 207.4 | 1,805.7 |\n| Total debt service 1/ | 2,425.8 | 2,611.7 | 3,442.2 | 5,732.5 | 7,011.6 | 7,071.5 | 6,641.6 | 6,210.2 | 4,981.9 | 46,129.0 |\n| (in percent of exports of G&S) | 3.5 | 3.5 | 4.4 | 6.9 | 8.0 | 7.7 | 6.9 | 6.4 | 5.1 | |\n| (in percent of GDP) | 0.5 | 0.6 | 0.8 | 1.2 | 1.4 | 1.4 | 1.2 | 1.0 | 0.7 | |\n| (in percent of GIR) | 12.4 | 10.9 | 11.6 | 16.2 | 16.5 | 14.0 | 12.0 | 11.8 | 13.5 | |\n| (Projected Level of Credit Outstanding based on Existing and Prospective Drawings) 1/ [colspan=11] |\n| Outstanding stock 1/ | 30,987.5 | 31,914.0 | 31,080.7 | 27,830.7 | 22,989.0 | 17,670.0 | 12,351.0 | 7,032.0 | 2,546.3 | |\n| (in percent of quota) | 972.2 | 1,001.3 | 975.1 | 873.2 | 721.3 | 554.4 | 387.5 | 220.6 | 79.9 | |\n| (in percent of GDP) | 7.0 | 7.7 | 7.0 | 5.9 | 4.6 | 3.4 | 2.2 | 1.1 | 0.4 | |\n| (in percent of GIR) | 158.1 | 133.5 | 104.8 | 78.6 | 54.0 | 35.0 | 22.2 | 13.3 | 6.9 | |\n| Memorandum items: [colspan=11] |\n| Exports of goods and services (US$ mn) | 96,235 | 102,391 | 108,263 | 114,811 | 122,030 | 127,567 | 133,357 | 135,044 | 136,753 | |\n| Gross International Reserves (US$ mn) | 27,248 | 33,248 | 41,248 | 49,248 | 59,248 | 70,208 | 77,205 | 73,429 | 51,484 | |\n| Quota | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | 3,187.3 | |",
+      "latencyMs": 35217,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 8044,
+        "cost": 0.0211351
+      }
+    },
+    {
+      "caseId": "imf-reviews-purchases",
+      "description": "IMF: Schedule of reviews and purchases table",
+      "status": "pass",
+      "score": {
+        "score": 3.5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model accurately extracted all data, including the main title and footnotes. Header detection was strong, identifying the correct labels and their hierarchical relationships (e.g., 'Original Amounts' spanning two sub-headers, and others spanning two rows). However, the formatting suffered significantly due to the use of non-standard markdown (`[rowspan=2]`, `[colspan=2]`), which would not render correctly in a standard markdown parser. There was also a minor inconsistency in the first header row's cell count versus the delimiter line. Despite these formatting issues, the raw data extraction and header identification were very good."
+      },
+      "output": "Table 13. Argentina: Schedule of Reviews and Purchases\n| Available on or after [rowspan=2] | Original Amounts [colspan=2] | Conditions 1/ [rowspan=2] |\n|:---|---:|---:|:---|\n| | SDR millions | % Quota | |\n| March 25, 2022 | 7,000 | 220 | Approval of Arrangement |\n| May 10, 2022 | 3,000 | 94 | First Review and end-March 2022 performance criteria |\n| September 10, 2022 | 3,000 | 94 | Second Review and end-June 2022 performance criteria |\n| December 10, 2022 | 4,500 | 141 | Third Review and end-September 2022 performance criteria |\n| March 10, 2023 | 4,000 | 125 | Fourth Review and end-December 2022 performance criteria |\n| June 10, 2023 | 3,000 | 94 | Fifth Review and end-June 2023 performance criteria |\n| August 21, 2023 | 2,500 | 78 | Sixth Review and end-June 2023 performance criteria |\n| January 15, 2024 | 3,500 | 110 | Seventh Review and end-December 2023 performance criteria |\n| May 10, 2024 | 600 | 19 | Eighth Review and end-March 2024 performance criteria |\n| August 10, 2024 | 400 | 13 | Ninth Review and end-June 2024 performance criteria |\n| November 10, 2024 | 414 | 13 | Tenth Review and end-September 2024 performance criteria |\n| Total | 31,914 | 1,001 | |\nSources: Fund staff calculations.\n1/ Apart from periodic performance criteria, conditions also include continuous performance criteria.",
+      "latencyMs": 27254,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 5147,
+        "cost": 0.0138926
+      }
+    },
+    {
+      "caseId": "metro-h1-results",
+      "description": "Metro Bank H1'24 results: 8 key financial metrics across 3 periods",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model's output suffers from significant issues that make it largely unusable as a markdown table. While it accurately extracted the numerical data values and period annotations directly from the charts in the image (a strong point for data accuracy within the tables), it failed on several critical aspects:\n\n1.  **Structural Accuracy (1):** The model used non-standard markdown syntax (`[colspan=3]`) to attempt to merge cells, which makes the generated tables invalid and unparseable by standard markdown renderers. It also completely missed extracting the three bulleted notes and the footnote text from the bottom of the source image, which are crucial pieces of information.\n2.  **Data Accuracy (4):** The numeric data and specific period annotations (e.g., 'Feb'24: £16.5bn') within the extracted tables are perfectly accurate to the source image. However, the omission of the descriptive bullet points and the footnote from the image lowers this score, as these are also data points that should have been captured.\n3.  **Header Detection (4):** The model successfully identified all the main metric titles (e.g., 'Customer deposits', 'Net interest margin') as headers for the respective data blocks, and also correctly identified the period labels (H1 2023, H2 2023, H1 2024) as sub-headers for each column.\n4.  **Formatting (1):** The use of `[colspan=3]` renders the markdown tables invalid. A markdown table must be well-formed to be considered correctly formatted."
+      },
+      "output": "| Customer deposits [colspan=3] | Liquidity coverage ratio [colspan=3] | Total capital + MREL[1] [colspan=3] | Net fee and other income [colspan=3] |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 |\n| | | Feb'24: £16.5bn | | | | | | | | | |\n| 15.5 | 15.6 | 15.7 | 214% | 332% | 365% | 18.1% | 22.0% | 22.2% | 63.3 | 68.6 | 62.0 |\n| Net interest margin [colspan=3] | Cost of deposits [colspan=3] | Underlying loss before tax [colspan=3] | Statutory loss before tax [colspan=3] |\n| H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 |\n| | | Q2'24: 1.74% | | | Q2'24: 2.12% | | | | | | |\n| 2.14% | 1.85% | 1.64% | 0.66% | 1.29% | 2.18% | 16.1 | (33.0) | (26.8) | 15.4 | 15.1 | (33.5) |",
+      "latencyMs": 21581,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4344,
+        "cost": 0.0114207
+      }
+    },
+    {
+      "caseId": "metro-mortgages",
+      "description": "Metro Bank mortgage overview: LTV splits, geographical distribution, IFRS9 staging",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model demonstrated excellent performance across all dimensions. All numerical and textual data were extracted with perfect accuracy from the source image. Header detection was flawless, correctly identifying and categorizing all labels and titles for the different charts. Structural accuracy was outstanding, with the model successfully interpreting various chart types (donut charts, bar charts, complex multi-dimensional tables) and representing them logically in markdown tables. Even complex layouts, such as the 'Balance by IFRS9 stage', were well-structured, including the identification of nested metrics. The formatting was generally very good; while the use of `[colspan=X]` and `[rowspan=X]` within markdown tables is not standard markdown syntax, it represents a sophisticated attempt to capture and convey the visual layout of merged cells, which is commendable given the constraint of markdown. Overall, the output is highly accurate and comprehensive."
+      },
+      "output": "| Metric | Value |\n|---|---|\n| 1H24 Total Portfolio | £7.5bn |\n| Owner Occupied | 75% |\n| Buy-to-let | 25% |\n\n| Period | New lending loan-to-value % |\n|---|---|\n| FY23 | 63% |\n| 1H24 | 68% |\n\n| [colspan=8] Retail mortgages loan-to-value |\n|---|---|\n| [colspan=8] Average retail LTV: 61% at 1H24 vs 58% at FY23 |\n| LTV Band | < 50% | 51-60% | 61-70% | 71-80% | 81-90% | 91-100% | > 100% |\n|---|---|---|---|---|---|---|---|\n| FY23 | 31% | 18% | 22% | 21% | 7% | 1% | 0% |\n| 1H24 | 27% | 16% | 19% | 25% | 11% | 2% | 0% |\n\n| Region | Percentage |\n|---|---|\n| Greater London | 10% |\n| South East | 4% |\n| South West | 4% |\n| East of England | 10% |\n| North West | 7% |\n| West Midlands | 25% |\n| Rest of UK | 40% |\n\n| Period | ECL coverage ratio |\n|---|---|\n| FY23 | 0.24% |\n| 1H24 | 0.25% |\n\n| [colspan=4] Balance by IFRS9 stage |\n|---|---|---|---|\n| Stage | Metric | FY23 | 1H24 |\n|---|---|---|---|\n| [rowspan=2] Stage 1 | Balance % | 88.1% | 87.6% |\n| | Additional metric | 0.1% | 0.1% |\n| [rowspan=2] Stage 2 | Balance % | 10.0% | 9.8% |\n| | Additional metric | 0.7% | 0.6% |\n| [rowspan=2] Stage 3 | Balance % | 1.9% | 2.6% |\n| | ECL coverage ratio | 4.1% | 3.8% |",
+      "latencyMs": 22986,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4342,
+        "cost": 0.0114157
+      }
+    },
+    {
+      "caseId": "metro-balance-sheet",
+      "description": "Metro Bank balance sheet: capital accretion, provisions, portfolio composition",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model provided an exceptionally accurate and well-formatted output. All data points, including percentages and numerical values, were correctly extracted from the image. The structural interpretations were generally very good, often creating clear and readable tables even when differing slightly from the reference's suggested structure (e.g., in 'Continued capital accretion' where it actually provided a more accurate data representation for H1 23 MREL than the reference). Header detection and markdown formatting were excellent. The only minor omission was the 'PMO/PMA: Modelled' label in the 'Provision levels' section, but this is a very small detail in an otherwise near-perfect extraction."
+      },
+      "output": "### Continued capital accretion across H1'24\n| | H1 23 | H2 23 | H1 24 |\n|---|---|---|---|\n| Impact of Mortgage portfolio sale (post completion[1]) | | | 23.4% |\n| MREL | 18.1% | 22.0% | 22.2% |\n| CET1 | 10.4% | 13.1% | 12.9% |\n\n### Provision levels remain appropriate [2]\n| FY 2023 provision | Portfolio movements | Single name movements | Post model overlays | 1H24 |\n|---|---|---|---|---|\n| 199 | 6 | (5) | (4) | 196 |\n\n### Low risk balance sheet\n*   Year-on-year MREL ratio increased + c.530bps (inc. post mortgage portfolio sale completion)\n*   20bps MREL ratio accretion from 1 Jan'24, despite IFRS9 quick fix reversal and losses\n*   The loan portfolio remains highly collateralised and prudently provisioned\n*   Treasury portfolio remains highly liquid and primarily AAA rated\n\n### Treasury portfolio composition (H1 2024: £8.8bn)\n| Category | Percentage |\n|---|---|\n| Securitisations | 47% |\n| SSAs | 21% |\n| Cash & Money Market Funds | 11% |\n| Government Bonds | 14% |\n| Covered Bonds | 7% |\n\n### High quality non-cash portfolio (H1 2024: £4.7bn)\n| Category | Percentage |\n|---|---|\n| AAA | 79% |\n| AA | 21% |\n\n### Footnotes\n1.  Completion of the transaction is conditional on a satisfactory response from the Competition & Markets Authority\n2.  The difference between ECL expense and ECL provision movement relates to write-offs adjustments",
+      "latencyMs": 44502,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 8877,
+        "cost": 0.0227532
+      }
+    },
+    {
+      "caseId": "metro-upgraded-guidance",
+      "description": "Metro Bank upgraded guidance: RoTE, NIM, and cost:income projections",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model failed to extract a significant portion of the image's content, including the main title, side notes, and the concluding statement. The data that was extracted into tables was presented in an invalid markdown format using non-standard 'colspan' attributes, making it unparseable. The structural organization of the tables was also incorrect, attempting to merge distinct data blocks into a single, malformed table. While the values within the extracted cells were accurate, the severe omissions, structural errors, and formatting issues lead to a very poor overall quality."
+      },
+      "output": "| [colspan=3] **Profitability during Q4'24** |\n|---|---|---|\n| [colspan=3] ⬆️ **RoTE guidance increased** |\n| **2025** | **2026** | **2027+** |\n| mid-to-upper single digit | double digit | mid-to-upper teens thereafter |\n| [colspan=3] **Continued NIM expansion driven by asset rotation and CoD** | [colspan=3] **Continued cost discipline and control** |\n|---|---|---|---|---|---|\n| [colspan=3] **NIM approaching:** | [colspan=3] **Cost:income ratio approaching:** |\n| **2024** | **2025** | **2026** | **2026** | **2027** | **2028** |\n| 2.50% | 3.25% | 4.00% | 70% | 60% | 50% |",
+      "latencyMs": 20678,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4228,
+        "cost": 0.0111307
+      }
+    },
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model achieved excellent data accuracy, extracting all numerical and text values correctly from the source image. Header detection was also very strong, identifying all hierarchical column headers (including nested years and quarters) and row labels, along with their correct indentation. However, the structural accuracy of the markdown table is hindered by the use of non-standard `[rowspan]` and `[colspan]` attributes for merged cells in the header. While these attributes reflect an understanding of the intended structure, they do not conform to standard markdown table syntax, which affects the formatting score. Despite this formatting limitation, the core information is accurately captured."
+      },
+      "output": "| [rowspan=3] | [rowspan=2] 2022 | [rowspan=2] SR (Jan.) | [rowspan=2] 2023 | Proj. [colspan=12] | | | | | | | | | | |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| | | | | 2024 [colspan=4] | | | | [rowspan=2] SR (Jan.) | [rowspan=2] 2024 | [rowspan=2] SR (Jan.) | [rowspan=2] 2025 | [rowspan=2] 2026 | [rowspan=2] 2027 | [rowspan=2] 2028 | [rowspan=2] 2029 |\n| | | | | Q1 | Q2 | Q3 | Q4 | | | | | | | |\n| Imports G&S | 97,558 | 99,037 | 98,245 | 17,937 | 22,064 | 21,293 | 19,056 | 83,112 | 80,349 | 89,279 | 84,836 | 88,998 | 93,606 | 98,601 | 102,674 |\n| FDI payments | 2,076 | 2,337 | 2,403 | 559 | 597 | 540 | 591 | 2,243 | 2,286 | 2,315 | 2,366 | 2,425 | 2,468 | 2,496 | 2,529 |\n| Interest federal government | 2,702 | 2,934 | 2,934 | 1,396 | 567 | 1,370 | 567 | 3,837 | 3,900 | 4,030 | 4,083 | 4,044 | 4,014 | 5,417 | 5,842 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to IFIs (excl IMF) | 667 | 1,706 | 1,706 | 550 | 550 | 550 | 550 | 2,109 | 2,200 | 2,131 | 2,236 | 2,217 | 2,203 | 2,292 | 2,241 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to private creditors FX | 866 | 1,205 | 1,205 | 831 | 1 | 804 | 1 | 1,665 | 1,638 | 1,832 | 1,777 | 1,752 | 1,727 | 3,013 | 3,473 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to private creditors AR$ | 1,169 | 23 | 23 | 16 | 16 | 16 | 16 | 64 | 62 | 67 | 70 | 75 | 85 | 113 | 128 |\n| Interest provincial government | 710 | 951 | 951 | 339 | 167 | 344 | 158 | 1,008 | 1,008 | 943 | 943 | 834 | 764 | 475 | 377 |\n| Amortization federal government | 14,387 | 5,462 | 5,445 | 934 | 938 | 1,511 | 938 | 4,317 | 4,320 | 6,902 | 6,610 | 6,561 | 7,174 | 9,051 | 10,031 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to IFIs (excl IMF) | 2,507 | 3,516 | 3,516 | 706 | 706 | 706 | 706 | 2,822 | 2,824 | 2,941 | 2,945 | 2,827 | 2,860 | 2,925 | 2,981 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to private creditors FX | 0 | 0 | 0 | 0 | 3 | 577 | 3 | 681 | 583 | 3,335 | 2,937 | 2,937 | 3,396 | 5,299 | 6,201 |\n| &nbsp;&nbsp;&nbsp;&nbsp;to private creditors AR$ | 11,880 | 1,946 | 1,929 | 228 | 228 | 228 | 228 | 814 | 914 | 627 | 728 | 798 | 918 | 827 | 849 |\n| Amortization provincial government | 274 | 1,074 | 1,074 | 474 | 403 | 292 | 389 | 1,558 | 1,558 | 2,225 | 2,225 | 2,193 | 2,165 | 1,099 | 881 |\n| Debt service to IMF | 18,642 | 20,978 | 20,978 | 2,804 | 2,804 | 1,509 | 861 | 7,980 | 7,978 | 3,473 | 3,473 | 4,603 | 7,691 | 9,412 | 9,495 |\n| &nbsp;&nbsp;&nbsp;&nbsp;of which interest and charges | 1,868 | 3,238 | 3,238 | 861 | 861 | 861 | 861 | 3,445 | 3,443 | 3,473 | 3,473 | 3,485 | 3,324 | 2,905 | 2,347 |\n| Other outflows (net) | 5,584 | 16,544 | 15,369 | 6,980 | 571 | 1,386 | 1,492 | 15,456 | 10,428 | 12,139 | 3,879 | 6,283 | 4,095 | 4,390 | 7,542 |\n| **Total Needs** | **141,934** | **149,317** | **147,398** | **31,424** | **28,109** | **28,243** | **24,052** | **119,511** | **111,828** | **121,306** | **108,414** | **115,941** | **121,977** | **130,942** | **139,371** |\n| Exports G&S | 103,003 | 88,637 | 88,727 | 22,700 | 26,641 | 23,052 | 23,842 | 102,704 | 96,235 | 109,271 | 102,391 | 108,263 | 114,811 | 122,030 | 128,428 |\n| FDI Inflows | 15,409 | 22,237 | 22,911 | 6,650 | 1,750 | 150 | -1,350 | 11,197 | 7,200 | 9,997 | 4,000 | 6,000 | 4,000 | 6,000 | 6,000 |\n| Borrowing of federal government | 6,350 | 6,668 | 6,651 | 1,313 | 1,313 | 1,313 | 1,313 | 5,294 | 5,252 | 7,026 | 7,010 | 8,413 | 9,405 | 11,152 | 14,428 |\n| &nbsp;&nbsp;&nbsp;&nbsp;from IFIs (excl IMF) | 4,334 | 4,630 | 4,630 | 1,005 | 1,005 | 1,005 | 1,005 | 4,159 | 4,020 | 4,073 | 3,972 | 4,133 | 3,688 | 3,558 | 3,580 |\n| &nbsp;&nbsp;&nbsp;&nbsp;from private creditors FX | 49 | 69 | 69 | 64 | 64 | 64 | 64 | 257 | 256 | 2,259 | 2,240 | 3,407 | 4,715 | 6,655 | 9,870 |\n| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of which international market issuance | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1,500 | 1,500 | 2,500 | 3,500 | 5,000 | 6,000 |\n| &nbsp;&nbsp;&nbsp;&nbsp;from private creditors AR$ | 1,967 | 1,969 | 1,952 | 244 | 244 | 244 | 244 | 877 | 976 | 694 | 798 | 873 | 1,002 | 940 | 978 |\n| Borrowing of provincial government | 689 | 507 | 507 | 197 | 197 | 197 | 197 | 786 | 786 | 1,012 | 1,012 | 1,265 | 1,761 | 1,761 | 515 |\n| Reserve Drawdown (- = accumulation) | -6,918 | 18,600 | 15,935 | -4,087 | -2,588 | 3,000 | -500 | -7,000 | -4,175 | -6,000 | -6,000 | -8,000 | -8,000 | -10,000 | -10,000 |\n| **Total Sources** | **118,533** | **136,649** | **134,730** | **26,773** | **27,312** | **27,712** | **23,502** | **112,982** | **105,298** | **121,306** | **108,414** | **115,941** | **121,977** | **130,942** | **139,371** |\n| **Total Gap** | **23,401** | **12,668** | **12,668** | **4,651** | **797** | **532** | **550** | **6,530** | **6,530** | **0** | **0** | **0** | **0** | **0** | **0** |\n| IMF Disbursements | 23,401 | 12,668 | 12,668 | 4,651 | 797 | 532 | 550 | 6,530 | 6,530 | 0 | 0 | 0 | 0 | 0 | 0 |",
+      "latencyMs": 43956,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 10663,
+        "cost": 0.0272182
+      }
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model correctly identified all column headers and row labels, including complex nested headers and superscripts. Data accuracy is high for numerical and text values. However, there's a recurring structural and data accuracy issue where '—' (em-dash) characters are systematically omitted and replaced with empty cells in three specific data points. Additionally, the use of `[colspan=X]` is a non-standard markdown extension, and some cells have excessive padding. While the intent for merges is clear, it deviates from standard markdown formatting."
+      },
+      "output": "```markdown\n|                                    |                        | Adjustments [colspan=3]                                                                                                 |                    |                    |                    |\n|:-----------------------------------|:-----------------------|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------|:-------------------|:-------------------|\n|                                    | As at 30 June 2023^(1) | Net proceeds from the Firm Placing^(2)                               | Net proceeds from the issuance of the Cash New MREL Notes^(3) | Issuance of the New Tier 2 Notes and the Non-Cash New MREL Notes^(4) | Pro Forma Group    |\n|                                    |                        | (unaudited) (£ million) [colspan=3]                                                                                     |                    |                    |                    |\n| Total assets.......................| 21,747                 | 144                                                                  | 168                | (42)               | 22,017             |\n| Total liabilities..................| (20,777)               | —                                                                    | (168)              | 103                | (20,842)           |\n| Net assets.........................| 970                    | 144                                                                  | —                  | 61                 | 1,175              |\n| CET1 resources^(5)................| 813                    | 144                                                                  | —                  | 61                 | 1,018              |\n| CET1 ratio^(5)....................| 10.4%                  | 1.8%                                                                 |                    | 0.8%               | 13.1%              |\n```",
+      "latencyMs": 55844,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 10847,
+        "cost": 0.0276782
+      }
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model correctly identified all headers, the table structure, and used the `[rowspan]` notation accurately to represent merged cells, which is excellent for structural accuracy and formatting. However, there were two data accuracy errors in the '●' indicators: one dot was missing for 'Scale of the Economy' under 'Social IPS', and one extra dot was present for 'Political Risk' under 'Environmental IPS'. Despite these minor data inaccuracies, the overall extraction quality is good due to the strong performance in other dimensions."
+      },
+      "output": "| Factor | Sub-factor | Environmental IPS | Social IPS | Governance IPS |\n|---|---|---|---|---|\n| ECONOMIC STRENGTH [rowspan=3] | Growth Dynamics | ● | ● | ● |\n| | Scale of the Economy | | | |\n| | National Income | | ● | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH [rowspan=2] | Quality of Institutions | | ● | ● |\n| | Policy Effectiveness | | ● | ● |\n| FISCAL STRENGTH [rowspan=2] | Debt Burden | ● | ● | |\n| | Debt Affordability | | ● | ● |\n| SUSCEPTIBILITY TO EVENT RISK [rowspan=4] | Political Risk | ● | ● | ● |\n| | Government Liquidity Risk | | | ● |\n| | Banking Sector Risk | | | ● |\n| | External Vulnerability Risk | ● | | |",
+      "latencyMs": 8956,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 1448,
+        "cost": 0.0041807
+      }
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "pass",
+      "score": {
+        "score": 3.5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model accurately identified all column headers and produced well-formatted markdown with correct rowspan syntax. For the 'ECONOMIC STRENGTH', 'INSTITUTIONS AND GOVERNANCE STRENGTH', and 'FISCAL STRENGTH' sections, the structural and data extraction was very good, including correct application of rowspans and identification of superscripts. However, the 'SUSCEPTIBILITY TO EVENT RISK' section had significant structural and data accuracy issues. Several data points in this section were placed in the incorrect column (e.g., 'Domestic Political and Geopolitical Risk' was in the 'Metric / Sub-sub-factor' column instead of 'Metric/Sub-sub-factor Weighting'). Additionally, some rowspans for 'Sub-factor Weighting' were omitted in this section (e.g., for 'Government Liquidity Risk' and 'External Vulnerability Risk')."
+      },
+      "output": "| Factor | Sub-factor | Sub-factor Weighting | Metric / Sub-sub-factor | Metric / Sub-sub-factor Weighting |\n|:-------|:-----------|:---------------------|:------------------------|----------------------------------:|\n| ECONOMIC STRENGTH [rowspan=5] | Growth Dynamics [rowspan=2] | 35% [rowspan=2] | Average Real GDP Growth | 25% |\n|        |            |                      | MAD Volatility in Real GDP Growth | 10% |\n|        | Scale of the Economy | 30% | Nominal GDP (US$ bn) | 30% |\n|        | National Income | 35% | GDP per Capita (PPP, Int. USD) | 35% |\n|        | Adjustment to Factor Score | 0 to 9 notches | Other | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH [rowspan=6] | Quality of Institutions [rowspan=2] | 40% [rowspan=2] | Quality of Legislative and Executive Institutions | 20% |\n|        |            |                      | Strength of Civil Society and the Judiciary | 20% |\n|        | Policy Effectiveness [rowspan=2] | 60% [rowspan=2] | Fiscal Policy Effectiveness | 30% |\n|        |            |                      | Monetary and Macroeconomic Policy Effectiveness | 30% |\n|        | Adjustments to Factor Score | 0 to 3 notches | Government Default History and Track Record of Arrears | |\n|        | Adjustments to Factor Score | 0 to 3 notches | Other | |\n| FISCAL STRENGTH [rowspan=11] | Debt Burden [rowspan=2] | 50%¹ [rowspan=2] | General Government Debt / GDP | 25% |\n|        |            |                      | General Government Debt / Revenue | 25% |\n|        | Debt Affordability [rowspan=6] | 50%¹ [rowspan=6] | General Government Interest Payments / Revenue | 25% |\n|        |            |                      | General Government Interest Payments / GDP | 25% |\n|        |            |                      | Debt Trend [rowspan=2] | |\n|        |            |                      | Historical Change in Debt Burden | |\n|        |            |                      | Expected Change in Debt Burden | |\n|        |            |                      | General Government Foreign Currency Debt / GDP | |\n|        | Adjustments to Factor Score [rowspan=3] | 0 to 6 notches [rowspan=3] | Other Non-Financial Public Sector Debt / GDP | |\n|        |            |                      | Government Financial Assets including Sovereign Wealth Funds / GDP | |\n|        |            |                      | Other | |\n| SUSCEPTIBILITY TO EVENT RISK [rowspan=9] | Political Risk | Minimum Function² | Domestic Political and Geopolitical Risk | |\n|        | Government Liquidity Risk [rowspan=2] | Minimum Function² | Ease of Access to Funding | |\n|        |            | 0 to 2 scoring categories | Adjustment to Sub-factor Score High Refinancing Risk | |\n|        | Banking Sector Risk [rowspan=3] | Minimum Function² [rowspan=2] | Risk of Banking Sector Credit Event (BSCE) | |\n|        |            |                      | Total Domestic Bank Assets / GDP | |\n|        |            | 0 to 2 scoring categories | Adjustment to Sub-factor Score | |\n|        | External Vulnerability Risk [rowspan=2] | Minimum Function² | External Vulnerability Risk | |\n|        |            | 0 to 2 scoring categories | Adjustment to Sub-factor Score | |\n|        | Adjustment to Factor Score | 0 to 2 scoring categories | | |",
+      "latencyMs": 41527,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1353,
+        "completionTokens": 9340,
+        "cost": 0.0237559
+      }
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent accuracy across all dimensions. Structural accuracy is high, with merged cells correctly indicated using `[rowspan=2]` and all rows/columns captured. Data accuracy is perfect; all numbers, ranges, percentages, text, and special characters (≥, ≤, <, >) exactly match the source image. Header detection is also flawless. Formatting is very good, using standard markdown syntax and `<br>` for line breaks within cells, effectively representing the visual layout. While `[rowspan=2]` is a non-standard markdown extension, it effectively conveys the table structure where standard markdown falls short for complex layouts, and does not hinder parseability as string content within a JSON."
+      },
+      "output": "| Sub-factor | Metric | Metric Weight | aaa | aa1 | aa2 | aa3 | a1 | a2 | a3 | baa1 | baa2 | baa3 | ba1 | ba2 | ba3 | b1 | b2 | b3 | caa1 | caa2 | caa3 | ca |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| Growth Dynamics [rowspan=2] | Average Real GDP<br>Growth<br>(%) t-4 to t+5 \\*1 | 25% | ≥ 5.7 | 5.3-<br>5.7 | 4.9-<br>5.3 | 4.4-<br>4.9 | 4-<br>4.4 | 3.7-<br>4 | 3.3-<br>3.7 | 3-<br>3.3 | 2.6-<br>3 | 2.3-<br>2.6 | 2-<br>2.3 | 1.8-<br>2 | 1.6-<br>1.8 | 1.3-<br>1.6 | 1.1-<br>1.3 | 0.9-<br>1.1 | 0.7-<br>0.9 | 0.5-<br>0.7 | 0.3-<br>0.5 | < 0.3 |\n| | MAD Volatility<br>in Real GDP<br>Growth<br>(%) t-9 to t \\*2 | 10% | ≤ 0.10 | 0.10-<br>0.20 | 0.20-<br>0.30 | 0.30-<br>0.40 | 0.40-<br>0.50 | 0.50-<br>0.60 | 0.60-<br>0.75 | 0.75-<br>0.90 | 0.90-<br>1.10 | 1.10-<br>1.30 | 1.30-<br>1.50 | 1.50-<br>1.80 | 1.80-<br>2.10 | 2.10-<br>2.40 | 2.40-<br>2.70 | 2.70-<br>3.00 | 3.00-<br>3.50 | 3.50-<br>4.00 | 4.00-<br>4.50 | > 4.50 |\n| Scale of the<br>Economy [rowspan=2] | Nominal GDP<br>(US$ bn) \\*3 | 30% | ≥ 1,000 | 750-<br>1,000 | 600-<br>750 | 450-<br>600 | 330-<br>450 | 250-<br>330 | 190-<br>250 | 140-<br>190 | 100-<br>140 | 80-<br>100 | 60-<br>80 | 45-<br>60 | 35-<br>45 | 26-<br>35 | 20-<br>26 | 15-<br>20 | 10-<br>15 | 8-<br>10 | 6-<br>8 | < 6 |\n| | GDP per<br>capita (PPP,<br>international<br>USD) \\*4 | 35% | ≥ 48,000 | 42,000-<br>48,000 | 37,000-<br>42,000 | 32,000-<br>37,000 | 27,500-<br>32,000 | 24,500-<br>27,500 | 21,000-<br>24,500 | 19,000-<br>21,000 | 16,000-<br>19,000 | 14,000-<br>16,000 | 12,000-<br>14,000 | 10,750-<br>12,000 | 9,500-<br>10,750 | 8,000-<br>9,500 | 7,000-<br>8,000 | 6,200-<br>7,000 | 5,500-<br>6,200 | 4,700-<br>5,500 | 4,100-<br>4,700 | < 4,100 |\n<br>\n| Adjustment to Factor Score |\n|---|\n| Other |\n| 0 to 9 notches |",
+      "latencyMs": 34284,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 2901,
+        "completionTokens": 7319,
+        "cost": 0.0191678
+      }
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output perfectly replicates the table structure and all data from the source image. All headers, row labels, and numerical values are accurately extracted and formatted correctly in markdown. The representation of merged cells and hierarchical headers matches the reference and accurately reflects the source image."
+      },
+      "output": " ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` Net ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` ` `",
+      "latencyMs": 200304,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 65532,
+        "cost": 0.1643907
+      }
+    }
+  ],
+  "summary": {
+    "total": 21,
+    "passed": 14,
+    "failed": 5,
+    "errors": 2,
+    "avgScore": 3.47,
+    "avgLatencyMs": 41854,
+    "dimensions": {}
+  }
+}

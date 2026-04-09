@@ -1,0 +1,169 @@
+{
+  "task": "chart-parsing",
+  "model": "google/gemini-2.5-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T06:31:33.838Z",
+  "results": [
+    {
+      "caseId": "imf-fiscal-chart",
+      "description": "IMF report chart: fiscal chart",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output captures most of the essential information from the chart, including the title (though slightly incomplete), axis details, source, and a data table. However, it misses the qualitative overview provided in the reference (e.g., reduction in 2024, redistribution, peak in 2025). Several data points in the table have minor inaccuracies (off by ~500-1000 ARS billions). The legend details (colors) are also not explicitly mentioned. The structure is less detailed than the reference but is concise."
+      },
+      "output": "The chart is titled \"Peso Debt Service\" and displays values in ARS billions. It illustrates the projected peso debt service for the years 2024 through 2028, comparing \"Pre-Exchange\" and \"Post-Exchange\" scenarios.\n\nThe Y-axis ranges from 0 to 80,000 ARS billions, with major gridlines at intervals of 10,000. The X-axis represents the years 2024, 2025, 2026, 2027, and 2028.\n\nThe data presented is as follows:\n\n| Year | Pre-Exchange (ARS billions) | Post-Exchange (ARS billions) |\n| :--- | :-------------------------- | :--------------------------- |\n| 2024 | ~58,000                     | ~16,000                      |\n| 2025 | ~24,000                     | ~42,000                      |\n| 2026 | ~5,000                      | ~21,000                      |\n| 2027 | ~3,000                      | ~16,000                      |\n| 2028 | ~500                        | ~10,000                      |\n\nThe sources for this data are \"MECON and Fund staff calculations.\"",
+      "latencyMs": 5617,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 840,
+        "cost": 0.002298
+      }
+    },
+    {
+      "caseId": "imf-external-debt-composition",
+      "description": "IMF report chart: external debt composition",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is incomplete as it misses the 'Summary of Trends' section entirely. The data extraction is problematic because many of the extracted numerical values in the table significantly differ from the reference's estimated values, leading to low accuracy and data_extraction scores. While the general chart description elements (axes, title, series names) are accurate, the core data is not."
+      },
+      "output": "The chart is titled \"Evolution of Exchange Rate Expectations (ROFEX future contracts, AR$/US$)\".\n\nThe Y-axis represents the exchange rate in AR$/US$, ranging from 800 to 2000, with major tick marks at intervals of 200 (800, 1000, 1200, 1400, 1600, 1800, 2000).\nThe X-axis represents time in monthly intervals, spanning from Jan-24 to Jan-25. The specific labels are Jan-24, Feb-24, Mar-24, Apr-24, May-24, Jun-24, Jul-24, Aug-24, Sep-24, Oct-24, Nov-24, Dec-24, and Jan-25.\n\nThere are three lines representing different exchange rate expectations:\n*   **end-Dec 2023** (light blue line)\n*   **end-Feb 2024** (medium blue line)\n*   **end-May, 2024** (dark blue line)\n\nThe approximate values for each series at the indicated monthly intervals are provided below:\n\n| Month | end-Dec 2023 (AR$/US$) | end-Feb 2024 (AR$/US$) | end-May, 2024 (AR$/US$) |\n| :---- | :--------------------- | :--------------------- | :---------------------- |\n| Jan-24 | 850                    |                        |                         |\n| Feb-24 | 900                    |                        |                         |\n| Mar-24 | 1000                   | 880                    |                         |\n| Apr-24 | 1080                   | 960                    |                         |\n| May-24 | 1180                   | 1040                   | 920                     |\n| Jun-24 | 1280                   | 1120                   | 980                     |\n| Jul-24 | 1380                   | 1220                   | 1050                    |\n| Aug-24 | 1480                   | 1320                   | 1120                    |\n| Sep-24 | 1580                   | 1420                   | 1180                    |\n| Oct-24 | 1680                   | 1520                   | 1240                    |\n| Nov-24 | 1800                   | 1620                   | 1280                    |\n| Dec-24 |                        | 1700                   | 1290                    |\n| Jan-25 |                        |                        | 1300                    |",
+      "latencyMs": 13962,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 2713,
+        "cost": 0.0069805
+      }
+    },
+    {
+      "caseId": "imf-private-official-debt-maturity",
+      "description": "IMF report chart: private official debt maturity",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output suffers from significant accuracy issues, particularly in data extraction. Many specific data points for all three series deviate substantially from the reference, sometimes by a very large margin (e.g., Agr (RHS) values are frequently off by 10-20 percentage points or more). While the output provides a general overview and covers most elements of the chart, its verbose, point-by-point narrative for data details is less concise and effective than the reference's tabular format. It also misses explicit details about axis ranges and the relationship between the two Y-axes. The pervasive data inaccuracies lead to a very low score."
+      },
+      "output": "The chart titled \"Economic Activity (Percent, y/y; 3m m.a.)\" displays the year-over-year percentage change in economic activity, smoothed by a 3-month moving average, for \"Total\", \"Ex. Agr\" (excluding agriculture), and \"Agr (RHS)\" (agriculture, using the right-hand side axis). The data ranges from November 2020 to March 2024.\n\n**Overview:**\nThe chart shows a period of strong growth peaking in mid-2021, followed by a general deceleration and subsequent contraction for \"Total\" and \"Ex. Agr\" activity, while \"Agr (RHS)\" exhibited higher volatility, including a significant trough in mid-2023 and a strong recovery by early 2024.\n\n**Detailed Breakdown:**\n\n1.  **Total Economic Activity (dark blue line, left Y-axis):**\n    *   Started at approximately -7% in November 2020.\n    *   Rose to -1% by March 2021.\n    *   Peaked sharply at 22% in July 2021.\n    *   Declined to 14% by November 2021, then to 7% by March 2022, and 6% by July 2022.\n    *   Continued its decline, reaching 2% by November 2022.\n    *   Dipped into negative territory at -1% by March 2023.\n    *   Reached a trough of -7% in July 2023.\n    *   Slightly recovered to -4% by November 2023 but then fell again to -6% by March 2024.\n\n2.  **Economic Activity Ex. Agr (light blue line, left Y-axis):**\n    *   Began at approximately -5% in November 2020.\n    *   Increased to 5% by March 2021.\n    *   Peaked at 20% in July 2021.\n    *   Followed a declining trend, reaching 10% by November 2021, 8% by March 2022, and 7% by July 2022.\n    *   Continued its descent to 3% by November 2022.\n    *   Reached 0% by March 2023.\n    *   Dipped into negative territory at -5% in July 2023.\n    *   Recovered slightly to -3% by November 2023, then declined to -4% by March 2024.\n\n3.  **Agr (RHS) Economic Activity (cyan blue line, right Y-axis):**\n    *   Started at approximately 8% in November 2020.\n    *   Dropped to -2% by March 2021.\n    *   Rose to 12% by July 2021 and peaked at 16% in November 2021.\n    *   Decreased to 10% by March 2022 and 8% by July 2022.\n    *   Fell to 0% by November 2022.\n    *   Increased to 5% by March 2023.\n    *   Experienced a sharp and significant decline to its lowest point of approximately -38% in July 2023.\n    *   Showed a robust recovery, reaching 10% by November 2023 and continuing to rise to 16% by March 2024.\n\n**Sources:**\nINDEC; Haver Analytics; and Fund staff calculations.",
+      "latencyMs": 14582,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 2607,
+        "cost": 0.0067155
+      }
+    },
+    {
+      "caseId": "imf-embig-sovereign-spread",
+      "description": "IMF report chart: embig sovereign spread",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is highly complete, capturing all significant details and key data points from the chart, and in some instances, providing even more specific observations than the reference (e.g., approximate number of points per series, detailed negative yield points for Sept-Nov 23). Data extraction is very good, accurately identifying ranges and specific outlier values. However, there are minor inaccuracies regarding the specific major tick labels listed for the Y-axis, and some slight discrepancies in the visual estimation of data ranges (e.g., maturity ranges for Dec 23-May 24, outlier values). The conciseness is lower because it uses descriptive text and bullet points instead of the more structured and succinct tabular format of the reference, making it slightly more verbose."
+      },
+      "output": "This chart, titled \"Maturity and Yields of ARS (CER) Debt Issuances,\" is a scatter plot displaying two series of debt issuances.\n\n**Chart Axes:**\n*   **X-axis (horizontal):** Labeled \"Maturity (days)\", ranging from 0 to 1500, with major ticks at 0, 500, 1000, and 1500.\n*   **Y-axis (vertical):** Labeled \"Yields (percent)\", ranging from -120 to 60, with major ticks at -80, -40, 0, 20, 40, and 60. A light grey horizontal line is present at 0 percent yield.\n\n**Data Series:**\nThe chart displays two sets of data points, distinguished by color and shape:\n\n1.  **Sept-Nov 23 (light blue circles):**\n    *   This series consists of approximately 20 data points.\n    *   Maturity ranges from approximately 100 days to about 600 days.\n    *   Yields for these issuances are predominantly positive, generally ranging from around 0 percent to +10 percent. A few points are slightly negative, such as one around (380 days, -5%) and another around (500 days, -2%).\n\n2.  **Dec 23-May 24 (dark blue circles):**\n    *   This series consists of approximately 17 data points.\n    *   Maturity ranges more broadly, from about 50 days to approximately 1350 days.\n    *   Yields for this period are largely negative.\n    *   There are two distinct outliers with very low negative yields at shorter maturities: one at approximately (50 days, -85%) and another at roughly (100 days, -110%).\n    *   The remaining dark blue points are clustered with maturities between roughly 350 days and 1350 days, exhibiting yields generally ranging from approximately -2 percent to -25 percent.\n\n**Overall Observation:**\nThe issuances from Sept-Nov 23 generally had shorter maturities and positive or near-zero yields. In contrast, the Dec 23-May 24 issuances show a wider range of maturities, extending to longer terms, and predominantly exhibit negative yields, with some notably very low negative yields at the shorter end of their maturity spectrum.",
+      "latencyMs": 12883,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 2161,
+        "cost": 0.0056005
+      }
+    },
+    {
+      "caseId": "imf-reserve-assets",
+      "description": "IMF report chart: reserve assets",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output captures the main components of the chart and provides a structured data table and observations. However, there are significant inaccuracies in the extracted numerical data, especially for years 2025 through 2028, leading to discrepancies in the totals and impacting the accuracy of some observations. It also misses some contextual details like the Y-axis/X-axis descriptions, chart type, and data source that were present in the reference."
+      },
+      "output": "The chart, titled \"Private and Official Debt Maturity Profile 1/\", illustrates the debt maturity profile in billions of US dollars from 2024 to 2028, categorized into five types: FX Bonds, Peso Bonds, IMF, Other Official, and Bopreal.\n\nThe data presented in the stacked bar chart is as follows:\n\n| Year | FX Bonds (Billions of US$) | Peso Bonds (Billions of US$) | IMF (Billions of US$) | Other Official (Billions of US$) | Bopreal (Billions of US$) | Total (Billions of US$) |\n| :--- | :------------------------- | :--------------------------- | :-------------------- | :------------------------------- | :------------------------ | :---------------------- |\n| 2024 | 2.5                        | 17.5                         | 3                     | 3                                | 1                         | 27                      |\n| 2025 | 9                          | 26                           | 3                     | 4                                | 1                         | 43                      |\n| 2026 | 9                          | 17                           | 3                     | 2                                | 1                         | 32                      |\n| 2027 | 10                         | 16                           | 4                     | 2                                | 4                         | 36                      |\n| 2028 | 12                         | 12                           | 2                     | 3                                | 0                         | 29                      |\n\n**Summary of observations:**\n*   The total debt maturity peaks in 2025 at $43 billion.\n*   Peso Bonds represent the largest share of the debt in 2024 ($17.5 billion) and 2025 ($26 billion).\n*   FX Bonds show a consistent increase from $2.5 billion in 2024 to $12 billion in 2028.\n*   Bopreal debt is $1 billion from 2024 to 2026, increases to $4 billion in 2027, and is zero in 2028.\n*   IMF and Other Official debt components vary across the years, generally making up smaller portions of the total.",
+      "latencyMs": 16065,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 3256,
+        "cost": 0.008338
+      }
+    },
+    {
+      "caseId": "imf-domestic-credit",
+      "description": "IMF report chart: domestic credit",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output provides a decent high-level summary of the chart and its components, including axes and most legend items. It also correctly identifies the general trends, such as the overall decline and the informal sector's sharper drop. However, it suffers from several key inaccuracies and omissions. The data table is significantly less complete than the reference, missing many time points and including inaccuracies for peak values/dates and some specific time point values (e.g., Jul-23 and Jan-24 for public sector, Jan-24 informal sector). A critical legend item's color and precise label were also misidentified. While the overall narrative is acceptable, the numerical precision and completeness of extracted data points are lacking."
+      },
+      "output": "The chart displays the \"Real Wage Index\" from January 2017 to January 2024, with January 2017 set as the base index of 100. The Y-axis represents the index values ranging from 30 to 130, marked in increments of 10. The X-axis represents time, with labels at roughly six-month intervals (e.g., Jan-17, Jul-17, Jan-18, etc.).\n\nThere are four distinct lines representing different sectors:\n*   **Formal sector (private)**: Dark blue line\n*   **Formal sector (public)**: Light blue line\n*   **Formal sector**: Grey-blue line (appears to be an aggregate or a different classification of the formal sector)\n*   **Informal sector**: Light grey line\n\nHere are the approximate index values for each sector at key points:\n\n| Sector                  | Jan-17 (Start) | Peak Value | Peak Date | Jul-23      | Jan-24 (End) | Overall Trend                                                                                                                                                                                                                              |\n| :---------------------- | :------------- | :--------- | :-------- | :---------- | :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Formal sector (private) | ~100           | ~105       | Jan-18    | ~85         | ~70          | After starting at 100, it peaked around 105 in Jan-18, then generally declined with fluctuations, reaching ~85 by Jul-23 and sharply dropping to ~70 by Jan-24.                                                                           |\n| Formal sector (public)  | ~100           | ~102       | Jan-18    | ~80         | ~62-63       | Starting at 100, it peaked around 102 in Jan-18. It then consistently declined, with some minor upticks, falling to ~80 by Jul-23 and sharply to ~62-63 by Jan-24.                                                                          |\n| Formal sector           | ~100           | ~103       | Jan-18    | ~83         | ~68          | Beginning at 100, it reached a peak of ~103 in Jan-18. Subsequently, it followed a downward trend with oscillations, standing at ~83 in Jul-23 before a steep fall to ~68 by Jan-24.                                                         |\n| Informal sector         | ~100           | ~108       | Jan-18    | ~50         | ~37          | After starting at 100, it had the highest initial peak at ~108 in Jan-18. It experienced a consistent and significant decline thereafter, reaching ~50 by Jul-23 and sharply dropping to its lowest point of ~37 by Jan-24, marking the most substantial decrease among all sectors. |\n\nIn summary, all sectors began at an index of 100 in January 2017, experiencing a slight increase into early 2018. However, from early 2018 to January 2024, all real wage indices showed a significant decline, with the Informal sector experiencing the most severe reduction, ending at approximately 37. The Formal sectors, while also declining substantially, maintained higher index values compared to the Informal sector throughout the period, ending around 62-70. All sectors show a sharp decline between July 2023 and January 2024.",
+      "latencyMs": 11460,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 2053,
+        "cost": 0.0053305
+      }
+    },
+    {
+      "caseId": "imf-growth-comparison",
+      "description": "IMF report chart: growth comparison",
+      "status": "pass",
+      "score": {
+        "score": 3.5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output provided a comprehensive description of the chart, including its title, axis ranges, legends, a data table, and a summary of the trends, thus scoring well on completeness and conciseness. However, there were several inaccuracies in the numerical data extracted in the table when compared to the reference, notably for 'Successful' at period -3 (0.0 actual vs 1.0 reference), and a few other minor discrepancies across other data points. This significantly impacted the accuracy and data_extraction scores."
+      },
+      "output": "The chart is titled \"Primary Fiscal Balance (Percent of GDP)\".\n\nThe horizontal axis ranges from -5 to 5, representing time periods (likely years relative to an event).\nThe vertical axis ranges from -2 to 8, representing the Primary Fiscal Balance as a percentage of GDP.\n\nThere are two lines plotted on the chart, distinguished by color:\n*   A dark blue line represents \"Successful\" outcomes.\n*   A light blue line represents \"Not successful\" outcomes.\n\nThe approximate data points for each line at different time periods are as follows:\n\n| Time Period | Successful (Primary Fiscal Balance, % of GDP) | Not successful (Primary Fiscal Balance, % of GDP) |\n| :---------- | :-------------------------------------------- | :------------------------------------------------ |\n| -5          | -1.2                                          | 1.4                                               |\n| -4          | -0.8                                          | 0.8                                               |\n| -3          | 0.0                                           | 1.8                                               |\n| -2          | 3.8                                           | 1.6                                               |\n| -1          | 3.8                                           | 1.0                                               |\n| 0           | 3.9                                           | 1.4                                               |\n| 1           | 5.7                                           | 3.4                                               |\n| 2           | 5.0                                           | 3.1                                               |\n| 3           | 4.1                                           | 2.9                                               |\n| 4           | 1.5                                           | 3.3                                               |\n| 5           | 1.0                                           | 2.4                                               |\n\n**Summary of trends:**\nThe \"Successful\" line shows a primary fiscal balance starting at -1.2% at period -5, rising sharply from period -3 to reach a peak of 5.7% at period 1, and then declining to 1.0% by period 5.\nThe \"Not successful\" line starts at 1.4% at period -5, fluctuates between 0.8% and 1.8% until period 0, then rises to 3.4% at period 1, and generally stays between 2.4% and 3.4% until period 5.",
+      "latencyMs": 8179,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 1452,
+        "cost": 0.003828
+      }
+    },
+    {
+      "caseId": "imf-inflation-comparison",
+      "description": "IMF report chart: inflation comparison",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output successfully extracts chart details like title, axes, and legend. It also attempts to extract data points into a table. However, it completely misses the 'Summary of Trends' section, which is a critical part of interpreting any chart, significantly impacting completeness. Additionally, several of the extracted numerical data points in the table show inaccuracies compared to the reference, affecting accuracy and data extraction scores. While concise in its presentation of available information, the omissions are significant."
+      },
+      "output": "This chart, titled \"'Ex-ante' Real Interest Rate (Percent)\", displays two lines representing \"Successful\" and \"Not Successful\" scenarios over an X-axis ranging from -5 to 5, and a Y-axis representing Percent from -1200 to 400.\n\n**Chart Details:**\n\n*   **Title:** \"'Ex-ante' Real Interest Rate (Percent)\"\n*   **Y-axis:** Labeled \"Percent\", ranges from -1,200 to 400, with major tick marks at -1200, -1000, -800, -600, -400, -200, 0, 200, and 400.\n*   **X-axis:** Shows values from -5 to 5, in increments of 1.\n*   **Legend:**\n    *   Dark Blue line: Successful\n    *   Light Blue line: Not Successful\n\n**Approximate Data Points:**\n\n| X-Axis Value | \"Successful\" (Percent) | \"Not Successful\" (Percent) |\n| :----------- | :--------------------- | :------------------------- |\n| -5           | -350                   | -40                        |\n| -4           | -950                   | -10                        |\n| -3           | -1050                  | -150                       |\n| -2           | -550                   | -250                       |\n| -1           | -200                   | -950                       |\n| 0            | -50                    | -780                       |\n| 1            | 0                      | -150                       |\n| 2            | 0                      | -10                        |\n| 3            | 0                      | -30                        |\n| 4            | 0                      | -10                        |\n| 5            | 0                      | -250                       |",
+      "latencyMs": 10251,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 660,
+        "completionTokens": 1759,
+        "cost": 0.0045955
+      }
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 5,
+    "failed": 3,
+    "errors": 0,
+    "avgScore": 2.69,
+    "avgLatencyMs": 11625,
+    "dimensions": {}
+  }
+}

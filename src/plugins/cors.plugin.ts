@@ -2,24 +2,29 @@ import cors from "@fastify/cors";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 
+const DEFAULT_ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+  "https://dev-lara-admin.up.railway.app",
+];
+
 const parseAllowedOrigins = () => {
+  const allowedOrigins = new Set(DEFAULT_ALLOWED_ORIGINS);
   const configured = process.env.CORS_ORIGIN;
   if (!configured || configured.trim() === "") {
-    return new Set([
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:5174",
-      "http://localhost:4173",
-      "http://127.0.0.1:4173",
-    ]);
+    return allowedOrigins;
   }
-  return new Set(
-    configured
-      .split(",")
-      .map((origin) => origin.trim())
-      .filter((origin) => origin.length > 0),
-  );
+  for (const origin of configured.split(",")) {
+    const normalizedOrigin = origin.trim();
+    if (normalizedOrigin.length > 0) {
+      allowedOrigins.add(normalizedOrigin);
+    }
+  }
+  return allowedOrigins;
 };
 
 const isLoopbackOrigin = (origin: string) => {

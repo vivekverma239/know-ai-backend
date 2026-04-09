@@ -47,11 +47,7 @@ const resolveAdminSecretsFile = () => {
   return process.env.ADMIN_SECRETS_FILE ?? "data/admin-secrets.json";
 };
 
-const loadAdminUsers = async () => {
-  const filePath = path.resolve(process.cwd(), resolveAdminSecretsFile());
-  const raw = await readFile(filePath, "utf8");
-  const parsed = JSON.parse(raw) as unknown;
-
+const parseAdminUsersPayload = (parsed: unknown) => {
   if (
     typeof parsed !== "object" ||
     parsed === null ||
@@ -59,7 +55,7 @@ const loadAdminUsers = async () => {
     !Array.isArray(parsed.users) ||
     parsed.users.length === 0
   ) {
-    throw new Error("admin-secrets file must be an object with a non-empty users array.");
+    throw new Error("admin-secrets config must be an object with a non-empty users array.");
   }
 
   const users = parsed.users.map((entry) => {
@@ -79,10 +75,26 @@ const loadAdminUsers = async () => {
 
   const uniqueUserIds = new Set(users.map((user) => user.userId));
   if (uniqueUserIds.size !== users.length) {
-    throw new Error("admin-secrets file contains duplicate userId values.");
+    throw new Error("admin user config contains duplicate userId values.");
   }
 
   return users;
+};
+
+const loadAdminUsers = async () => {
+  const adminUsersJson = process.env.ADMIN_USERS_JSON?.trim();
+  if (adminUsersJson) {
+    const parsed = JSON.parse(adminUsersJson) as unknown;
+    if (Array.isArray(parsed)) {
+      return parseAdminUsersPayload({ users: parsed });
+    }
+    return parseAdminUsersPayload(parsed);
+  }
+
+  const filePath = path.resolve(process.cwd(), resolveAdminSecretsFile());
+  const raw = await readFile(filePath, "utf8");
+  const parsed = JSON.parse(raw) as unknown;
+  return parseAdminUsersPayload(parsed);
 };
 
 const getAdminConfig = async () => {
@@ -102,7 +114,9 @@ const getAdminConfig = async () => {
     };
   } catch (error) {
     throw new Error(
-      `Failed to load admin secrets from ${resolveAdminSecretsFile()}: ${
+      `Failed to load admin secrets from ${
+        process.env.ADMIN_USERS_JSON ? "ADMIN_USERS_JSON" : resolveAdminSecretsFile()
+      }: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

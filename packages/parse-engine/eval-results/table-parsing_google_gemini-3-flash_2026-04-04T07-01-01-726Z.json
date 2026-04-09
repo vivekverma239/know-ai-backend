@@ -1,0 +1,131 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-3-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T07:01:01.725Z",
+  "results": [
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output was not provided, so a proper evaluation cannot be performed. Please provide the actual output to be evaluated against the reference."
+      },
+      "output": "",
+      "latencyMs": 24087,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1119,
+        "completionTokens": 4092,
+        "cost": 0.0128355
+      }
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output table suffers from significant issues. Structurally, it is missing two entire data rows compared to the reference, and it uses a non-standard `[colspan=X]` syntax for merged cells, which would prevent it from rendering correctly as a standard Markdown table. Data accuracy is compromised by these missing rows and the presence of extraneous characters ('............................') in several row labels. Header detection correctly identifies the hierarchical headers and their general span, but again, the non-standard `colspan` syntax hinders its effectiveness. Formatting is poor due to the non-standard Markdown syntax and the added extraneous characters."
+      },
+      "output": "| | [colspan=3] **Year ended 31 December** | [colspan=2] **Six months ended 30 June** |\n| :--- | :---: | :---: | :---: | :---: | :---: |\n| | **2020** | **2021** | **2022** | **2022** | **2023** |\n| | [colspan=3] *(£ million)* | [colspan=2] *(unaudited)* |\n| Net cash inflow/(outflow) from operating activities ............................ | 1,041 | 2,854 | (1,185) | (73) | 182 |\n| Net cash (outflow)/inflow from investing activities ............................ | (956) | (2,250) | (402) | (620) | 582 |\n| Net cash outflow from financing activities ............................ | (81) | (29) | (25) | (13) | (12) |\n| **Net increase/(decrease) in cash and cash equivalents**............................ | 4 | 575 | (1,612) | (706) | 752 |\n| **Cash and cash equivalents at start of period**............................ | 2,989 |",
+      "latencyMs": 22505,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1119,
+        "completionTokens": 4096,
+        "cost": 0.0128475
+      }
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is largely incorrect and incomplete. It fails significantly on structural accuracy due to incorrect column counts, misaligned headers, and the omission of most data rows. The use of `[colspan=X]` is not standard markdown table syntax, leading to poor formatting. Data accuracy is very low as most of the table's content is missing. While some header text is identified, its placement and grouping are incorrect."
+      },
+      "output": "| [colspan=2] | Adjustments [colspan=3] | |\n| :--- | :---: | :---: | :---: | :---: | :---: |\n| | **As at 30 June 2023<sup>(1)</sup>** | **Net proceeds from the Firm Placing<sup>(2)</sup>** | **Net proceeds from the issuance of the Cash New MREL Notes<sup>(3)</sup>** | **Issuance of the New Tier 2 Notes and the Non-Cash New MREL Notes<sup>(4)</sup>** | **Pro Forma Group** |\n| | **(unaudited) (£ million) [colspan=5]** | | | | |\n| **Total assets**.................................................... | ",
+      "latencyMs": 22780,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1163,
+        "completionTokens": 4093,
+        "cost": 0.0128605
+      }
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is severely truncated, containing only a small fraction of the reference table's rows and data. While the header detection is perfect, the structural accuracy and data accuracy are very low due to the missing content. The use of `[rowspan=X]` is also non-standard for Markdown tables, making the formatting score low."
+      },
+      "output": "| Factor | Sub-factor | Sub-factor Weighting | Metric / Sub-sub-factor | Metric / Sub-sub-factor Weighting |\n| :--- | :--- | :--- | :--- | :--- |\n| [rowspan=5] ECONOMIC STRENGTH | [rowspan=2] Growth Dynamics | 35% | Average Real GDP Growth | 25% |\n| | | | MAD Volatility in Real GDP Growth | 10% |\n| | Scale of the Economy | 30% | Nominal GDP (US$ bn) | 30% |\n| | National Income | 35% | GDP per Capita (PPP, Int. USD) | 35% |\n| | Adjustment to Factor Score | ",
+      "latencyMs": 23782,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1151,
+        "completionTokens": 4090,
+        "cost": 0.0128455
+      }
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is extremely incomplete, only providing two header rows and stopping abruptly. It incorrectly interprets 'Factor: Economic Strength' as a merged table cell rather than an external heading. The `[colspan=23]` syntax is not standard markdown. Only a few column headers are present, and one is slightly incorrect ('Metric Weight' vs 'Weight'). No data rows are present. Overall, it's a very poor attempt at parsing the table."
+      },
+      "output": "| Factor: Economic Strength [colspan=23] |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| Sub-factor | Metric | Metric Weight | aaa | aa1 | aa2 | aa3 | a1 | a2 | a3 | baa1 | baa2 | baa3 | ba1 | ba2 | ba3 | b1 | b2 | b3 | caa1 | caa2 | caa3 | ca |\n| Growth Dynamics",
+      "latencyMs": 24024,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1163,
+        "completionTokens": 4090,
+        "cost": 0.0128515
+      }
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The data accuracy is very poor, with '●' indicators frequently incorrect or missing in most rows. While the structural grouping of rows is conceptually correct, the use of explicit '[rowspan=X]' syntax for merged cells diverges from the reference's implicit merging approach. Header detection is perfect, but the overall formatting also deviates from the reference's style for merged cells. Due to major data errors and structural/formatting discrepancies, the overall quality is low."
+      },
+      "output": "| Factor | Sub-factor | Environmental IPS | Social IPS | Governance IPS |\n| :--- | :--- | :---: | :---: | :---: |\n| [rowspan=3] ECONOMIC STRENGTH | Growth Dynamics | ● | ● | ● |\n| | Scale of the Economy | | | |\n| | National Income | | ● | |\n| [rowspan=2] INSTITUTIONS AND GOVERNANCE STRENGTH | Quality of Institutions | | ● | ● |\n| | Policy Effectiveness | | ● | ● |\n| [rowspan=2] FISCAL STRENGTH | Debt Burden | ● | ● | |\n| | Debt Affordability | | ● | ● |\n| [rowspan=4] SUSCEPTIBILITY TO EVENT RISK | Political Risk | ● | ● | ● |\n| | Government Liquidity Risk | | | ● |\n| | Banking Sector Risk | | | ● |\n| | External Vulnerability Risk | ● | | |",
+      "latencyMs": 18828,
+      "usage": {
+        "model": "google/gemini-3-flash",
+        "promptTokens": 1163,
+        "completionTokens": 3341,
+        "cost": 0.0106045
+      }
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "errors": 0,
+    "avgScore": 1.33,
+    "avgLatencyMs": 22668,
+    "dimensions": {}
+  }
+}

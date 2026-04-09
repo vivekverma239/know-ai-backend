@@ -50,6 +50,13 @@
       "when": 1771420000000,
       "tag": "0006_add_btree_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775355996496,
+      "tag": "0007_jittery_ultimates",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,302 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-2.5-flash",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T06:51:08.600Z",
+  "results": [
+    {
+      "caseId": "metro-nested-table",
+      "description": "Metro Bank strategy slide with nested commercial pipeline table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output provided is a completely different table from the reference table. It contains different headers, different data, different number of rows and columns, and uses non-standard markdown for merged cells (colspan, rowspan) that were not present in the reference. There is no match in structure, data, or headers. The formatting using `[colspan]` and `[rowspan]` is also not standard markdown table syntax."
+      },
+      "output": "| Delivering mid-to-high teen RoTE by 2027 [colspan=4] |\n|---|---|---|---|\n| Cost Discipline [rowspan=3] | M Continued cost discipline with £80 million of annualised run-rate savings on track to be delivered by Q4'24 | [colspan=2] |\n| | M Reduced colleague numbers by > 1,000 or c.22% of FTE | [colspan=2] |\n| | M Repositioned our store and call centre propositions | [colspan=2] |\n| Asset Rotation [rowspan=10] | M £2.5 billion mortgage portfolio sale accelerates balance sheet repositioning | [colspan=2] |\n| |",
+      "latencyMs": 22128,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "imf-balance-of-payments",
+      "description": "IMF: Balance of payments projection table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output fails significantly across all dimensions. The structural accuracy is poor due to the use of non-standard markdown syntax for merged cells ([rowspan=2], [colspan=2]) which would not render as a table. The table is also severely incomplete. Data accuracy is very low as most of the data is missing, and what little is present is incorrectly structured relative to the reference. Header detection is poor because the multi-level headers are not correctly represented in standard markdown, and the attempt to use custom syntax is invalid. Formatting is also poor because the output is not valid standard markdown for a table."
+      },
+      "output": "Argentina: Selected Economic Indicators, 2022–25\n| [rowspan=2]                                   | 2022 [rowspan=2]      | 2023 [colspan=2]    | 2024 [colspan=2]    | 2025 [colspan=2]    |\n|:----------------------------------------------|:----------------------|:--------------------|:--------------------|:--------------------|:--------------------|:--------------------|:--------------------|\n|                                               |                       | 7th Rev             | 8th Rev             | 7th Rev             | 8th Rev             | 7th Rev             | 8th Rev             |\n| GDP growth (avg, %)                           | ",
+      "latencyMs": 21146,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-fiscal-outlook",
+      "description": "IMF: Fiscal outlook comparison table (Dec-Apr 2022/23 vs 2023/24)",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is missing a significant portion of the table, specifically the entire \"Cash Based\" section. It also includes non-table content (titles) as part of the table structure, and uses non-standard `[colspan=X]` syntax for merged cells, which would not render correctly in standard markdown. While some of the extracted data is accurate, the extensive missing information and structural/formatting errors lead to a low overall score."
+      },
+      "output": "| Argentina: Trade Balance Developments [colspan=4] |\n| (in billions of U.S. dollars) [colspan=4] |\n|:---|:---|:---|:---|\n| | Dec-Apr [colspan=2] | Diff. |\n| | 2022/23 | 2023/24 | |\n|:---|:---:|:---:|:---:|\n| Accrual Based [colspan=4] |\n| Goods Trade Balance | -0.5 | 7.2 | 7.6 |\n| Goods Exports | 27.9 | 29.2 | 1.3 |\n| Goods Imports | 28.4 | 22.0 | -",
+      "latencyMs": 23526,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-financial-indicators",
+      "description": "IMF: Financial soundness indicators table (2015-2023)",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely truncated, missing the vast majority of the table rows and data. It also introduces a top-level merged title row which is not present in the reference. While the data for the few extracted rows is mostly accurate, the incompleteness and structural deviations lead to a low score. The last column header text also differs slightly, and non-standard markdown (HTML entities for indentation) is used."
+      },
+      "output": "| Net International Investment Position, 2015-2023 (in billions of U.S. dollars) [colspan=5] |\n|:---|---:|---:|---:|---:|\n| | end-2015 | end-2019 | end-2023 | Diff 2019/2023 |\n| Overall NIIP | 56.5 | 113.2 | 109.0 | -4.2 |\n| GG NIIP | -62.1 | -128.1 | -131.2 | -3.1 |\n| &nbsp;&nbsp;&nbsp;&nbsp;Reserve Assets | 25.6 | 4",
+      "latencyMs": 19897,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-external-financing",
+      "description": "IMF: External financing requirements table (2024-2027)",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The output table perfectly matches the structural integrity, data values, and header detection of the reference. The only minor deviation is the addition of bolding and indentation to some row labels, which, while well-formed markdown, is not present in the reference. This leads to a slightly lower formatting score, but the core content and structure are excellent."
+      },
+      "output": "|                               | 2024 1/ | 2025 | 2026 | 2027 | Total |\n|:------------------------------|:--------|:-----|:-----|:-----|:------|\n| **Reprofiled FX Backlog Due** | **8.2** | **2.0** | **2.0** | **5.0** | **17.2** |\n| &nbsp;&nbsp;Legacy imports    | 1.1     | 1.4  | 0.8  | 5.0  | 8.3   |\n| &nbsp;&nbsp;&nbsp;&nbsp;BOPREAL 1 |         |      |      | 5.0  | 5.0   |\n| &nbsp;&nbsp;&nbsp;&nbsp;BOPREAL 2 | 1.0     | 1.0  |      |      | 2.0   |\n| &nbsp;&nbsp;&nbsp;&nbsp;BOPREAL 3 | 0.1     | 0.4  | 0.8  |      | 1.3   |\n| &nbsp;&nbsp;Schedule for new imports | 7.1     |      |      |      | 7.1   |\n| &nbsp;&nbsp;Dividends through BOPREAL 3 | 0.0     | 0.6  | 1.2  |      | 1.8   |",
+      "latencyMs": 15959,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 3069,
+        "cost": 0.0086976
+      }
+    },
+    {
+      "caseId": "imf-selected-economic-indicators",
+      "description": "IMF: Selected economic indicators comprehensive table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is severely lacking in all aspects. The table structure is fundamentally incorrect, with a different number of columns and misinterpretation of merged cells (using non-standard `colspan` syntax incorrectly). The output is also incomplete, cutting off after the first data point of the first data row. Header detection is poor as the multi-level headers are not correctly parsed or aligned, and the formatting uses non-standard markdown extensions while still being structurally flawed and truncated."
+      },
+      "output": "| | 2022 | SR (Jan.) | SR (Jan.) Proj. [colspan=2] | SR (Jan.) | Proj. | 2026 | 2027 | 2028 | 2029 |\n|---|---|---|---|---|---|---|---|---|---|---|\n| | | 2023 | 2023 | 2024 | 2025 | 2025 | | | | |\n| [colspan=11] (Annual percentage changes unless otherwise indicated) |\n| **National Income and Prices** | | | | | | | | | | |\n| GDP at constant prices | 5.0 | -",
+      "latencyMs": 20169,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-fiscal-operations",
+      "description": "IMF: Federal government fiscal operations table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely truncated, missing almost the entire table. Furthermore, it attempts to represent merged cells using non-standard `[colspan=X]` syntax, which is not valid markdown for table merging. The top-level headers are also combined incorrectly (e.g., 'SR (Jan.) Proj.') compared to the reference. Due to truncation and invalid formatting, all dimensions score very low."
+      },
+      "output": "```markdown\n| | | SR (Jan.) [colspan=1] | SR (Jan.) Proj. [colspan=2] | SR (Jan.) [colspan=2] | Proj. [colspan=5] |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| | 2022 | 2023 | 2023 | 2024 | 2024 | 2025 | 2025 | 2026 | 2027 | 2028 | 2029 |\n| | (in billions of Argentine pesos) [colspan=11] |\n|**Revenues**|**14,8",
+      "latencyMs": 18066,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-financial-soundness",
+      "description": "IMF: Financial soundness indicators multi-year table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is severely incomplete, only showing a tiny fraction of the expected rows. The unit row was misinterpreted with non-standard markdown syntax (`[colspan=7]`) and the 'Total Gross Federal Government Debt' row included unnecessary bolding and a truncated data value for 2023. This leads to very low scores across all dimensions due to the fundamental failure to produce a complete and accurate table."
+      },
+      "output": "| | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 |\n| :------------------------------------------------------ | :----- | :----- | :----- | :----- | :----- | :----- | :----- |\n| (in billions of U.S. dollars) [colspan=7] | | | | | | | |\n| **Total Gross Federal Government Debt** | **320.9** | **332.2** | **323.4** | **335.7** | **364.5** | **394.1** | **36",
+      "latencyMs": 19892,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-bop-detailed",
+      "description": "IMF: Detailed balance of payments table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is highly incomplete, containing only the first few rows of the table. While the detected values for the few available cells are correct, the vast majority of the data is missing. The structural integrity is severely compromised due to the missing rows. The header detection is partially correct, identifying the main categories and years, but the use of `[colspan=X]` is not standard markdown and does not match the reference's approach to implicitly merging header cells. Overall, the output is largely incorrect and missing essential information."
+      },
+      "output": "| | In millions of US dollars [colspan=6] | In percent of GDP [colspan=6] |\n|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n| | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 |\n| **Net IIP** | **65,630** | **113,155**",
+      "latencyMs": 18870,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-external-financing-detailed",
+      "description": "IMF: Detailed external financing requirements",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely incomplete, providing only the title and header rows of the table. It fails to extract any of the actual data rows or row headers. The markdown formatting uses non-standard extensions like `[colspan]` and `[rowspan]` which are not present in the reference and make the markdown unparseable by standard tools. Header detection is poor, missing all row labels and misinterpreting the 'Total' column header structure. Overall, it's a very poor match."
+      },
+      "output": "| Table 12. Argentina: Indicators of Fund Credit, 2024–32 [colspan=11] |\n| (In Millions of SDRs, Unless Otherwise Specified) [colspan=11] |\n|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|\n| | 2024 | 2025 | 2026 | 2027 | 2028 | 2029 | 2030 | 2031 | 2032 | Total [rowspan=2] |\n| | | | | | | | | | | (2024-2032) |",
+      "latencyMs": 19236,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "imf-reviews-purchases",
+      "description": "IMF: Schedule of reviews and purchases table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output is severely truncated, missing most of the table rows. The markdown formatting is invalid due to the use of non-standard 'rowspan' and 'colspan' syntax, which is not supported in standard markdown tables. Merged cells are not handled correctly. While some data within the partial table is accurate, the overall structural and formatting issues, combined with truncation, lead to a very low score."
+      },
+      "output": "Table 13. Argentina: Schedule of Reviews and Purchases\n| Available on or after[rowspan=2] | Original Amounts[colspan=2] | Conditions 1/[rowspan=2] |\n|---|---|---|---|\n| | SDR millions | % Quota | |\n|---|---|---|---|\n| March 25, 2022 | 7,000 | 220 | Approval of Arrangement |\n| May 10, 2022 | 3,000 | 94 | First Review and end-March 2022 performance criteria |\n| September 10, 2022 | 3,000 | 94 | Second Review and end",
+      "latencyMs": 21912,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 3417,
+        "completionTokens": 4092,
+        "cost": 0.0112551
+      }
+    },
+    {
+      "caseId": "metro-h1-results",
+      "description": "Metro Bank H1'24 results: 8 key financial metrics across 3 periods",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is a completely incorrect and incomplete interpretation of the table. It misidentifies row labels as column headers with merged cells, fails to extract any data, and cuts off abruptly. There is no structural or data accuracy, and header detection is fundamentally flawed."
+      },
+      "output": "| [colspan=3] Customer deposits | [colspan=3] Liquidity coverage ratio | [colspan=3] Total capital + MREL[1] | [colspan=3] Net fee and other income |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 | H1 2023 | H2 2023 | H1 2024 |\n| 1",
+      "latencyMs": 20091,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "metro-upgraded-guidance",
+      "description": "Metro Bank upgraded guidance: RoTE, NIM, and cost:income projections",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output completely fails to match the reference. It attempts to combine multiple distinct tables into one malformed structure, using non-standard markdown `colspan` within content cells. This results in incorrect structural accuracy, significant data loss (only some data from the first reference table is present, and it's misplaced), and a total failure in header detection. The formatting is also poor due to the incorrect use of markdown table syntax."
+      },
+      "output": "| [colspan=3] Profitability during Q4'24 |\n| [colspan=3] RoTE guidance increased |\n|:--------------------------|:-------------|:------------------------------|\n| **2025** | **2026** | **2027+** |\n| mid-to-upper single digit | double digit | mid-to-upper teens thereafter |\n\n| [colspan=6] Driven by: |\n|:-----------------------------------------------------|:----------|:----------|:-------------------------------------------|:----------|:----------|\n| [colspan=3] Continued NIM expansion driven by asset rotation and CoD | [colspan=3] Continued cost discipline and control |\n| [colspan=3] NIM approaching",
+      "latencyMs": 21159,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "metro-mortgages",
+      "description": "Metro Bank mortgage overview: LTV splits, geographical distribution, IFRS9 staging",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is severely incomplete and contains numerous errors in the parts that are present. Major sections (ECL coverage, geographical split, IFRS9 balance) are entirely missing. For the sections that are present, there are significant structural inaccuracies (e.g., bullet points converted to tables, truncated tables, incorrect row counts), widespread data inaccuracies (incorrect percentages, completely wrong data sets), and header detection issues (incorrect headers, missing headers). The overall quality is very poor."
+      },
+      "output": "| Retail mortgage portfolio (1H24) | Value  |\n| :------------------------------- | :----- |\n| Owner Occupied                   | 75%    |\n| Buy-to-let                       | 25%    |\n| Total                            | £7.5bn |\n\n| New lending loan-to-value % | FY23 | 1H24 |\n| :-------------------------- | :--- | :--- |\n| Percentage                  | 63%  | 68%  |\n\n| Retail mortgages loan-to-value (Average retail LTV: 61% at 1H24 vs 58% at FY23) | < 50% | 51-60",
+      "latencyMs": 21019,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    },
+    {
+      "caseId": "metro-balance-sheet",
+      "description": "Metro Bank balance sheet: capital accretion, provisions, portfolio composition",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The output has severe structural issues, completely misrepresenting tables, inverting rows and columns in one, and creating a table from prose in another. Entire sections (two lists) from the reference are completely missing. Data accuracy is low due to incorrect values and omissions. Header detection is poor as main titles are missing, and many column/row headers are either missing or misused. While the markdown syntax for the generated tables is valid, the overall structure and content interpretation are highly inaccurate."
+      },
+      "output": "| | H1 23 | H2 23 | H1 24 |\n|---|---|---|---|\n| MREL | 18.1% | 22.0% | 22.2% |\n| CET1 | 10.4% | 13.1% | 12.9% |\n| Impact of Mortgage portfolio sale (post completion[1]) | | | 23.4% |\n\n| FY 2023 provision | Portfolio movements | Single name movements | Post model overlays | 1H24 |\n|---|---|---|---|---|\n| 199 | 6 | (5) | (4) | 196 |\n\n| Low risk balance sheet |\n|---|\n| Year-on-year MREL ratio increased + c.530bps (inc. post mortgage portfolio sale completion) |\n| 20bps MREL ratio accretion from 1 Jan'24",
+      "latencyMs": 23179,
+      "usage": {
+        "model": "google/gemini-2.5-flash",
+        "promptTokens": 1869,
+        "completionTokens": 4092,
+        "cost": 0.0107907
+      }
+    }
+  ],
+  "summary": {
+    "total": 15,
+    "passed": 1,
+    "failed": 14,
+    "errors": 0,
+    "avgScore": 1.4,
+    "avgLatencyMs": 20417,
+    "dimensions": {}
+  }
+}

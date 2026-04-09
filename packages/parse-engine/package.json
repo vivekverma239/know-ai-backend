@@ -9,6 +9,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./workflows/upstash": {
+      "import": "./dist/workflows/upstash.js",
+      "types": "./dist/workflows/upstash.d.ts"
     }
   },
   "files": [

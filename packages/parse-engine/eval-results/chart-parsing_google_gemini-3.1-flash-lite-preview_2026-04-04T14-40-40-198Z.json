@@ -1,0 +1,283 @@
+{
+  "task": "chart-parsing",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "judgeModel": "google/gemini-2.5-flash",
+  "timestamp": "2026-04-04T14:40:40.190Z",
+  "results": [
+    {
+      "caseId": "imf-fiscal-chart",
+      "description": "IMF report chart: fiscal chart",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent data extraction and accuracy for all numerical values and chart labels. All key elements like the title, axis labels, legend, and sources are correctly identified. The data table values are remarkably accurate, with minor, acceptable estimation differences from the reference (e.g., 43,000 vs 42,500 and 800 vs 1,000), which are well within visual interpretation tolerances. The main drawback is the lack of an 'Overview' or summary section that describes the chart's trends, as provided in the reference. The title is also split into 'Chart Title' and 'Subtitle', which is a minor structural difference but does not omit information. Overall, a very strong performance in data capture."
+      },
+      "output": "### Chart Information\n\n*   **Chart Title:** Peso Debt Service\n*   **Subtitle:** (ARS billions)\n*   **Chart Type:** Clustered Bar Chart\n*   **Axis Labels:**\n    *   **Y-axis:** 0 to 80,000 (ARS billions)\n    *   **X-axis:** Years (2024–2028)\n*   **Legend:**\n    *   Pre-Exchange (Light Blue)\n    *   Post-Exchange (Dark Blue)\n*   **Sources:** MECON and Fund staff calculations.\n\n### Data Table\n*Note: Values are estimated based on visual interpretation of the chart bars.*\n\n| Year | Pre-Exchange (ARS billions) | Post-Exchange (ARS billions) |\n| :--- | :--- | :--- |\n| 2024 | ~59,000 | ~16,000 |\n| 2025 | ~24,000 | ~43,000 |\n| 2026 | ~6,000 | ~21,000 |\n| 2027 | ~4,000 | ~16,000 |\n| 2028 | ~800 | ~10,000 |",
+      "latencyMs": 3434,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2384,
+        "completionTokens": 293,
+        "cost": 0.0010355
+      }
+    },
+    {
+      "caseId": "imf-private-official-debt-maturity",
+      "description": "IMF report chart: private official debt maturity",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output is missing critical information compared to the reference. It completely omitted the 'Estimated Data Values' table, which is a major component of the reference's expected output for data extraction. The 'Sources' information was also entirely missing. While the information it did extract (title, axes, legend, and general trend descriptions) is largely accurate, the significant omissions severely impact its completeness and data extraction scores. The model's explicit statement that it cannot provide precise data points directly contradicts the expectation set by the reference to estimate values."
+      },
+      "output": "Based on the provided image, here is the extraction of the chart information:\n\n### Chart Details\n*   **Title:** Economic Activity\n*   **Subtitle:** (Percent, y/y; 3m m.a.)\n*   **Chart Type:** Multi-line chart (dual-axis)\n*   **Legend Entries:** \n    *   Total (Dark blue line)\n    *   Ex. Agr (Medium blue line)\n    *   Agr (RHS) (Light blue line)\n\n### Axes Information\n*   **Left Axis (Primary):** Percent (-10 to 30)\n*   **Right Axis (Secondary):** Percent (-40 to 40) — *Applies to the \"Agr (RHS)\" series*\n*   **X-Axis (Time):** Date range from Nov-20 to Mar-24\n\n### Data Interpretation\nThe chart tracks three indicators of economic activity. Because this is a line chart without a provided data table, specific numerical values for individual data points are approximate. \n\n| Trend Summary |\n| :--- |\n| **Total & Ex. Agr:** These two series track closely together. They both show a significant spike around early 2021 (reaching approx. 20%), a steady decline through 2022, and a sharp drop into negative territory mid-2023, bottoming out before showing a slight upward trend toward Mar-24. |\n| **Agr (RHS):** This series follows a different scale. It fluctuates between approximately -40% and 15%. It shows a significant drop in mid-2023 (dipping to the -40% level) and a strong recovery thereafter, ending near 10-15% by Mar-24. |\n\n*Note: As this is a continuous line chart, precise data points for every interval would require the underlying dataset. The observations above summarize the visual performance of the plotted lines.*",
+      "latencyMs": 4149,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2362,
+        "completionTokens": 420,
+        "cost": 0.0012205
+      }
+    },
+    {
+      "caseId": "imf-external-debt-composition",
+      "description": "IMF report chart: external debt composition",
+      "status": "fail",
+      "score": {
+        "score": 2,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The actual output captures the basic chart metadata (title, subtitle, axes, legend) fairly well. However, it completely misses the crucial \"Summary of Trends\" section, which is a significant omission for a chart analysis. More critically, the data extraction for the table has substantial inaccuracies, especially for the later months of the first two series. Several values are off by 80-120 units, and the model incorrectly extends lines beyond their visible end points in the source image, leading to 'hallucinated' data points for months not covered by those series. This severely impacts accuracy and completeness."
+      },
+      "output": "### Chart Details\n\n*   **Chart Title:** Evolution of Exchange Rate Expectations\n*   **Subtitle:** (ROFEX future contracts, AR$/US$)\n*   **Chart Type:** Line Chart\n*   **Axis Labels:** \n    *   **Y-axis:** Exchange rate values from 800 to 2000 (AR$/US$)\n    *   **X-axis:** Time periods from Jan-24 to Jan-25\n*   **Legend Entries:** \n    *   end-Dec 2023 (Light blue line)\n    *   end-Feb 2024 (Medium blue line)\n    *   end-May 2024 (Dark blue line)\n\n### Data Representation\nAs this is a trend-based line chart without explicit data labels for every point, the values are approximated based on the visual progression along the axes:\n\n| Time Period | end-Dec 2023 | end-Feb 2024 | end-May 2024 |\n| :--- | :--- | :--- | :--- |\n| **Jan-24** | ~850 | - | - |\n| **Feb-24** | ~900 | - | - |\n| **Mar-24** | ~1000 | ~880 | - |\n| **Apr-24** | ~1100 | ~950 | - |\n| **May-24** | ~1200 | ~1000 | ~920 |\n| **Jun-24** | ~1280 | ~1100 | ~960 |\n| **Jul-24** | ~1360 | ~1180 | ~1000 |\n| **Aug-24** | ~1440 | ~1260 | ~1040 |\n| **Sep-24** | ~1520 | ~1340 | ~1080 |\n| **Oct-24** | ~1600 | ~1420 | ~1120 |\n| **Nov-24** | ~1700 | ~1500 | ~1160 |\n| **Dec-24** | ~1800 | ~1580 | ~1200 |\n| **Jan-25** | - | ~1680 | ~1250 |",
+      "latencyMs": 6195,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2384,
+        "completionTokens": 555,
+        "cost": 0.0014285
+      }
+    },
+    {
+      "caseId": "imf-embig-sovereign-spread",
+      "description": "IMF report chart: embig sovereign spread",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is well-structured and captures most of the essential information from the chart. It correctly identifies the title, axis labels, legend, and provides a good summary of the data, including accurate identification of the extreme outliers. However, it missed extracting the axis ranges and increments, which are important contextual details. There was also a minor discrepancy in one of the yield ranges (reporting +5% instead of a more accurate +2% for the upper bound of Dec 23-May 24 yields). Despite these minor shortcomings, the core data extraction and overall understanding of the chart are very good."
+      },
+      "output": "### Chart Overview\n\n*   **Chart Title:** Maturity and Yields of ARS (CER) Debt Issuances\n*   **Chart Type:** Scatter Plot\n*   **Axis Labels & Units:**\n    *   **X-axis:** Maturity (days)\n    *   **Y-axis:** Yields (percent)\n*   **Legend:**\n    *   Light Blue: Sept-Nov 23\n    *   Dark Blue: Dec 23-May 24\n\n### Data Extraction Summary\nDue to the nature of the scatter plot, specific coordinates for each data point cannot be extracted with 100% precision without the raw dataset. However, the data can be grouped by the observed clusters and individual outliers:\n\n| Series | Observation Cluster/Range | Approx. Y-Yield Range |\n| :--- | :--- | :--- |\n| **Sept-Nov 23 (Light Blue)** | 50 – 550 days | ~ -10% to +10% |\n| **Dec 23-May 24 (Dark Blue)** | 100 – 1250 days | ~ -110% to +5% |\n\n**Key Observations/Outliers:**\n*   **Dec 23-May 24 (Dark Blue) Outliers:**\n    *   One extreme negative value at approximately 100 days maturity with a yield of ~ -85%.\n    *   One extreme negative value at approximately 120 days maturity with a yield of ~ -110%.\n*   **General Trend:** The Sept-Nov 23 data points are clustered primarily between 0 and 550 days with yields largely concentrated between -10% and +10%. The Dec 23-May 24 data points show a broader distribution in maturity (extending to ~1250 days) and significant negative yields at shorter maturities.",
+      "latencyMs": 5608,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2355,
+        "completionTokens": 415,
+        "cost": 0.00121125
+      }
+    },
+    {
+      "caseId": "imf-reserve-assets",
+      "description": "IMF report chart: reserve assets",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates high accuracy in data extraction, often providing more precise estimations than the reference. The chart title, axes, and legend information are correctly identified. However, the output is less complete in structure compared to the reference, as it omits the 'Observations' and 'Sources' sections that provide valuable context and interpretation. It also missed the '1/' from the chart title. Despite these omissions, the core data and chart metadata are captured very well."
+      },
+      "output": "### Chart Information\n*   **Chart Title:** Private and Official Debt Maturity Profile 1/\n*   **Subtitle:** (Billions of US$)\n*   **Chart Type:** Stacked Bar Chart\n*   **X-Axis Labels:** 2024, 2025, 2026, 2027, 2028\n*   **Y-Axis Labels:** 0, 10, 20, 30, 40, 50, 60, 70 (Unit: Billions of US$)\n*   **Legend Entries:** FX Bonds, Peso Bonds, IMF, Other Official, Bopreal\n\n### Data Table\nThe following data has been estimated based on the visual representation of the stacked bar chart. Values represent the approximate vertical segment height for each category per year.\n\n| Year | FX Bonds | Peso Bonds | IMF | Other Official | Bopreal | **Total (Approx)** |\n| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n| **2024** | 2.5 | 17 | 3 | 3 | 1.5 | ~27 |\n| **2025** | 9 | 25 | 3.5 | 5 | 2 | ~44.5 |\n| **2026** | 9 | 12.5 | 4.5 | 5 | 1 | ~32 |\n| **2027** | 10 | 9 | 7.5 | 4.5 | 5 | ~36 |\n| **2028** | 12 | 3 | 9.5 | 4.5 | 0 | ~29 |",
+      "latencyMs": 5250,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2389,
+        "completionTokens": 402,
+        "cost": 0.00120025
+      }
+    },
+    {
+      "caseId": "imf-domestic-credit",
+      "description": "IMF report chart: domestic credit",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model accurately identified the chart title, subtitle, axis ranges, and all legend entries with their corresponding visual cues (colors). It also correctly observed the major trends, such as the universal decline in wages, the informal sector experiencing the most significant drop, and the sharp decline across all sectors towards the end of the series. However, its 'data_extraction' score suffers because it explicitly stated it could not provide individual coordinate points, while the reference successfully approximated numerical index values for various time periods from the chart lines. This omission significantly impacts its completeness from a data extraction perspective. Despite this, the accuracy of the information presented and the clear structure of the output are excellent."
+      },
+      "output": "Based on the chart provided, here is the extracted information:\n\n*   **Chart Title:** Real Wage Index\n*   **Subtitle:** (Index, Jan 2017=100)\n*   **Chart Type:** Multi-line chart\n*   **Axis:**\n    *   **Y-axis:** Numeric scale from 30 to 130\n    *   **X-axis:** Chronological timeline from Jan-17 to Jan-24\n*   **Legend Entries:**\n    *   Formal sector (private) (dark blue line)\n    *   Formal sector (public) (light blue line)\n    *   Formal sector (medium blue line)\n    *   Informal sector (grey line)\n\n### Data Observations\nThe chart depicts the trend of real wages over time using an index where January 2017 = 100. Key visual trends include:\n*   **Starting Point:** All sectors begin at approximately 100 in Jan 2017.\n*   **Trend:** All sectors show a long-term decline in real wages over the seven-year period.\n*   **Sector Performance:** \n    *   The \"Informal sector\" (grey line) shows the most significant decline, ending significantly lower than the formal sectors (roughly in the 35–40 range by Jan 2024).\n    *   The \"Formal sector (private)\" (dark blue line) generally remains the highest of the four series throughout the period.\n    *   There is a sharp decline across all categories toward the end of the timeline (approaching Jan 2024).\n\n*Note: As this is a continuous line chart without specific data tables or data labels on the lines, individual coordinate points for every month are not explicitly provided in the visual, but the relative values and trends can be traced along the Y-axis against the timeline.*",
+      "latencyMs": 5524,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2355,
+        "completionTokens": 406,
+        "cost": 0.00119775
+      }
+    },
+    {
+      "caseId": "imf-growth-comparison",
+      "description": "IMF report chart: growth comparison",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is highly complete and accurate. It correctly identifies the chart type, title, subtitle, legend entries, and axis labels and ranges. The data extraction is remarkably precise, with all data points for both lines extracted with minimal to no deviation from what is visually discernible in the source image. The structure is clear and easy to understand. The only minor omission compared to the reference is a detailed textual summary of the trends, but the core data and metadata extraction is perfect."
+      },
+      "output": "### Chart Information\n*   **Title:** Primary Fiscal Balance\n*   **Subtitle:** (Percent of GDP)\n*   **Chart Type:** Line chart\n*   **Legend:**\n    *   Dark Blue: Successful\n    *   Light Blue: Not successful\n*   **Axis:**\n    *   Y-axis: Units of Percent of GDP (-2 to 8)\n    *   X-axis: Time period relative to stabilization episode (-5 to 5)\n\n### Data Points (Approximate)\n\n| Period | Successful (Dark Blue) | Not successful (Light Blue) |\n| :--- | :--- | :--- |\n| -5 | -1.2 | 1.3 |\n| -4 | -0.9 | 0.8 |\n| -3 | 0.9 | 1.8 |\n| -2 | 3.8 | 1.4 |\n| -1 | 3.7 | 1.0 |\n| 0 | 3.9 | 1.4 |\n| 1 | 5.6 | 3.4 |\n| 2 | 5.0 | 3.2 |\n| 3 | 4.1 | 2.9 |\n| 4 | 1.5 | 3.3 |\n| 5 | 1.1 | 2.3 |",
+      "latencyMs": 4915,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2362,
+        "completionTokens": 301,
+        "cost": 0.001042
+      }
+    },
+    {
+      "caseId": "imf-inflation-comparison",
+      "description": "IMF report chart: inflation comparison",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output demonstrates excellent data extraction, with numerical values closely matching the source image and reference. The chart title, axes, and legend information are also accurate and complete. The structure is clear and well-organized for the information provided. The main drawback is the omission of a 'Summary of Trends' section, which is present in the reference and provides valuable high-level analysis of the data. Despite this, the core data extraction and structural elements are very strong, leading to an overall high score."
+      },
+      "output": "### Chart Information\n\n*   **Chart Title:** \"Ex-ante\" Real Interest Rate\n*   **Subtitle/Unit:** (Percent)\n*   **Chart Type:** Line chart\n*   **Legend Entries:**\n    *   Successful (Dark blue line)\n    *   Not Successful (Light blue line)\n*   **Axis:**\n    *   **Y-axis:** Values range from -1,200 to 400.\n    *   **X-axis:** Time periods ranging from -5 to 5.\n\n### Data Table\n*Note: Values are approximate based on visual estimation from the chart.*\n\n| Time Period | Successful (Dark Blue) | Not Successful (Light Blue) |\n| :--- | :--- | :--- |\n| -5 | -300 | -50 |\n| -4 | -950 | -30 |\n| -3 | -1,050 | -100 |\n| -2 | -550 | -250 |\n| -1 | -250 | -950 |\n| 0 | -50 | -800 |\n| 1 | 0 | -120 |\n| 2 | 5 | -20 |\n| 3 | 5 | -25 |\n| 4 | 5 | -25 |\n| 5 | 5 | -250 |",
+      "latencyMs": 3704,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 2367,
+        "completionTokens": 314,
+        "cost": 0.00106275
+      }
+    },
+    {
+      "caseId": "ms-robot-revenue-projection",
+      "description": "Morgan Stanley stacked bar: $25T global robot revenues by 2050",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is nearly perfect. It accurately extracts all chart elements, including the title, subtitle, axis labels, and legend entries. The data table precisely matches the total values displayed on each bar in the source image, and the key projections are also extracted correctly. The structure is clear and well-organized. The only minor omission is the 'Source: Morgan Stanley Research estimates' line, which is not critical."
+      },
+      "output": "### Chart Information\n\n*   **Chart Title:** We See $25 Trillion in Global Robot Revenues by 2050\n*   **Chart Subtitle:** Final Hardware Sales Only- Software/Services, Maintenance, Supply Chains, etc. could theoretically multiply this figure\n*   **Chart Type:** Stacked Bar Chart\n*   **Axis Labels:**\n    *   Y-Axis: Robot Revenue ($ Billions)\n    *   X-Axis: Years (2024e – 2050e)\n*   **Legend Entries:**\n    *   Home Robotics\n    *   Small Drones\n    *   Humanoids\n    *   Autonomous Vehicles\n    *   Industrial Robots\n    *   Professional Service Robots\n    *   Large VTOLs\n\n---\n\n### Data Table\n\nThe following table reflects the total values per year as indicated at the top of each bar in the chart:\n\n| Year | Total Revenue ($ Billions) |\n| :--- | :--- |\n| 2024e | 91 |\n| 2025e | 107 |\n| 2026e | 138 |\n| 2027e | 202 |\n| 2028e | 299 |\n| 2029e | 425 |\n| 2030e | 540 |\n| 2031e | 815 |\n| 2032e | 1,036 |\n| 2033e | 1,416 |\n| 2034e | 1,877 |\n| 2035e | 2,664 |\n| 2036e | 3,432 |\n| 2037e | 4,507 |\n| 2038e | 5,649 |\n| 2039e | 7,310 |\n| 2040e | 8,780 |\n| 2041e | 10,670 |\n| 2042e | 12,085 |\n| 2043e | 13,842 |\n| 2044e | 15,339 |\n| 2045e | 17,177 |\n| 2046e | 18,893 |\n| 2047e | 20,668 |\n| 2048e | 22,078 |\n| 2049e | 23,729 |\n| 2050e | 25,053 |\n\n---\n\n### Key Projections Text\n*   **2030:** >$500 Billion\n*   **2040:** ~$9 Trillion\n*   **2050:** $25.0 Trillion\n*   **Note:** Hardware Sales Only",
+      "latencyMs": 5016,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1239,
+        "completionTokens": 697,
+        "cost": 0.00135525
+      }
+    },
+    {
+      "caseId": "ms-robot-sales",
+      "description": "Morgan Stanley stacked bar: 1.4B robot unit sales by 2050",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is excellent. It accurately extracts all chart elements, including the title, subtitle, axis labels, and a comprehensive legend. Crucially, it successfully extracts the full data series for 'Total Units' for every year from 2024e to 2050e, matching the values shown on top of the stacked bars. It also correctly captures the additional projections from the text overlay. The structure is clear and well-organized, making the information easily digestible. The output goes beyond the reference in data granularity, which is a positive."
+      },
+      "output": "### Chart Information\n*   **Title:** We See 1.4 Billion Robot Unit Sales in 2050\n*   **Subtitle:** See individual form factor sections for TAM projections for each.\n*   **Chart Type:** Stacked Bar Chart\n*   **Axis Labels:**\n    *   Y-axis: Millions of Robots Sold\n    *   X-axis: Years (2024e – 2050e)\n*   **Legend:**\n    *   Home Robotics\n    *   Small Drones\n    *   Humanoids\n    *   Autonomous Vehicles\n    *   Industrial Robots\n    *   Professional Service Robots\n    *   Large VTOLs\n\n### Data Table (Millions of Units)\n\n| Year | Total Units |\n| :--- | :--- |\n| 2024e | 21 |\n| 2025e | 24 |\n| 2026e | 29 |\n| 2027e | 46 |\n| 2028e | 58 |\n| 2029e | 81 |\n| 2030e | 93 |\n| 2031e | 125 |\n| 2032e | 144 |\n| 2033e | 168 |\n| 2034e | 197 |\n| 2035e | 261 |\n| 2036e | 305 |\n| 2037e | 369 |\n| 2038e | 426 |\n| 2039e | 529 |\n| 2040e | 605 |\n| 2041e | 721 |\n| 2042e | 797 |\n| 2043e | 872 |\n| 2044e | 955 |\n| 2045e | 1,039 |\n| 2046e | 1,129 |\n| 2047e | 1,215 |\n| 2048e | 1,290 |\n| 2049e | 1,357 |\n| 2050e | 1,427 |\n\n### Additional Projections (Text Overlay)\n*   **2030:** ~90mn Robots\n*   **2040:** ~600mn Robots\n*   **2050:** ~1.4bn Robots",
+      "latencyMs": 3380,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1239,
+        "completionTokens": 607,
+        "cost": 0.00122025
+      }
+    },
+    {
+      "caseId": "ms-us-economy",
+      "description": "Morgan Stanley: Mag 7 vs physical economy comparison",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is very strong, accurately capturing the main title, axis labels, and key aggregate market capitalization values. It provides a more complete list of companies and their associated sectors from the left bar chart than the reference. The structure is clear and well-organized. The output receives a score of 4 rather than 5 because it did not attempt to estimate the approximate market capitalization for each individual company in the stacked bar (which the reference included as estimations) and it also missed the 'Key insight' summary provided in the reference. However, given the difficulty of precisely reading individual bar heights from the image, and that the reference values were estimations, the model's choice to not include them is understandable and prevents hallucination. All explicitly stated data points are perfectly accurate."
+      },
+      "output": "### Chart Details\n\n*   **Chart Title:** The Mag 7 Dwarfs the US Physical Economy\n*   **Chart Type:** Bar Chart (Comparison of two aggregate values)\n*   **Axis:** \n    *   **Y-Axis:** Market Capitalization ($ Billions)\n    *   **X-Axis:** Categorical (Largest Physical Economy Companies vs. MSFT (Median Mag 7))\n\n---\n\n### Data Extraction\n\n**Total Market Capitalization Values:**\n*   **Largest Physical Economy Companies (Aggregate):** $3,025 Bn\n*   **MSFT (Median Mag 7):** $3,642 Bn\n\n**Composition of \"Largest Physical Economy Companies\" (Bottom to Top):**\n\n| Segment/Company | Sector/Category |\n| :--- | :--- |\n| **Lilly** | Largest Healthcare |\n| **ExxonMobil** | Largest Energy |\n| **GE Aerospace** | Largest Aerospace |\n| **CATERPILLAR** | Largest Machinery |\n| **RTX** | Largest Defense |\n| **Linde** | Largest Chemicals |\n| **GE VERNOVA** | Largest Electrical Equipment |\n| **UNION PACIFIC** | Largest Transport |\n| **Honeywell** | Largest Conglomerate |\n| **FREEPORT-McMoRAN** | Largest Metals & Mining |\n| **gm** | Largest Automotive (ex TSLA) |",
+      "latencyMs": 3220,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1214,
+        "completionTokens": 301,
+        "cost": 0.000755
+      }
+    },
+    {
+      "caseId": "ms-edge-compute",
+      "description": "Morgan Stanley dual chart: edge compute ExaFLOPS + Blackwell equivalents",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output correctly identifies and describes the two charts, including their types, axes, and legends. The structure is well-organized and easy to follow. However, it fails to extract a data table for the first chart (Edge Compute ExaFLOPS), which was a key part of the reference. For the second chart, 'Millions of Blackwell B200 Equivalents', it accurately extracts the annotated data points but misidentifies the year for the '19' value (listing 2034e instead of 2033e as shown in the image). It also does not attempt to estimate data points for years not explicitly annotated, unlike the reference. The omission of detailed data extraction for the first chart significantly impacts the completeness and data_extraction scores."
+      },
+      "output": "The image contains two distinct charts. Below is the extracted data for both.\n\n### Chart 1: Edge Compute (ExaFLOPS)\n*   **Chart Type:** Combination Chart (Stacked Bar with Line overlay)\n*   **Axis:** X-axis (Year: 2024e–2050e), Left Y-axis (ExaFLOPS Deployed), Right Y-axis ($ Millions)\n*   **Legend:** Autonomous Vehicles, Home Robotics, Humanoids, Industrial Robots, Large VTOLs, Professional Service Robots\n*   **Key Highlight:** \"40,000x Compute 2025-2050\"\n\n### Chart 2: Millions of Blackwell B200 Equivalents\n*   **Chart Type:** Line Chart\n*   **Axis:** X-axis (Year: 2024e–2050e), Y-axis (Millions of Blackwell B200 Equivalents (Edge Only))\n\n#### Data Points (Select Annotations)\n| Year | Metric | Value |\n| :--- | :--- | :--- |\n| 2025e | Millions of Blackwell B200 Equivalents | 0.02 |\n| 2034e | Millions of Blackwell B200 Equivalents | 19 |\n| 2043e | Millions of Blackwell B200 Equivalents | 371 |\n| 2050e | Millions of Blackwell B200 Equivalents | 697 |\n\n***\n\n**Note on Data:** The charts are based on \"NVIDIA Blackwell B200 FP4 Tensor Core at 18 PetaFLOPS\" and represent \"Morgan Stanley Research estimates.\"",
+      "latencyMs": 3132,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1239,
+        "completionTokens": 374,
+        "cost": 0.00087075
+      }
+    },
+    {
+      "caseId": "metro-cost",
+      "description": "Metro Bank cost discipline + underlying operating expenses charts",
+      "status": "pass",
+      "score": {
+        "score": 3,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model accurately extracted all numerical data from both the line chart and the stacked bar chart, and presented it in a clear, well-structured manner. The titles, axes, legends, and annotations for the charts were also correctly identified. However, the model completely missed the bulleted list of 'Key cost-saving initiatives' which is a significant piece of contextual information clearly present in the source image and included in the reference output. This omission impacts both completeness and data extraction, preventing a higher score, despite the excellent performance on chart data parsing itself."
+      },
+      "output": "Based on the image provided, there are two distinct charts under the section \"Cost discipline\".\n\n### Chart 1: Total underlying operating expenses (Line Chart)\n*   **Title:** Total underlying operating expenses (£m)\n*   **X-Axis:** H1 2022, H2 2022, H1 2023, H2 2023, H1 2024\n*   **Y-Axis:** £m (values indicated on chart)\n\n| Period | Value (£m) |\n| :--- | :--- |\n| H1 2022 | 266 |\n| H2 2022 | 267 |\n| H1 2023 | 258 |\n| H2 2023 | 272 |\n| H1 2024 | 255 |\n\n*   **Annotation:** Cost down £17m or 6% HoH (Half-on-Half)\n\n***\n\n### Chart 2: Underlying operating expenses (Stacked Bar Chart)\n*   **Title:** Underlying operating expenses\n*   **Chart Type:** Stacked Bar\n*   **X-Axis:** H1 2023, H2 2023, H1 2024\n*   **Legend:**\n    *   Occupancy expenses (Red)\n    *   Professional and other fees (Yellow)\n    *   Other (underlying) (Dark Blue)\n    *   Money transmission & bank costs (Light Blue)\n    *   Computer costs (Grey)\n    *   Depreciation & amortisation (Green)\n    *   People (Deep Blue)\n\n#### Data Table (£m)\n| Category | H1 2023 | H2 2023 | H1 2024 |\n| :--- | :---: | :---: | :---: |\n| Occupancy expenses | 14 | 17 | 16 |\n| Professional and other fees | 12 | 11 | 15 |\n| Other (underlying) | 19 | 28 | 23 |\n| Money transmission & bank costs | 24 | 26 | 23 |\n| Computer costs | 30 | 30 | 29 |\n| Depreciation & amortisation | 38 | 39 | 38 |\n| People | 121 | 121 | 111 |\n| **Total** | **258** | **272** | **255** |",
+      "latencyMs": 4237,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1239,
+        "completionTokens": 582,
+        "cost": 0.00118275
+      }
+    },
+    {
+      "caseId": "metro-multi-chart",
+      "description": "Metro Bank 4-chart page: treasury repricing, LCR, NIBLs, deposits",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is exceptional. It accurately and comprehensively extracts all data points, labels, and descriptive text from all four charts, often providing more detail than the reference. The data is presented in a well-structured and easy-to-understand format (tables). All numbers and percentages extracted are correct according to the source image. There are no missing key information or inaccuracies."
+      },
+      "output": "This response extracts the four individual charts/figures displayed on the page.\n\n### 1. Future benefit from Treasury asset repricing\n*   **Chart Type:** Combo chart (Column chart with Line overlay)\n*   **Axis:** X-axis (Years: 2024–2028), Y-axis (Total maturing £m / Average yield %)\n\n| Year | Total Maturing (£m) | Average Yield (%) |\n| :--- | :--- | :--- |\n| 2024 | 156 | 1.5% |\n| 2025 | 495 | 1.0% |\n| 2026 | 1,015 | 0.8% |\n| 2027 | 531 | 1.3% |\n| 2028 | 73 | 1.7% |\n\n*   **Additional Callouts:**\n    *   £0.5bn reinvested at c.4.2% = Annualised ROTE uplift of >c.170 bps in 2025\n    *   £1bn reinvested at c.3.6% = Annualised ROTE uplift of >c.310 bps in 2026\n    *   Cumulative impact = Annualised ROTE uplift of >c.450 bps in 2026\n\n---\n\n### 2. Liquidity coverage ratio\n*   **Chart Type:** Column chart\n*   **Axis:** X-axis (Periods: 1H22–1H24), Y-axis (Percentage)\n\n| Period | Liquidity Coverage Ratio |\n| :--- | :--- |\n| 1H22 | 257% |\n| 2H22 | 213% |\n| 1H23 | 214% |\n| 2H23 | 332% |\n| 1H24 | 365% |\n\n*   **Additional note:** 100% Req. (dashed line)\n\n---\n\n### 3. NIBLs remain double the market average\n*   **Chart Type:** Stacked bar chart\n*   **Legend:** NIBLs (Dark Blue), Variable (Green), Fixed (Light Blue), ISA (Grey)\n\n| Category | H1 2024 | Market Peers |\n| :--- | :--- | :--- |\n| NIBLs | 36% | 17% |\n| Variable | 49% | 50% |\n| Fixed | 12% | 17% |\n| ISA | 3% | 16% |\n\n---\n\n### 4. Deposits by customer type\n*   **Chart Type:** Donut chart\n*   **Legend:** Retail (Light Blue), SME (Green), Retail partnerships (Dark Blue), Commercial (Grey)\n\n| Segment | H2 2023 (£15.6bn) | H1 2024 (£15.7bn) |\n| :--- | :--- | :--- |\n| Retail | 46% | 46% |\n| SME | 24% | 27% |\n| Retail partnerships | 11% | 11% |\n| Commercial | 19% | 16% |",
+      "latencyMs": 9191,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1239,
+        "completionTokens": 744,
+        "cost": 0.00142575
+      }
+    }
+  ],
+  "summary": {
+    "total": 14,
+    "passed": 12,
+    "failed": 2,
+    "errors": 0,
+    "avgScore": 3.86,
+    "avgLatencyMs": 4783,
+    "dimensions": {}
+  }
+}

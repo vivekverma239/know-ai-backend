@@ -1,0 +1,366 @@
+{
+  "task": "table-parsing",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "judgeModel": "google/gemini-3-flash",
+  "timestamp": "2026-04-04T11:14:58.681Z",
+  "results": [
+    {
+      "caseId": "imf-balance-of-payments",
+      "description": "IMF: Balance of payments projection table",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model provided no output to evaluate. The 'Actual Output' section is empty, meaning no data, structure, or headers were extracted from the source image."
+      },
+      "output": "",
+      "latencyMs": 7784,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 1313,
+        "cost": 0.002302
+      }
+    },
+    {
+      "caseId": "imf-fiscal-outlook",
+      "description": "IMF: Fiscal outlook comparison table (Dec-Apr 2022/23 vs 2023/24)",
+      "status": "fail",
+      "score": {
+        "score": 1,
+        "pass": false,
+        "dimensions": {},
+        "reasoning": "The model failed to provide any output. The actual output is completely blank."
+      },
+      "output": "",
+      "latencyMs": 7062,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 1331,
+        "cost": 0.002329
+      }
+    },
+    {
+      "caseId": "imf-external-financing",
+      "description": "IMF: External financing requirements table (2024-2027)",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model provided a comprehensive and highly accurate extraction of the document. It not only parsed the table perfectly but also included the surrounding text, described the chart content, and captured all footnotes and footer information. Data accuracy is near perfect."
+      },
+      "output": "ARGENTINA\n\nBox 6. Taking Stock of FX Debt Backlog and Overhang\n\nThis box takes stock of the FX obligations backlog stemming from current account flows and the implications for the balance of payments over the near to medium term.\n\n**FX overhang/backlog.** As of end April 2024, Argentina’s outstanding FX debt backlog reached roughly US$21 billion, of which US$17 billion reflected excess importers' debt¹ (see text table 1) and an estimated US$4 billion of undistributed dividends, arising from restrictions to the distribution of dividends abroad.²\n\n**BCRA Treatments.** Through end-April, about US$17 billion has been reprofiled to smooth out FX obligations over time (see text table 2) through various BOPREAL schemes for legacy imports (US$8.3 billion) and dividend distribution abroad (US$1.8 billion), as well as a decision to delay access to FX for new imports (accumulated since mid-December 2023) accounting for the rest (US$7.1 billion).\n\n**BOP implications.** While the various BOPREAL schemes have substantially improved the maturity profile of the legacy FX backlog, reaching reserve accumulation goals will require a prolonged commitment to tight macroeconomic policies, and enhanced monetary and FX policies. Delayed FX access will likely be necessary for a period of time to manage the country’s import bills given payments on maturing importers' debt accumulated since end-2023.\n\n**Chart: Current Account Outstanding FX Backlog**\n*(Billions of US$)*\nThis bar chart illustrates the FX backlog from 2020 to April 2024. The bars are composed of \"Importers' debt\" (light blue) and \"Dividend backlog 1/\" (dark blue). A horizontal dashed line marks the \"Avg. import financing level 2/\".\n*   **2020:** Total approx. 22 billion.\n*   **2021:** Total approx. 25 billion.\n*   **2022:** Total approx. 30 billion.\n*   **2023:** Total approx. 45 billion.\n*   **Apr-24:** Total approx. 52 billion (approx. 47 billion Importers' debt; approx. 5 billion Dividend backlog).\n\nSources: BCRA; and Fund staff calculations.\n1/ Estimates reflect difference between actual and imputed distribution value assuming similar reinvestment rates. Recent increases reflect higher actual returns to capital.\n2/ Estimated from 2019-24.\n\n**BCRA FX Obligations Arising from Reprofiled FX Backlog, 2024-27**\n*(in billions of U.S. dollars, as of end-April)*\n\n+----------------------------------+-------+-------+-------+-------+-------+\n|                                  | 2024 1| 2025  | 2026  | 2027  | Total |\n+==================================+=======+=======+=======+=======+=======+\n| **Reprofiled FX Backlog Due**    |  8.2  |  2.0  |  2.0  |  5.0  | 17.2  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   Legacy imports                 |  1.1  |  1.4  |  0.8  |  5.0  |  8.3  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   BOPREAL 1                      |       |       |       |  5.0  |  5.0  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   BOPREAL 2                      |  1.0  |  1.0  |       |       |  2.0  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   BOPREAL 3                      |  0.1  |  0.4  |  0.8  |       |  1.3  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   Schedule for new imports       |  7.1  |       |       |       |  7.1  |\n+----------------------------------+-------+-------+-------+-------+-------+\n|   Dividends through BOPREAL 3    |  0.0  |  0.6  |  1.2  |       |  1.8  |\n+----------------------------------+-------+-------+-------+-------+-------+\n\nSources: BCRA and IMF staff estimates.\n1/ May through December.\n\n1/ MSMEs, which recently gained expedited access to the official FX market, have repaid US$0.6 billion. Under the US$1.2 billion envelop for MSMEs, an additional 0.6 billion can be expected in the second half of the year.\n2/ The amount of dividend backlog is estimated over 2020–23 as the difference between actual distributions and the imputed value at a reinvestment rate during periods without exchange restrictions (46 percent). A reinvestment ratio of 70 percent is assumed for 2024.\n\nINTERNATIONAL MONETARY FUND 37",
+      "latencyMs": 5015,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 1153,
+        "cost": 0.002062
+      }
+    },
+    {
+      "caseId": "imf-financial-indicators",
+      "description": "IMF: Financial soundness indicators table (2015-2023)",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is an excellent extraction of the document. It captures the full text of the box, provides a high-quality description of the chart, and extracts the table with 100% data accuracy. The table structure is well-preserved, including row indentation to show hierarchy, and all footnotes and source information are included."
+      },
+      "output": "ARGENTINA\n\nBox 5. Evolution of External Assets and Liabilities, 2016–23\nThis box describes the evolution of Argentina’s NIIP between 2016 and end-2023, drawing policy implications.\n\nDespite a strongly positive NIIP, Argentina’s external vulnerabilities remain high reflecting strong mismatches in the composition of foreign assets and liabilities. Argentina’s NIIP doubled in USD terms during 2016–19, as increases in formation of private sector foreign assets (over US$100 billion), took place against a backdrop of rising public external indebtedness (over US$60 billion). Since 2019, the net external position has remained relatively stable, although gross assets and liabilities have moved substantially. In the case of the public sector, the significant decline in reserve assets was balanced against a reduction in debt held by the private sector of a similar magnitude (US$25 billion), namely reflecting valuation gains from the exchange rate depreciation on peso debt held by nonresidents as well as resident purchases of debt held by nonresidents. Meanwhile, the generally unchanged private sector external position reflects offsetting factors, including (i) an increase in private assets abroad, mainly in the form of currency and deposits (close to US$40 billion),¹ and (ii) an increase in private external liabilities mainly in the form of trade credit (US$55 billion), largely in response to the tight restrictions on FX access for imports. Despite having a positive NIIP of about US$110 billion at end-2023, most external assets are in the form of household savings abroad (US$260 billion), while gross debt (non-FDI) liabilities are large, owed by the public sector (over US$150 billion), and private firms in the form of trade credits.²\n\n**Chart Description (International Investment Position):**\nThe line chart titled \"International Investment Position (Billions of US$)\" displays three series from 2016Q1 to 2023Q3:\n- **Overall NIIP (Light Blue Area):** This represents the net position. It trends upward from approximately 50 billion in early 2016, peaking near 200 billion around 2020Q1, and slowly tapering to approximately 110 billion by 2023Q3.\n- **Private NIIP (Red Line):** This shows a strong upward trend, moving from approximately 100 billion in 2016Q1 to a peak of approximately 250 billion in 2020Q1, remaining relatively stable near 240 billion through 2023Q3.\n- **Public NIIP (Dark Blue Line):** This shows a negative trend, starting at approximately -50 billion in 2016Q1 and steadily declining to approximately -130 billion by 2023Q3.\n\nA sustained commitment to twin fiscal/external surpluses remains crucial to meet FX debt service obligations while gradually reducing these gross stock imbalances. A large level of external assets alone is not sufficient to mitigate external debt liabilities risks if the holders’ profiles are mismatched. Argentina’s large gross external assets are largely in the form of private savings abroad (or USD under the mattress) in response to a long history of unsustainable policies, while external debt (non-FDI) liabilities are concentrated in the public sector (and more recently the corporate sector in the form of short-term import debt that are being reprofiled under BOPREAL). As such, it remains critical to implement policies to sustain fiscal and external surpluses, while also encouraging FDI and private capital inflows (especially in the form of resident asset repatriation).\n\n**Net International Investment Position, 2015-2023**\n*(in billions of U.S. dollars)*\n\n+-------------------------+---------+----------+----------+--------+\n|                         | end-2015| end-2019 | end-2023 | 2019/23|\n|-------------------------+---------+----------+----------+--------|\n| Overall NIIP            |    56.5 |    113.2 |    109.0 |   -4.2 |\n|                         |         |          |          |        |\n| GG NIIP                 |   -62.1 |   -128.1 |   -131.2 |   -3.1 |\n|  Reserve Assets         |    25.6 |     44.8 |     23.1 |  -21.8 |\n|  Gross Liabilities      |   -87.7 |   -172.9 |   -154.2 |   18.7 |\n|   Official              |   -28.0 |    -73.4 |    -78.9 |   -5.5 |\n|   Private               |   -58.7 |    -98.9 |    -73.9 |   25.0 |\n|   Others                |    -1.0 |     -0.6 |     -1.4 |   -0.8 |\n|                         |         |          |          |        |\n| Private NIIP            |   118.6 |    241.2 |    240.1 |   -1.1 |\n|  Assets                 |   246.2 |    352.3 |    414.3 |   62.0 |\n|   Currency deposits     |   153.3 |    226.6 |    263.0 |   36.5 |\n|   Other                 |    92.9 |    125.8 |    151.3 |   25.5 |\n|  GrossLiabilities       |  -127.6 |   -111.1 |   -174.2 |  -63.1 |\n|   FDI equity&shares     |   -53.2 |    -47.5 |    -77.1 |  -29.6 |\n|   FDI and trade debt    |   -45.6 |    -51.4 |    -77.3 |  -26.0 |\n|   Private loans         |   -22.0 |    -34.8 |    -34.8 |    0.0 |\n|   Residual              |    -6.8 |     22.5 |     15.0 |   -7.5 |\n+-------------------------+---------+----------+----------+--------+\nSources: INDEC; and Fund staff calculations.\n\n1/ Investment income to Argentines over the same period was US$13.8 billion, indicating that a larger share of the growth in Argentines' foreign savings has been on account of new flows (e.g., interest and capital gains).\n2/ The high level of private foreign assets suggests that the risk of significant capital flight upon the lifting of FX restrictions may have diminished.\n\n36 INTERNATIONAL MONETARY FUND",
+      "latencyMs": 6565,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 1549,
+        "cost": 0.002656
+      }
+    },
+    {
+      "caseId": "metro-nested-table",
+      "description": "Metro Bank strategy slide with nested commercial pipeline table",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "A. de "
+      },
+      "output": "Strategy remains unchanged\n\nDelivering mid-to-high teen RoTE by 2027\n\n+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Cost Discipline| M Continued cost discipline with £80 million of annualised run-rate savings on track to be delivered by Q4’24                                                                      |\n|                | M Reduced colleague numbers by > 1,000 or c.22% of FTE                                                                                                                           |\n|                | M Repositioned our store and call centre propositions                                                                                                                            |\n+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Asset Rotation | M £2.5 billion mortgage portfolio sale accelerates balance sheet repositioning                                                                                                     |\n|                | M TFSME to be repaid from proceeds of mortgage sale eliminating any industry wide deposit funding headwinds going forward                                                          |\n|                | M Upon completion, a structurally higher NIM, with continued NIM expansion driven by asset rotation, and expect NIMs in 2024, 2025 and 2026 to be approaching 2.50%, 3.25% and 4.00%, respectively |\n|                | M Strong commercial pipeline at H1’24:                                                                                                                                           |\n|                |                                                                                                                                                                                  |\n|                | +---------------------+---------------------------------+---------------------------------+                                                                                          |\n|                | | Commercial Teams    | H1’24 credit approved pipeline %| H1’24 drawdowns % of FY’23      |                                                                                          |\n|                | |                     | of FY’23 drawdowns            | lending                         |                                                                                          |\n|                | +---------------------+---------------------------------+---------------------------------+                                                                                          |\n|                | | Corporate           | 139%                            | 76%                             |                                                                                          |\n|                | | Regional Commercial | 178%                            | 143%                            |                                                                                          |\n|                | | Asset Finance       | 60%                             | 60%                             |                                                                                          |\n|                | | Invoice Finance     | 168%                            | 159%                            |                                                                                          |\n|                | | Total               | 116%                            | 81%                             |                                                                                          |\n|                | +---------------------+---------------------------------+---------------------------------+                                                                                          |\n+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Reduce         | M Deposits at H1’24 of £15.7 billion, actively managed down c.£0.8 billion since Feb’24 peak                                                                                      |\n| Liquidity and  | M LCR remains strong at 365%, with c.£4 billion of cash providing further opportunity to continue optimisation of funding                                                         |\n| Improve CoD    |                                                                                                                                                                                  |\n+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Asset Repricing| M Passage of time benefiting repricing of treasury assets and maturity of lower yielding residential mortgages                                                                   |\n|                | M Annualised RoTE improves c.450 bps from c.£1.5 billion of treasury assets rolling off in 2025 and 2026 assuming reinvestment in cash[1]                                        |\n+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n\nDelivering RoTE of mid-to-upper single digit in 2025, double digit in 2026 and mid-to-upper teens thereafter\n\n[1] Base rate estimated at c.4.2% for 2025 and c.3.6% for 2026 based on latest market expectation as of 29 July 2024\n\n**Summary of Commercial Pipeline Table:**\nThe table provides a breakdown of H1'24 performance across four commercial teams compared to FY'23 lending levels. \n- The \"H1’24 credit approved pipeline % of FY’23 drawdowns\" column indicates the volume of approved credit relative to previous year drawdowns, with Corporate at 139%, Regional Commercial at 178%, Asset Finance at 60%, and Invoice Finance at 168%, resulting in a Total of 116%.\n- The \"H1’24 drawdowns % of FY’23 lending\" column shows the actual utilization relative to previous year lending, with Corporate at 76%, Regional Commercial at 143%, Asset Finance at 60%, and Invoice Finance at 159%, resulting in a Total of 81%.",
+      "latencyMs": 6615,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 1018,
+        "cost": 0.001859
+      }
+    },
+    {
+      "caseId": "imf-selected-economic-indicators",
+      "description": "IMF: Selected economic indicators comprehensive table",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "the r-is    "
+      },
+      "output": "ARGENTINA\n\nTable 1. Argentina: Selected Economic and Financial Indicators, 2022–29\n\n+----------------------------------------------------+------+------+------+------+------+------+------+------+------+------+------+\n|                                                    |      | SR (Jan.) |      | SR (Jan.)| Proj. | SR (Jan.) |      |      | Proj. |      |      |\n|                                                    | 2022 | 2023 | 2023 | 2024 | 2024 | 2025 | 2025 | 2026 | 2027 | 2028 | 2029 |\n+----------------------------------------------------+------+------+------+------+------+------+------+------+------+------+------+\n|                                                    | (Annual percentage changes unless otherwise indicated)                               |\n| National Income and Prices                         |      |      |      |      |      |      |      |      |      |      |      |\n| GDP at constant prices                             |  5.0 | -1.1 | -1.6 | -2.8 | -3.5 |  5.0 |  5.0 |  4.7 |  3.9 |  3.3 |  2.4 |\n| Non-agro GDP at constant prices                    |  5.7 | -0.3 | -0.8 | -5.2 | -5.7 |  5.0 |  5.2 |  4.9 |  4.1 |  3.4 |  2.5 |\n| Domestic demand                                    |  7.8 |  3.1 |  0.4 | -11.0 | -11.3 |  5.2 |  5.1 |  4.7 |  3.8 |  3.1 |  2.1 |\n| Consumption                                        |  8.4 |  2.0 |  1.1 | -7.8 | -8.6 |  3.6 |  3.6 |  3.5 |  2.9 |  2.5 |  2.1 |\n| Private                                            |  9.7 |  1.6 |  1.1 | -6.7 | -6.8 |  3.5 |  3.9 |  3.5 |  3.2 |  2.7 |  2.3 |\n| Public                                             |  1.9 |  4.4 |  1.2 | -13.6 | -18.4 |  4.5 |  1.7 |  3.2 |  1.1 |  1.1 |  1.1 |\n| Investment                                         | 11.1 |  4.0 | -1.9 | -23.6 | -21.8 | 12.7 | 12.0 | 10.2 |  7.4 |  5.5 |  2.2 |\n| Exports                                            |  5.8 | -12.7 | -6.7 | 26.8 | 21.7 |  6.5 |  4.5 |  4.6 |  4.9 |  5.0 |  5.1 |\n| Imports                                            | 17.9 |  6.2 |  2.2 | -15.2 | -15.5 |  7.2 |  4.9 |  4.8 |  4.6 |  4.2 |  3.8 |\n| Net exports (percent contribution to real GDP)     | -3.1 | -4.3 | -2.0 |  9.4 |  8.7 | -0.3 | -0.1 |  0.0 |  0.1 |  0.2 |  0.3 |\n| Output gap (percent of potential GDP)              |  1.7 | -0.4 | -0.4 | -5.6 | -6.2 | -3.9 | -4.4 | -2.5 | -1.1 | -0.1 |  0.0 |\n| Inflation (eop)                                    | 94.8 | 211.4 | 211.4 | 149.4 | 139.7 | 45.0 | 45.0 | 25.0 | 12.0 | 10.0 |  8.0 |\n| Inflation (avg)                                    | 72.4 | 133.5 | 133.5 | 253.4 | 232.8 | 59.6 | 61.2 | 31.8 | 17.5 | 10.4 |  8.9 |\n| GDP deflator                                       | 69.8 | 135.6 | 134.3 | 253.1 | 236.9 | 58.4 | 61.2 | 31.8 | 17.5 | 10.4 |  8.9 |\n|                                                    | (Percent of GDP unless otherwise indicated)                                          |\n| Savings-Investment Balance                         |      |      |      |      |      |      |      |      |      |      |      |\n| Gross national savings                             | 17.2 | 16.2 | 15.7 | 17.8 | 17.3 | 18.6 | 18.6 | 19.8 | 21.0 | 21.9 | 22.2 |\n| Private                                            | 21.1 | 20.5 | 20.3 | 17.8 | 17.3 | 17.9 | 17.7 | 19.0 | 19.4 | 20.3 | 20.5 |\n| Public                                             | -3.9 | -4.2 | -4.6 |  0.0 |  0.0 |  0.7 |  0.9 |  0.8 |  1.6 |  1.6 |  1.7 |\n| Gross domestic investment                          | 17.9 | 19.7 | 19.1 | 16.9 | 16.7 | 17.7 | 18.0 | 19.1 | 20.0 | 20.7 | 20.8 |\n| Private                                            | 14.7 | 17.4 | 16.3 | 14.1 | 14.4 | 15.1 | 15.0 | 16.2 | 17.5 | 18.1 | 18.2 |\n| Public                                             |  3.2 |  2.3 |  2.8 |  2.8 |  2.3 |  2.6 |  3.0 |  2.9 |  2.6 |  2.6 |  2.6 |\n| External Sector                                    |      |      |      |      |      |      |      |      |      |      |      |\n| Current account balance                            | -0.7 | -3.5 | -3.4 |  0.9 |  0.6 |  0.9 |  0.6 |  0.8 |  1.0 |  1.3 |  1.5 |\n| Trade balance                                      |  0.9 | -1.6 | -1.5 |  3.3 |  2.6 |  3.6 |  3.1 |  3.1 |  3.2 |  3.4 |  3.6 |\n| Foreign direct investment (net)                    |  2.1 |  3.1 |  3.2 |  1.5 |  0.8 |  1.4 |  0.3 |  0.6 |  0.2 |  0.5 |  0.5 |\n| Total external debt                                | 57.4 | 113.7 | 112.6 | 56.8 | 54.6 | 57.3 | 54.3 | 48.7 | 43.9 | 41.4 | 39.3 |\n| Gross international reserves (US$ billions)        | 44.6 | 23.1 | 23.1 | 30.1 | 27.2 | 36.1 | 33.2 | 41.2 | 49.2 | 59.2 | 69.2 |\n| Net international reserves (US$ billions)          |  8.8 | -8.5 | -8.5 | -1.5 | -1.5 |  4.5 |  4.5 | 12.5 | 20.5 | 30.5 | 40.5 |\n| Terms of trade (percent change) 1/                 | -3.2 | -6.5 | -6.6 | -8.3 | -6.8 | -1.6 | -2.2 | -2.2 | -2.3 | -2.3 | -2.5 |\n| Federal Government Operations                      |      |      |      |      |      |      |      |      |      |      |      |\n| Revenues 2/                                        | 18.0 | 16.6 | 16.9 | 18.6 | 16.7 | 18.4 | 17.3 | 17.4 | 17.4 | 17.4 | 17.4 |\n| Primary expenditure 3/                             | 20.4 | 19.5 | 19.8 | 16.5 | 15.1 | 15.8 | 15.0 | 14.9 | 14.9 | 14.9 | 14.9 |\n| Primary balance 4/                                 | -2.4 | -3.0 | -2.9 |  2.1 |  1.7 |  2.5 |  2.3 |  2.5 |  2.5 |  2.5 |  2.5 |\n| Overall balance                                    | -4.2 | -5.2 | -4.6 |  0.0 |  0.0 |  0.4 |  0.5 |  0.2 |  0.7 |  0.7 |  0.9 |\n| Federal government debt                            | 84.7 | 154.5 | 156.7 | 86.2 | 91.0 | 79.5 | 78.3 | 69.1 | 60.4 | 54.3 | 48.6 |\n| Official creditors                                 | 16.8 | 36.5 | 33.6 | 17.2 | 17.4 | 17.4 | 17.4 | 15.4 | 13.2 | 11.3 |  9.7 |\n| Private creditors                                  | 33.8 | 56.0 | 60.1 | 27.7 | 38.6 | 26.1 | 34.3 | 30.3 | 26.9 | 24.9 | 22.9 |\n| of which: FX-denominated debt                      | 19.9 | 40.8 | 40.5 | 19.9 | 19.1 | 19.7 | 18.7 | 16.6 | 15.0 | 14.3 | 13.8 |\n| Public entities                                    | 34.1 | 62.0 | 63.0 | 41.3 | 35.1 | 36.0 | 26.7 | 23.4 | 20.4 | 18.1 | 16.0 |\n| Money and Credit                                   |      |      |      |      |      |      |      |      |      |      |      |\n| Monetary base                                      |  6.3 |  5.0 |  5.1 |  5.5 |  4.2 |  5.9 |  5.0 |  6.0 |  6.5 |  6.7 |  6.8 |\n| BCRA fiscal financing 5/                           |  3.1 |  5.0 |  5.1 |  0.0 |  0.0 |  0.0 |  0.0 |  0.0 |  0.0 |  0.0 |  0.0 |\n| BCRA securities                                    | 12.7 | 16.1 | 16.4 |  9.2 |  8.4 |  8.7 |  8.2 |  7.4 |  5.9 |  5.7 |  5.4 |\n| BCRA quasi-fiscal cost                             |  5.2 |  6.1 |  6.4 |  3.9 |  3.2 |  2.9 |  2.5 |  2.0 |  1.0 |  0.5 |  0.2 |\n| Memorandum Items                                   |      |      |      |      |      |      |      |      |      |      |      |\n| Consolidated public sector balance (percent of GDP) 6/| -9.0 | -10.4 | -11.0 | -3.9 | -3.3 | -2.2 | -1.6 | -1.2 |  0.6 |  1.2 |  1.5 |\n| Poverty rate (percent, H2)                         | 39.2 |  ... | 41.7 |  ... |  ... |  ... |  ... |  ... |  ... |  ... |  ... |\n| Unemployment rate (avg, percent)                   |  6.8 |  6.6 |  6.1 |  8.0 |  8.2 |  7.5 |  7.6 |  7.2 |  7.0 |  7.0 |  7.0 |\n| GDP per capita (in US$, nominal)                   | 13,575 |  ... | 13,745 |  ... |  ... |  ... |  ... |  ... |  ... |  ... |  ... |\n| Federal government debt (share of annualized Q4 GDP)| 67 | 102.1 | 106.0 | 71.4 | 75.2 | 68.9 | 69.1 | 65.3 | 58.7 | 53.5 | 48.1 |\n| Monetary base (share of annualized Q4 GDP)         |  5.0 |  3.3 |  3.4 |  4.6 |  3.5 |  5.1 |  4.4 |  5.7 |  6.4 |  6.6 |  6.7 |\n| BCRA securities (share of annualized Q4 GDP)       | 10.1 | 10.7 | 11.1 |  7.6 |  6.9 |  7.5 |  7.2 |  7.0 |  5.7 |  5.6 |  5.4 |\n+----------------------------------------------------+------+------+------+------+------+------+------+------+------+------+------+\nSources: National authorities and Fund staff estimates and projections.\n1/ Based on global price trends. Excludes changes in supply side factors, like climate conditions or structural changes in energy balance.\n2/ Non-tax revenues in 2022 include 0.3 percent of GDP income from issuance of inflation linked debt securities. This income is excluded from revenues in 2023. Proceeds from 5G phone license auctions are also excluded.\n3/ Includes COVID-related spending in 2022.\n4/ Primary balance excludes BCRA profit transfers.\n5/ Up to 2023 includes profit transfers, advances (adelantos) and secondary market purchases. For 2024 includes also issuance of new non-marketable government bonds and treasury buybacks, including that from December 21 2023.\n6/ Includes the overall balance of federal and government, and the quasi-fiscal deficit of the BCRA.\n\nINTERNATIONAL MONETARY FUND 43",
+      "latencyMs": 10676,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 3814,
+        "cost": 0.0060535
+      }
+    },
+    {
+      "caseId": "imf-fiscal-operations",
+      "description": "IMF: Federal government fiscal operations table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Gateway request timed out: Cannot connect to API: Headers Timeout Error\n\n    This is a client-side timeout. To resolve this, increase your timeout configuration: https://vercel.com/docs/ai-gateway/capabilities/video-generation#extending-timeouts-for-node.js"
+    },
+    {
+      "caseId": "imf-financial-soundness",
+      "description": "IMF: Financial soundness indicators multi-year table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Gateway request timed out: Cannot connect to API: Headers Timeout Error\n\n    This is a client-side timeout. To resolve this, increase your timeout configuration: https://vercel.com/docs/ai-gateway/capabilities/video-generation#extending-timeouts-for-node.js"
+    },
+    {
+      "caseId": "imf-reviews-purchases",
+      "description": "IMF: Schedule of reviews and purchases table",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The model's output is exceptional. It captures every detail from the source image, including the table title, all data rows, the total row, footnotes, and even the page-level metadata (ARGENTINA, INTERNATIONAL MONETARY FUND 57). The data accuracy is 100% correct, and the structural representation in ASCII format is clear and faithful to the source document."
+      },
+      "output": "ARGENTINA\n\n+-------------------------------------------------------------------------------------------------------------------+\n|                                 Table 13. Argentina: Schedule of Reviews and Purchases                            |\n|                                                Original Amounts                                                   |\n| Available on or after        | SDR millions | % Quota |                    Conditions 1/                      |\n|------------------------------+--------------+---------+-------------------------------------------------------|\n| March 25, 2022               |        7,000 |     220 | Approval of Arrangement                               |\n| May 10, 2022                 |        3,000 |      94 | First Review and end-March 2022 performance criteria  |\n| September 10, 2022           |        3,000 |      94 | Second Review and end-June 2022 performance criteria  |\n| December 10, 2022            |        4,500 |     141 | Third Review and end-September 2022 performance criteria|\n| March 10, 2023               |        4,000 |     125 | Fourth Review and end-December 2022 performance criteria|\n| June 10, 2023                |        3,000 |      94 | Fifth Review and end-June 2023 performance criteria   |\n| August 21, 2023              |        2,500 |      78 | Sixth Review and end-June 2023 performance criteria   |\n| January 15, 2024             |        3,500 |     110 | Seventh Review and end-December 2023 performance criteria|\n| May 10, 2024                 |          600 |      19 | Eighth Review and end-March 2024 performance criteria |\n| August 10, 2024              |          400 |      13 | Ninth Review and end-June 2024 performance criteria   |\n| November 10, 2024            |          414 |      13 | Tenth Review and end-September 2024 performance criteria|\n|------------------------------+--------------+---------+-------------------------------------------------------|\n| Total                        |       31,914 |   1,001 |                                                       |\n+-------------------------------------------------------------------------------------------------------------------+\nSources: Fund staff calculations.\n1/ Apart from periodic performance criteria, conditions also include continuous performance criteria.\n\nINTERNATIONAL MONETARY FUND 57",
+      "latencyMs": 8091,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1330,
+        "completionTokens": 577,
+        "cost": 0.001198
+      }
+    },
+    {
+      "caseId": "metro-h1-results",
+      "description": "Metro Bank H1'24 results: 8 key financial metrics across 3 periods",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is exceptionally accurate to the source image, capturing every data point, period label, and extra annotation (such as Feb'24 and Q2'24 values) perfectly. Although it chose a structured text format rather than a markdown table, it is highly parseable and complete. It correctly interprets negative values (numbers in brackets in the image) as negative numbers. Notably, the actual output is much more accurate to the provided image than the reference output provided in the prompt, which contains several data discrepancies."
+      },
+      "output": "H1’24 results are on track, reflecting period of transition\n\n**Customer deposits**\nThe bar chart shows customer deposits in £bn across three periods: H1 2023 (15.5), H2 2023 (15.6), and H1 2024 (15.7). An additional data point indicates Feb’24: £16.5bn.\n\n**Liquidity coverage ratio**\nThe bar chart shows the liquidity coverage ratio across three periods: H1 2023 (214%), H2 2023 (332%), and H1 2024 (365%).\n\n**Total capital + MREL[1]**\nThe bar chart shows the total capital + MREL ratio across three periods: H1 2023 (18.1%), H2 2023 (22.0%), and H1 2024 (22.2%).\n\n**Net fee and other income**\nThe bar chart shows net fee and other income across three periods: H1 2023 (63.3), H2 2023 (68.6), and H1 2024 (62.0).\n\n**Net interest margin**\nThe bar chart shows the net interest margin across three periods: H1 2023 (2.14%), H2 2023 (1.85%), and H1 2024 (1.64%). An additional data point indicates Q2’24: 1.74%.\n\n**Cost of deposits**\nThe bar chart shows the cost of deposits across three periods: H1 2023 (0.66%), H2 2023 (1.29%), and H1 2024 (2.18%). An additional data point indicates Q2’24: 2.12%.\n\n**Underlying loss before tax**\nThe bar chart shows underlying loss before tax across three periods: H1 2023 (16.1), H2 2023 (-33.0), and H1 2024 (-26.8).\n\n**Statutory loss before tax**\nThe bar chart shows statutory loss before tax across three periods: H1 2023 (15.4), H2 2023 (15.1), and H1 2024 (-33.5).\n\n* Half-on-half NIM reduction driven by an elevated cost of deposits that peaked in Feb’24\n* Underlying losses reduced half-on-half, but were impacted by transient funding cost pressures due to elevated cost of deposits and lower lending balances\n* Capital accretion across the period reflects focus on capital management\n\n[1] Excludes any impact from the mortgage portfolio sale\n\n7",
+      "latencyMs": 3382,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 629,
+        "cost": 0.0012755
+      }
+    },
+    {
+      "caseId": "imf-bop-detailed",
+      "description": "IMF: Detailed balance of payments table",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Gateway request timed out: Cannot connect to API: Headers Timeout Error\n\n    This is a client-side timeout. To resolve this, increase your timeout configuration: https://vercel.com/docs/ai-gateway/capabilities/video-generation#extending-timeouts-for-node.js"
+    },
+    {
+      "caseId": "metro-mortgages",
+      "description": "Metro Bank mortgage overview: LTV splits, geographical distribution, IFRS9 staging",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is nearly perfect. It correctly identifies all data points in the image, including those that were incorrect or missing in the reference output (e.g., the reference incorrectly stated the owner-occupied percentage was 69% when it is clearly 75% in the image). The extraction is complete, including the footnote and page number."
+      },
+      "output": "Retail mortgages – overview[1]\n\n**Retail mortgage portfolio**\n(Donut chart: 1H24 £7.5bn total. 75% Owner Occupied, 25% Buy-to-let)\n\n**New lending loan-to-value %**\n(Bar chart comparing FY23 at 63% and 1H24 at 68%)\n\n**Retail mortgages loan-to-value**\n(Bar chart comparing FY23 and 1H24 across LTV ranges. Average retail LTV: 61% at 1H24 vs 58% at FY23)\n| LTV Range | FY23 | 1H24 |\n|-----------|------|------|\n| < 50%     | 31%  | 27%  |\n| 51-60%    | 18%  | 16%  |\n| 61-70%    | 22%  | 19%  |\n| 71-80%    | 21%  | 25%  |\n| 81-90%    | 7%   | 11%  |\n| 91-100%   | 1%   | 2%   |\n| > 100%    | 0%   | 0%   |\n\n**ECL coverage ratio**\n(Bar chart comparing FY23 at 0.24% and 1H24 at 0.25%)\n\n**Retail mortgages geographical split**\n(Donut chart: Greater London 40%, South East 25%, South West 7%, East of England 10%, North West 4%, West Midlands 4%, Rest of UK 10%)\n\n**Balance by IFRS9 stage**\n(Bar chart showing balance distribution and ECL coverage ratio)\n| Stage | FY23 Balance | 1H24 Balance | ECL coverage ratio |\n|-------|--------------|--------------|--------------------|\n| Stage 1 | 88.1%        | 87.6%        | 0.1% (FY23), 0.1% (1H24) |\n| Stage 2 | 10.0%        | 9.8%         | 0.7% (FY23), 0.6% (1H24) |\n| Stage 3 | 1.9%         | 2.6%         | 4.1% (FY23), 3.8% (1H24) |\n\n[1] The figures exclude any impact from the mortgage portfolio sale\n\n21",
+      "latencyMs": 4196,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 603,
+        "cost": 0.0012365
+      }
+    },
+    {
+      "caseId": "metro-balance-sheet",
+      "description": "Metro Bank balance sheet: capital accretion, provisions, portfolio composition",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "the correct0    The the phrase reference - 'The as shown shared    *    A.  The as shown the shared    *   B.  As showing    *   C.  As in the diagram shown    *   D.  Correct as the original    *   E.  Correct as is    *   F.  Correction for the    *   Correct Answer: B.  As shown in    *   Question Type: Sentence Improvement (Language Usage)    *   Difficulty: Easy    *   Topic: Prepositions.    *   Explanatory Reasoning: "
+      },
+      "output": "Low-risk balance sheet supported by a robust capital position\n\nContinued capital accretion across H1’24\n\n[Stacked Bar Chart: Capital Ratios]\nX-axis: H1 23, H2 23, H1 24\nY-axis: Not specified (percentage)\n- H1 23: 10.4% CET1, 18.1% MREL\n- H2 23: 13.1% CET1, 22.0% MREL\n- H1 24: 12.9% CET1, 22.2% MREL, 23.4% (Total including Impact of Mortgage portfolio sale (post completion))\n\nProvision levels remain appropriate[2]\n\n[Waterfall Chart: Provision levels]\nStarting at 199 (FY 2023 provision), adjusting by +6 (Portfolio movements), -5 (Single name movements), -4 (Post model overlays), ending at 196 (1H24).\nCategories: Modelled (Blue), PMO/ PMA (Grey)\n\nTreasury portfolio composition\n[Donut Chart: H1 2024 £8.8bn]\n- 47%: Cash & Money Market Funds\n- 11%: Government Bonds\n- 21%: SSAs\n- 7%: Covered Bonds\n- 14%: Securitisations\n\nHigh quality non-cash portfolio\n[Donut Chart: H1 2024 £4.7bn]\n- 79%: AAA\n- 21%: AA\n\nLow risk balance sheet\n• Year-on-year MREL ratio increased + c.530bps (inc. post mortgage portfolio sale completion)\n• 20bps MREL ratio accretion from 1 Jan’24, despite IFRS9 quick fix reversal and losses\n• The loan portfolio remains highly collateralised and prudently provisioned\n• Treasury portfolio remains highly liquid and primarily AAA rated\n\n[1] Completion of the transaction is conditional on a satisfactory response from the Competition & Markets Authority\n[2] The difference between ECL expense and ECL provision movement relates to write-offs adjustments\n\n11",
+      "latencyMs": 4172,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1308,
+        "completionTokens": 472,
+        "cost": 0.001035
+      }
+    },
+    {
+      "caseId": "imf-external-financing-detailed",
+      "description": "IMF: Detailed external financing requirements",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Gateway request timed out: Cannot connect to API: Headers Timeout Error\n\n    This is a client-side timeout. To resolve this, increase your timeout configuration: https://vercel.com/docs/ai-gateway/capabilities/video-generation#extending-timeouts-for-node.js"
+    },
+    {
+      "caseId": "sample-metro-cashflow",
+      "description": "Metro Bank cash flow statement — clean numeric table with multi-level headers",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output captures all data from the source image with 100% accuracy. The structural formatting uses multi-line rows to handle the long row labels, which is a valid way to represent the table in ASCII format. Headers are correctly identified and aligned with the relevant columns."
+      },
+      "output": "                                     Year ended 31 December                     Six months ended 30 June\n                                  ----------------------------                 --------------------------\n                                    2020          2021          2022             2022           2023\n                                  ----------------------------                 --------------------------\n                                              (£ million)                       (unaudited)\n\n+--------------------------------+-------+-------+-------+-------+-------+\n| Net cash inflow/(outflow) from |       |       |       |       |       |\n| operating activities.......... | 1,041 | 2,854 | (1,185)|  (73) |   182 |\n| Net cash (outflow)/inflow from |       |       |       |       |       |\n| investing activities.......... | (956) | (2,250)|  (402) | (620) |   582 |\n| Net cash outflow from financing|       |       |       |       |       |\n| activities.................... |  (81) |  (29) |  (25) |  (13) |  (12) |\n| Net increase/(decrease) in cash|       |       |       |       |       |\n| and cash equivalents.......... |     4 |   575 | (1,612)| (706) |   752 |\n| Cash and cash equivalents at   |       |       |       |       |       |\n| start of period............... | 2,989 | 2,993 | 3,568 | 3,568 | 1,956 |\n| Cash and cash equivalents at   |       |       |       |       |       |\n| end of period................. | 2,993 | 3,568 | 1,956 | 2,862 | 2,708 |\n+--------------------------------+-------+-------+-------+-------+-------+",
+      "latencyMs": 3730,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1284,
+        "completionTokens": 450,
+        "cost": 0.000996
+      }
+    },
+    {
+      "caseId": "sample-imf-financing",
+      "description": "IMF Table 8: External financing needs & sources — dense multi-year numeric table",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The.    The personは    "
+      },
+      "output": "Table 8. Argentina: External (Residency) Gross Financing Needs and Sources, 2022–29\n(In Millions of U.S. Dollars)\n\n+-----------------------------------------+--------+----------+--------+--------+--------+--------+--------+----------+----------+----------+--------+--------+--------+--------+---------+\n|                                         |        | SR (Jan.)|        |        | 2024   |        |        | SR (Jan.)|          | SR (Jan.)|        |        |        |        |         |\n|                                         | 2022   | 2023     | 2023   | Q1     | Q2     | Q3     | Q4     | 2024     | 2024     | 2025     | 2025   | 2026   | 2027   | 2028   | 2029    |\n+=========================================+========+==========+========+========+========+========+========+==========+==========+==========+========+========+========+========+=========+\n| Imports G&S                             | 97,558 | 99,037   | 98,245 | 17,937 | 22,064 | 21,293 | 19,056 | 83,112   | 80,349   | 89,279   | 84,836 | 88,998 | 93,606 | 98,601 | 102,674 |\n| FDI payments                            | 2,076  | 2,337    | 2,403  | 559    | 597    | 540    | 591    | 2,243    | 2,286    | 2,315    | 2,366  | 2,425  | 2,468  | 2,496  | 2,529   |\n| Interest federal government             | 2,702  | 2,934    | 2,934  | 1,396  | 567    | 1,370  | 567    | 3,837    | 3,900    | 4,030    | 4,083  | 4,044  | 4,014  | 5,417  | 5,842   |\n| to IFIs (excl IMF)                      | 667    | 1,706    | 1,706  | 550    | 550    | 550    | 550    | 2,109    | 2,200    | 2,131    | 2,236  | 2,217  | 2,203  | 2,292  | 2,241   |\n| to private creditors FX                 | 866    | 1,205    | 1,205  | 831    | 1      | 804    | 1      | 1,665    | 1,638    | 1,832    | 1,777  | 1,752  | 1,727  | 3,013  | 3,473   |\n| to private creditors AR$                | 1,169  | 23       | 23     | 16     | 16     | 16     | 16     | 64       | 62       | 67       | 70     | 75     | 85     | 113    | 128     |\n| Interest provincial government          | 710    | 951      | 951    | 339    | 167    | 344    | 158    | 1,008    | 1,008    | 943      | 943    | 834    | 764    | 475    | 377     |\n| Amortization federal government         | 14,387 | 5,462    | 5,445  | 934    | 938    | 1,511  | 938    | 4,317    | 4,320    | 6,902    | 6,610  | 6,561  | 7,174  | 9,051  | 10,031  |\n| to IFIs (excl IMF)                      | 2,507  | 3,516    | 3,516  | 706    | 706    | 706    | 706    | 2,822    | 2,824    | 2,941    | 2,945  | 2,827  | 2,860  | 2,925  | 2,981   |\n| to private creditors FX                 | 0      | 0        | 0      | 0      | 3      | 577    | 3      | 681      | 583      | 3,335    | 2,937  | 2,937  | 3,396  | 5,299  | 6,201   |\n| to private creditors AR$                | 11,880 | 1,946    | 1,929  | 228    | 228    | 228    | 228    | 814      | 914      | 627      | 728    | 798    | 918    | 827    | 849     |\n| Amortization provincial government      | 274    | 1,074    | 1,074  | 474    | 403    | 292    | 389    | 1,558    | 1,558    | 2,225    | 2,225  | 2,193  | 2,165  | 1,099  | 881     |\n| Debt service to IMF                     | 18,642 | 20,978   | 20,978 | 2,804  | 2,804  | 1,509  | 861    | 7,980    | 7,978    | 3,473    | 3,473  | 4,603  | 7,691  | 9,412  | 9,495   |\n| of which interest and charges           | 1,868  | 3,238    | 3,238  | 861    | 861    | 861    | 861    | 3,445    | 3,443    | 3,473    | 3,473  | 3,485  | 3,324  | 2,905  | 2,347   |\n| Other outflows (net)                    | 5,584  | 16,544   | 15,369 | 6,980  | 571    | 1,386  | 1,492  | 15,456   | 10,428   | 12,139   | 3,879  | 6,283  | 4,095  | 4,390  | 7,542   |\n| Total Needs                             | 141,934| 149,317  | 147,398| 31,424 | 28,109 | 28,243 | 24,052 | 119,511  | 111,828  | 121,306  | 108,414| 115,941| 121,977| 130,942| 139,371  |\n| Exports G&S                             | 103,003| 88,637   | 88,727 | 22,700 | 22,641 | 23,052 | 23,842 | 102,704  | 96,235   | 109,271  | 102,391| 108,263| 114,811| 122,030| 128,428  |\n| FDI Inflows                             | 15,409 | 22,237   | 22,911 | 6,650  | 1,750  | 150    | -1,350 | 11,197   | 7,200    | 9,997    | 4,000  | 6,000  | 4,000  | 6,000  | 6,000   |\n| Borrowing of federal government         | 6,350  | 6,668    | 6,651  | 1,313  | 1,313  | 1,313  | 1,313  | 5,294    | 5,252    | 7,026    | 7,010  | 8,413  | 9,405  | 11,152 | 14,428  |\n| from IFIs (excl IMF)                    | 4,334  | 4,630    | 4,630  | 1,005  | 1,005  | 1,005  | 1,005  | 4,159    | 4,020    | 4,073    | 3,972  | 4,133  | 3,688  | 3,558  | 3,580   |\n| from private creditors FX               | 49     | 69       | 69     | 64     | 64     | 64     | 64     | 257      | 256      | 2,259    | 2,240  | 3,407  | 4,715  | 6,655  | 9,870   |\n| of which international market issuance  | 0      | 0        | 0      | 0      | 0      | 0      | 0      | 0        | 0        | 1,500    | 1,500  | 2,500  | 3,500  | 5,000  | 6,000   |\n| from private creditors AR$              | 1,967  | 1,969    | 1,952  | 244    | 244    | 244    | 244    | 877      | 976      | 694      | 798    | 873    | 1,002  | 940    | 978     |\n| Borrowing of provincial government      | 689    | 507      | 507    | 197    | 197    | 197    | 197    | 786      | 786      | 1,012    | 1,012  | 1,265  | 1,761  | 1,761  | 515     |\n| Reserve Drawdown (- = accumulation)     | -6,918 | 18,600   | 15,935 | -4,087 | -2,588 | 3,000  | -500   | -7,000   | -4,175   | -6,000   | -6,000 | -8,000 | -8,000 | -10,000| -10,000 |\n| Total Sources                           | 118,533| 136,649  | 134,730| 26,773 | 27,312 | 27,712 | 23,502 | 112,982  | 105,298  | 121,306  | 108,414| 115,941| 121,977| 130,942| 139,371  |\n+-----------------------------------------+--------+----------+--------+--------+--------+--------+--------+----------+----------+----------+--------+--------+--------+--------+---------+\n| Total Gap                               | 23,401 | 12,668   | 12,668 | 4,651  | 797    | 532    | 550    | 6,530    | 6,530    | 0        | 0      | 0      | 0      | 0      | 0       |\n| IMF Disbursements                       | 23,401 | 12,668   | 12,668 | 4,651  | 797    | 532    | 550    | 6,530    | 6,530    | 0        | 0      | 0      | 0      | 0      | 0       |\n+-----------------------------------------+--------+----------+--------+--------+--------+--------+--------+----------+----------+----------+--------+--------+--------+--------+---------+\n\nSources: National authorities and Fund staff estimates and projections.",
+      "latencyMs": 13255,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1284,
+        "completionTokens": 3629,
+        "cost": 0.0057645
+      }
+    },
+    {
+      "caseId": "sample-metro-proforma",
+      "description": "Metro Bank pro forma adjustments — financial table with footnote refs",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "A. de "
+      },
+      "output": "+--------------------------------------+-----------------+--------------------------------------------------+------------------------------------------------------------------------------------------+-----------------+\n|                                      |                 |                   Adjustments                    |                                                                                          |                 |\n|                                      |                 +-----------------------+--------------------------+------------------------------------------------------------------------------------------+                 |\n|                                      |      As at 30   |      Net proceeds     | Net proceeds from the    | Issuance of the New Tier 2 Notes and the Non-Cash New MREL Notes$^{(4)}$                  |    Pro Forma    |\n|                                      |     June 2023$^{(1)}$ | from the Firm Placing$^{(2)}$ | issuance of the Cash New MREL Notes$^{(3)}$ |                                                                                          |      Group      |\n+--------------------------------------+-----------------+-----------------------+--------------------------+------------------------------------------------------------------------------------------+-----------------+\n|                                      |                 |                       | (unaudited)              |                                                                                          |                 |\n|                                      |                 |                       | (£ million)              |                                                                                          |                 |\n| Total assets........................ |          21,747 |                   144 |                      168 |                                                                                     (42) |          22,017 |\n+--------------------------------------+-----------------+-----------------------+--------------------------+------------------------------------------------------------------------------------------+-----------------+\n| Total liabilities................... |        (20,777) |                     — |                    (168) |                                                                                      103 |        (20,842) |\n+--------------------------------------+-----------------+-----------------------+--------------------------+------------------------------------------------------------------------------------------+-----------------+\n| Net assets.......................... |             970 |                   144 |                        — |                                                                                       61 |           1,175 |\n+--------------------------------------+-----------------+-----------------------+--------------------------+------------------------------------------------------------------------------------------+-----------------+\n| CET1 resources$^{(5)}$............... |             813 |                   144 |                        — |                                                                                       61 |           1,018 |\n| CET1 ratio$^{(5)}$.................. |           10.4% |                  1.8% |                        — |                                                                                     0.8% |           13.1% |\n+--------------------------------------+-----------------+-----------------------+--------------------------+------------------------------------------------------------------------------------------+-----------------+\n\n**Table Summary:**\nThe table provides a pro forma reconciliation of the Group's financial position as at 30 June 2023, reflecting adjustments for the Firm Placing, the issuance of Cash New MREL Notes, and the issuance of New Tier 2 Notes and Non-Cash New MREL Notes. \n\n- **Total Assets:** Started at 21,747 (£ million). Adjustments include +144 (Firm Placing), +168 (Cash New MREL), and (42) (Tier 2/Non-Cash MREL), resulting in a pro forma total of 22,017.\n- **Total Liabilities:** Started at (20,777). Adjustments include — (Firm Placing), (168) (Cash New MREL), and +103 (Tier 2/Non-Cash MREL), resulting in a pro forma total of (20,842).\n- **Net Assets:** Started at 970. Adjustments include +144 (Firm Placing) and +61 (Tier 2/Non-Cash MREL), resulting in a pro forma total of 1,175.\n- **CET1 Resources:** Started at 813. Adjustments include +144 (Firm Placing) and +61 (Tier 2/Non-Cash MREL), resulting in a pro forma total of 1,018.\n- **CET1 Ratio:** Started at 10.4%. Adjustments include +1.8% (Firm Placing) and +0.8% (Tier 2/Non-Cash MREL), resulting in a pro forma total of 13.1%.",
+      "latencyMs": 4517,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 877,
+        "cost": 0.0016475
+      }
+    },
+    {
+      "caseId": "metro-upgraded-guidance",
+      "description": "Metro Bank upgraded guidance: RoTE, NIM, and cost:income projections",
+      "status": "error",
+      "score": null,
+      "output": "",
+      "latencyMs": 0,
+      "error": "Gateway request timed out: Cannot connect to API: Headers Timeout Error\n\n    This is a client-side timeout. To resolve this, increase your timeout configuration: https://vercel.com/docs/ai-gateway/capabilities/video-generation#extending-timeouts-for-node.js"
+    },
+    {
+      "caseId": "sample-moodys-sovereign",
+      "description": "Moody's sovereign scorecard — wide table with 20+ rating category columns",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "The actual output is structurally sound and follows the grid of the source image correctly. The data extraction is accurate for the most part, although there are minor issues with character spacing and truncation in the ASCII representation of large numbers (e.g., in the National Income row, '12,000' is split into multiple lines and '14,000' is partially truncated as '1400' in one cell). However, it is much more accurate than the provided reference output, which contains entirely incorrect data for the last row."
+      },
+      "output": "Exhibit 4\nSovereign scorecard\n\n+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Factor: Economic Strength                                                                                                                                                                                                                                                        |\n+-------------+-----------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| Sub-factor  | Metric                | Metric| aaa | aa1 | aa2 | aa3 | a1  | a2  | a3  | baa1| baa2| baa3| ba1 | ba2 | ba3 | b1  | b2  | b3  | caa1| caa2| caa3| ca  |\n|             |                       | Weight|     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |\n+-------------+-----------------------+-------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| Growth      | Average Real GDP      |       |     | 5.3-| 4.9-| 4.4-| 4 - | 3.7-| 3.3-| 3 - | 2.6-| 2.3-| 2 - | 1.8-| 1.6-| 1.3-| 1.1-| 0.9-| 0.7-| 0.5-| 0.3-|     |\n| Dynamics    | Growth (%) t-4 to t+5 | 25%   | ≥5.7| 5.7 | 5.3 | 4.9 | 4.4 | 4   | 3.7 | 3.3 | 3   | 2.6 | 2.3 | 2   | 1.8 | 1.6 | 1.3 | 1.1 | 0.9 | 0.7 | 0.5 | <0.3|\n|             | *1                    |       |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |\n+-------------+-----------------------+-------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| Growth      | MAD Volatility in     |       |     | 0.10| 0.20| 0.30| 0.40| 0.50| 0.60| 0.75| 0.90| 1.10| 1.30| 1.50| 1.80| 2.10| 2.40| 2.70| 3.00| 3.50| 4.00|     |\n| Dynamics    | Real GDP Growth (%)   | 10%   | ≤0.1| -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | >4.5|\n|             | t-9 to t *2           |       | 0   | 0.20| 0.30| 0.40| 0.50| 0.60| 0.75| 0.90| 1.10| 1.30| 1.50| 1.80| 2.10| 2.40| 2.70| 3.00| 3.50| 4.00| 4.50|     |\n+-------------+-----------------------+-------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| Scale of    | Nominal GDP           |       |     | 750-| 600-| 450-| 330-| 250-| 190-| 140-| 100-| 80 -| 60 -| 45 -| 35 -| 26 -| 20 -| 15 -| 10 -| 8 - | 6 - |     |\n| the Economy | (US$ bn) *3           | 30%   | ≥100| 1000| 750 | 600 | 450 | 330 | 250 | 190 | 140 | 100 | 80  | 60  | 45  | 35  | 26  | 20  | 15  | 10  | 8   | < 6 |\n|             |                       |       | 0   |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |\n+-------------+-----------------------+-------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| National    | GDP per capita (PPP,  |       |     | 4200| 3700| 3200| 2750| 2450| 2100| 1900| 1600| 1400| 1200| 1075| 9500| 8000| 7000| 6200| 5500| 4700| 4100|     |\n| Income      | international USD) *4 | 35%   | ≥480| 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | 0 - | -   | -   | -   | -   | -   | -   | -   | <410|\n|             |                       |       | 00  | 4800| 4200| 3700| 3200| 2750| 2450| 2100| 1900| 1600| 1400| 1200| 1075| 9500| 8000| 7000| 6200| 5500| 4700| 0   |\n+-------------+-----------------------+-------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n| Adjustment to Factor Score                                                                                                                                         |\n+-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+\n| Other       |                                                                                                                                                      |\n+-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+\n| 0 to 9 notches                                                                                                                                                     |\n+-------------+------------------------------------------------------------------------------------------------------------------------------------------------------+",
+      "latencyMs": 5854,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 1649,
+        "cost": 0.0028055
+      }
+    },
+    {
+      "caseId": "sample-moodys-scorecard",
+      "description": "Moody's sovereign rating scorecard — hierarchical with merged cells and sub-factors",
+      "status": "pass",
+      "score": {
+        "score": 4,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "In the problem    "
+      },
+      "output": "| Factor | Sub-factor | Sub-factor Weighting | Metric / Sub-sub-factor | Metric / Sub-sub-factor Weighting |\n| :--- | :--- | :--- | :--- | :--- |\n| ECONOMIC STRENGTH | Growth Dynamics | 35% | Average Real GDP Growth | 25% |\n| | | | MAD Volatility in Real GDP Growth | 10% |\n| | Scale of the Economy | 30% | Nominal GDP (US$ bn) | 30% |\n| | National Income | 35% | GDP per Capita (PPP, Int. USD) | 35% |\n| | Adjustment to Factor Score | 0 to 9 notches | Other | |\n| | | | | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH | Quality of Institutions | 40% | Quality of Legislative and Executive Institutions | 20% |\n| | | | Strength of Civil Society and the Judiciary | 20% |\n| | Policy Effectiveness | 60% | Fiscal Policy Effectiveness | 30% |\n| | | | Monetary and Macroeconomic Policy Effectiveness | 30% |\n| | Adjustments to Factor Score | 0 to 3 notches | Government Default History and Track Record of Arrears | |\n| | | 0 to 3 notches | Other | |\n| | | | | |\n| FISCAL STRENGTH | Debt Burden | 50%¹ | General Government Debt / GDP | 25% |\n| | | | General Government Debt / Revenue | 25% |\n| | Debt Affordability | 50%¹ | General Government Interest Payments / Revenue | 25% |\n| | | | General Government Interest Payments / GDP | 25% |\n| | Adjustments to Factor Score | 0 to 6 notches | Debt Trend | Historical Change in Debt Burden |\n| | | | | Expected Change in Debt Burden |\n| | | | | General Government Foreign Currency Debt / GDP |\n| | | | | Other Non-Financial Public Sector Debt / GDP |\n| | | | | Government Financial Assets including Sovereign Wealth Funds / GDP |\n| | | 0 to 3 notches | Other | |\n| | | | | |\n| SUSCEPTIBILITY TO EVENT RISK | Political Risk | Minimum Function² | Domestic Political and Geopolitical Risk | |\n| | Government Liquidity Risk | Minimum Function² | Ease of Access to Funding | |\n| | | 0 to 2 scoring categories | Adjustment to Sub-factor Score High Refinancing Risk | |\n| | Banking Sector Risk | Minimum Function² | Risk of Banking Sector Credit Event (BSCE) | |\n| | | | Total Domestic Bank Assets / GDP | |\n| | | 0 to 2 scoring categories | Adjustment to Sub-factor Score | |\n| | External Vulnerability Risk | Minimum Function² | External Vulnerability Risk | |\n| | | 0 to 2 scoring categories | Adjustment to Sub-factor Score | |\n| | Adjustment to Factor Score | 0 to 2 scoring categories | | |",
+      "latencyMs": 3225,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1316,
+        "completionTokens": 674,
+        "cost": 0.00134
+      }
+    },
+    {
+      "caseId": "sample-moodys-esg",
+      "description": "Moody's ESG integration — non-numeric table with dot/icon indicators",
+      "status": "pass",
+      "score": {
+        "score": 5,
+        "pass": true,
+        "dimensions": {},
+        "reasoning": "In the task_Definition de.json file, "
+      },
+      "output": "Exhibit 3\nHow ESG considerations are integrated into our analysis\n\n| Factor | Sub-factor | Environmental IPS | Social IPS | Governance IPS |\n| :--- | :--- | :---: | :---: | :---: |\n| ECONOMIC STRENGTH | Growth Dynamics | ● | ● | ● |\n| | Scale of the Economy | | | |\n| | National Income | | ● | |\n| INSTITUTIONS AND GOVERNANCE STRENGTH | Quality of Institutions | | ● | ● |\n| | Policy Effectiveness | | ● | ● |\n| FISCAL STRENGTH | Debt Burden | ● | ● | |\n| | Debt Affordability | | ● | ● |\n| SUSCEPTIBILITY TO EVENT RISK | Political Risk | ● | ● | ● |\n| | Government Liquidity Risk | | | ● |\n| | Banking Sector Risk | | | ● |\n| | External Vulnerability Risk | ● | | |\n\n*Source: Moody's Investors Service*\n\n***\n\n**Summary of Exhibit 3:**\nThis chart illustrates the integration of Environmental, Social, and Governance (ESG) Issuer Profile Scores (IPS) into Moody's analytical framework. It maps specific credit factors and sub-factors against the three ESG pillars. The colored dots indicate where a specific ESG factor is integrated into the analysis:\n*   **Blue dots (●):** Indicate the integration of Environmental IPS.\n*   **Teal dots (●):** Indicate the integration of Social IPS.\n*   **Green dots (●):** Indicate the integration of Governance IPS.\n\nThe table demonstrates that \"Political Risk\" is the only sub-factor that incorporates all three ESG pillars, while sub-factors such as \"Scale of the Economy\" have no mapped ESG integration.",
+      "latencyMs": 3357,
+      "usage": {
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "promptTokens": 1328,
+        "completionTokens": 368,
+        "cost": 0.000884
+      }
+    }
+  ],
+  "summary": {
+    "total": 21,
+    "passed": 14,
+    "failed": 2,
+    "errors": 5,
+    "avgScore": 4.38,
+    "avgLatencyMs": 4643,
+    "dimensions": {}
+  }
+}

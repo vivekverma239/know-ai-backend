@@ -1,0 +1,94 @@
+[
+  {
+    "id": "imf-private-official-debt-maturity",
+    "image": "charts/images/imf-private-official-debt-maturity.png",
+    "page": "charts/pages/imf-private-official-debt-maturity-page.png",
+    "reference": "charts/references/imf-private-official-debt-maturity.md",
+    "description": "IMF report chart: private official debt maturity"
+  },
+  {
+    "id": "imf-external-debt-composition",
+    "image": "charts/images/imf-external-debt-composition.png",
+    "page": "charts/pages/imf-external-debt-composition-page.png",
+    "reference": "charts/references/imf-external-debt-composition.md",
+    "description": "IMF report chart: external debt composition"
+  },
+  {
+    "id": "imf-fiscal-chart",
+    "image": "charts/images/imf-fiscal-chart.png",
+    "page": "charts/pages/imf-fiscal-chart-page.png",
+    "reference": "charts/references/imf-fiscal-chart.md",
+    "description": "IMF report chart: fiscal chart"
+  },
+  {
+    "id": "imf-embig-sovereign-spread",
+    "image": "charts/images/imf-embig-sovereign-spread.png",
+    "page": "charts/pages/imf-embig-sovereign-spread-page.png",
+    "reference": "charts/references/imf-embig-sovereign-spread.md",
+    "description": "IMF report chart: embig sovereign spread"
+  },
+  {
+    "id": "imf-reserve-assets",
+    "image": "charts/images/imf-reserve-assets.png",
+    "page": "charts/pages/imf-reserve-assets-page.png",
+    "reference": "charts/references/imf-reserve-assets.md",
+    "description": "IMF report chart: reserve assets"
+  },
+  {
+    "id": "imf-domestic-credit",
+    "image": "charts/images/imf-domestic-credit.png",
+    "page": "charts/pages/imf-domestic-credit-page.png",
+    "reference": "charts/references/imf-domestic-credit.md",
+    "description": "IMF report chart: domestic credit"
+  },
+  {
+    "id": "imf-growth-comparison",
+    "image": "charts/images/imf-growth-comparison.png",
+    "page": "charts/pages/imf-growth-comparison-page.png",
+    "reference": "charts/references/imf-growth-comparison.md",
+    "description": "IMF report chart: growth comparison"
+  },
+  {
+    "id": "imf-inflation-comparison",
+    "image": "charts/images/imf-inflation-comparison.png",
+    "page": "charts/pages/imf-inflation-comparison-page.png",
+    "reference": "charts/references/imf-inflation-comparison.md",
+    "description": "IMF report chart: inflation comparison"
+  },
+  {
+    "id": "ms-robot-revenue-projection",
+    "image": "charts/images/ms-robot-revenue-projection.png",
+    "reference": "charts/references/ms-robot-revenue-projection.md",
+    "description": "Morgan Stanley stacked bar: $25T global robot revenues by 2050"
+  },
+  {
+    "id": "ms-robot-sales",
+    "image": "charts/images/ms-robot-sales.png",
+    "reference": "charts/references/ms-robot-sales.md",
+    "description": "Morgan Stanley stacked bar: 1.4B robot unit sales by 2050"
+  },
+  {
+    "id": "ms-us-economy",
+    "image": "charts/images/ms-us-economy.png",
+    "reference": "charts/references/ms-us-economy.md",
+    "description": "Morgan Stanley: Mag 7 vs physical economy comparison"
+  },
+  {
+    "id": "ms-edge-compute",
+    "image": "charts/images/ms-edge-compute.png",
+    "reference": "charts/references/ms-edge-compute.md",
+    "description": "Morgan Stanley dual chart: edge compute ExaFLOPS + Blackwell equivalents"
+  },
+  {
+    "id": "metro-cost",
+    "image": "charts/images/metro-cost.png",
+    "reference": "charts/references/metro-cost.md",
+    "description": "Metro Bank cost discipline + underlying operating expenses charts"
+  },
+  {
+    "id": "metro-multi-chart",
+    "image": "charts/images/metro-multi-chart.png",
+    "reference": "charts/references/metro-multi-chart.md",
+    "description": "Metro Bank 4-chart page: treasury repricing, LCR, NIBLs, deposits"
+  }
+]

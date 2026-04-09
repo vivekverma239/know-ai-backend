@@ -1,0 +1,18 @@
+{
+  "pageIndex": 37,
+  "totalBlocks": 2,
+  "images": 0,
+  "tables": 2,
+  "blocks": [
+    {
+      "type": "table",
+      "id": "tbl-5.md",
+      "bounds": null
+    },
+    {
+      "type": "table",
+      "id": "tbl-6.md",
+      "bounds": null
+    }
+  ]
+}
