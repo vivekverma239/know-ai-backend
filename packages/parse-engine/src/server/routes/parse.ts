@@ -57,6 +57,8 @@ parseApp.openapi(postParseRoute, async (c) => {
   }
 
   const { paddle, textract } = c.req.valid("query");
+  // Auto-enable Paddle when MODAL_ENDPOINT_URL is configured
+  const usePaddle = paddle || !!process.env.MODAL_ENDPOINT_URL;
   const jobId = randomUUID();
   const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -67,7 +69,7 @@ parseApp.openapi(postParseRoute, async (c) => {
   const client = new Client({ token: process.env.QSTASH_TOKEN! });
   await client.trigger({
     url: workflowUrl,
-    body: { jobId, useTextract: textract, usePaddle: paddle },
+    body: { jobId, useTextract: textract, usePaddle },
   });
 
   return c.json({ jobId, status: "processing" as const }, 202);

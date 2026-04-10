@@ -60,6 +60,8 @@ export interface MediaBlock {
   /** Full page PNG bytes (context for vision LLM) */
   pageBytes: Buffer;
   cacheKey: string;
+  /** Original Mistral media ID (e.g. "img-0-0", "tbl-3") for inline marker replacement */
+  sourceId?: string;
 }
 
 /** Parsed media block — content extracted from the media region */
@@ -71,6 +73,8 @@ export interface ParsedMediaBlock {
   page: number;
   idx: number;
   bounds: [number, number, number, number];
+  /** Original Mistral media ID for inline marker replacement */
+  sourceId?: string;
 }
 
 /** Final parsed page with merged content */

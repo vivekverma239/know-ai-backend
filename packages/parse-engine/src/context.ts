@@ -65,7 +65,11 @@ export class PipelineContext {
     }
 
     const result = await fn();
-    await this.persistence.set(cacheKey, JSON.stringify(result), this.cacheTtl);
+    // Don't cache empty/falsy results — they likely represent failures
+    const isEmpty = result === "" || result === null || result === undefined;
+    if (!isEmpty) {
+      await this.persistence.set(cacheKey, JSON.stringify(result), this.cacheTtl);
+    }
     return result;
   }
 

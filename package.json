@@ -28,7 +28,8 @@
     "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts",
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev",
     "sync:auth": "tsx scripts/sync_auth_tables.ts",
-    "test:smoke": "tsx test/smokeTest.ts"
+    "test:smoke": "tsx test/smokeTest.ts",
+    "parse-engine:deploy": "railway up --dockerfile packages/parse-engine/Dockerfile.server"
   },
   "keywords": [],
   "author": "",

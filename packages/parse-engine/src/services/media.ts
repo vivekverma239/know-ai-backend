@@ -53,6 +53,7 @@ export async function parseMediaBlocks(
         page: block.page,
         idx: block.idx,
         bounds: block.bounds,
+        sourceId: block.sourceId,
       };
     })
   );

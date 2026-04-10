@@ -1,5 +1,6 @@
 import { Storage } from "@google-cloud/storage";
 import { env } from "../env.js";
+import type { ParsedDocumentResponse } from "./schemas.js";
 
 let _client: Storage | null = null;
 
@@ -69,7 +70,7 @@ export async function writeJobError(jobId: string, error: string): Promise<void>
 /** Read job status and result/error from GCS. */
 export async function readJobStatus(jobId: string): Promise<{
   status: "processing" | "completed" | "failed" | "not_found";
-  result?: unknown;
+  result?: ParsedDocumentResponse;
   error?: string;
 }> {
   const bucket = getBucket();

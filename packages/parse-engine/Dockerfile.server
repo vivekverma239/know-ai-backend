@@ -10,22 +10,20 @@ WORKDIR /app
 
 # Build stage
 FROM base AS builder
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-COPY packages/parse-engine/package.json packages/parse-engine/
-RUN pnpm install --frozen-lockfile
-COPY packages/parse-engine/ packages/parse-engine/
-RUN pnpm --filter parse-engine build
+COPY package.json ./
+RUN pnpm install --no-frozen-lockfile
+COPY . .
+RUN pnpm build
 
 # Production stage
 FROM base AS production
 ENV NODE_ENV=production
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-COPY packages/parse-engine/package.json packages/parse-engine/
-RUN pnpm install --prod --frozen-lockfile
+COPY package.json ./
+RUN pnpm install --prod --no-frozen-lockfile
 
-COPY --from=builder /app/packages/parse-engine/dist ./packages/parse-engine/dist
-COPY --from=builder /app/packages/parse-engine/package.json ./packages/parse-engine/
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
 
 EXPOSE 3001
 
-CMD ["node", "packages/parse-engine/dist/server/index.js"]
+CMD ["node", "dist/server/index.js"]

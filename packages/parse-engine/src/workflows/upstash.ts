@@ -44,7 +44,7 @@ export function parsePdfHandler(config: UpstashWorkflowConfig) {
       const allMedia = mistralResult.pages.flatMap((p) => [...p.images, ...p.tables]);
 
       const mediaResult = await context.run("media-pipeline", () =>
-        mediaStep(pdf, mistralResult, allMedia, ctx, { concurrency: config.concurrency ?? 20, useTextract: config.useTextract ?? true, baseName })
+        mediaStep(pdf, mistralResult, allMedia, ctx, { concurrency: config.concurrency ?? 20, useTextract: config.useTextract ?? false, baseName })
       );
 
       const summary = await context.run("summary", () => summaryStep(pdf, ctx));

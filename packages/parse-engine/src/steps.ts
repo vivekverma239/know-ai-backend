@@ -131,6 +131,7 @@ export async function mediaStep(
         originalLabel: m.annotation ?? m.type,
         bounds: m.bounds!, blockBytes, pageBytes,
         cacheKey: `${opts.baseName}_${m.pageIndex}_${i}`,
+        sourceId: m.id,
       });
     } catch (err) {
       console.warn(`  Failed to extract block ${i}: ${err}`);

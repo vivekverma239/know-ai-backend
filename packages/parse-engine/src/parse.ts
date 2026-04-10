@@ -205,6 +205,7 @@ export async function parsePdf(
           originalLabel: m.annotation ?? m.type,
           bounds: m.bounds!, blockBytes, pageBytes,
           cacheKey: `${baseName}_${m.pageIndex}_${i}`,
+          sourceId: m.id,
         });
       } catch {
         // Skip blocks that fail to extract

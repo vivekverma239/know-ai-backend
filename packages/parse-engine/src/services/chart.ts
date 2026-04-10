@@ -20,18 +20,17 @@ For the chart, provide:
 
 const CHART_CONTEXT_PROMPT = `The following page image is provided ONLY for context to help you understand what the chart is about. Do NOT extract text or content from this page — only use it to understand the chart in the first image.`;
 
-const TABLE_PROMPT = `copy paste the document attahed here, maintaining its layout, and following the following instructions:
-- do not complete sentences that are incomplete, only return exactly what is in the document, no additional content
-- do not summarize the content of the document, report exactly what is in the document
-- do not add content to the output, only return what you see in the document, do not infer anything, just copy paste
-- make sure to include all references, even those in smaller font at the end of the page
-- if there are charts/figures, add a good summary of them which explains the meaning of the chart as well, if possible extract any numeric values mentioned or inferrable form the charts, in a way that makes sense in text form
-- If there are numeric values in any chart like bar chart make sure to extract those along with appropriate text which should include legends and axis title
-- make sure to extract all tables correctly taking into account merged cells, indicate merged cells with [rowspan=X] and [colspan=X] markers in the initial cell the merged range, while leaving all other cells of the range empty, for example look at the following table with 4 columns and 2 rows:
-|text in the merged cells [colspan=3] | | | text in cell after merged range|
-| a | b | c | d |`;
+const TABLE_PROMPT = `Extract the table from the first image below into a markdown table. Follow these rules strictly:
 
-const TABLE_CONTEXT_PROMPT = `To help you understand the context, this is the full document page from which the content was extracted. Use it only for reference.`;
+1. Return ONLY the table content as a markdown table — no surrounding text, headers, or commentary
+2. Reproduce the data exactly as shown — do not infer, complete, or modify any values
+3. Include all footnote references (e.g. superscript numbers) inline
+4. For merged cells, use [rowspan=X] or [colspan=X] in the first cell of the range and leave spanned cells empty. Example:
+   |text [colspan=3] | | | other|
+   | a | b | c | d |
+5. Preserve alignment: use :--- for left, ---: for right, :---: for center where apparent`;
+
+const TABLE_CONTEXT_PROMPT = `The second image shows the full page for context only. Do NOT extract from it — use it only to understand column headers or footnotes that may help interpret the table in the first image.`;
 
 async function callVisionLLM(
   model: string,
@@ -87,6 +86,8 @@ export async function parseChart(
 
 /**
  * Parse a table image using a vision LLM. Uses retry with model fallback.
+ * If the response is empty (e.g. content filter), retries without the
+ * context page image.
  */
 export async function parseTableWithLLM(
   imageBytes: Buffer,
@@ -97,7 +98,8 @@ export async function parseTableWithLLM(
   const key = cacheKey ? ctx.key("table_llm", cacheKey) : undefined;
 
   const fn = async () => {
-    const messages = [
+    // Try with full context (table crop + page image)
+    const messagesWithContext = [
       {
         role: "user" as const,
         content: [
@@ -109,10 +111,30 @@ export async function parseTableWithLLM(
       },
     ];
 
-    return withRetry(
-      (model) => callVisionLLM(model, messages, ctx, "table_llm_parse"),
+    const result = await withRetry(
+      (model) => callVisionLLM(model, messagesWithContext, ctx, "table_llm_parse"),
       ctx.models.smart,
       { maxRetries: ctx.maxRetries, models: ctx.models, label: "Table LLM parse" }
+    );
+
+    if (result) return result;
+
+    // Retry without context page image (content filter workaround)
+    console.warn("  Table LLM returned empty, retrying without page context...");
+    const messagesNoContext = [
+      {
+        role: "user" as const,
+        content: [
+          { type: "text" as const, text: TABLE_PROMPT },
+          { type: "image" as const, image: imageBytes, mediaType: "image/png" as const },
+        ],
+      },
+    ];
+
+    return withRetry(
+      (model) => callVisionLLM(model, messagesNoContext, ctx, "table_llm_parse_no_ctx"),
+      ctx.models.smart,
+      { maxRetries: ctx.maxRetries, models: ctx.models, label: "Table LLM parse (no context)" }
     );
   };
 
