@@ -70,6 +70,7 @@ parseApp.openapi(postParseRoute, async (c) => {
   await client.trigger({
     url: workflowUrl,
     body: { jobId, useTextract: textract, usePaddle },
+    headers: { "Upstash-Timeout": "300" },
   });
 
   return c.json({ jobId, status: "processing" as const }, 202);

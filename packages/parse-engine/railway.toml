@@ -1,2 +1,6 @@
 [build]
 dockerfilePath = "Dockerfile.server"
+
+[deploy]
+# Increase request timeout for long-running workflow steps (Mistral OCR, LLM parsing)
+requestTimeout = 300
