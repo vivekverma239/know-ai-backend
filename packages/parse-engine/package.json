@@ -13,6 +13,10 @@
     "./workflows/upstash": {
       "import": "./dist/workflows/upstash.js",
       "types": "./dist/workflows/upstash.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
     }
   },
   "files": [
@@ -29,6 +33,8 @@
     "pipeline": "tsx src/pipeline.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "server": "node dist/server/index.js",
+    "server:dev": "tsx src/server/index.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
@@ -43,11 +49,15 @@
     "@anthropic-ai/sdk": "^0.82.0",
     "@aws-sdk/client-textract": "^3.1023.0",
     "@google-cloud/storage": "^7.19.0",
+    "@hono/node-server": "^1.19.13",
+    "@hono/zod-openapi": "^1.2.4",
     "@llamaindex/liteparse": "^1.4.4",
     "@mistralai/mistralai": "^2.1.2",
+    "@upstash/workflow": "^1.2.0",
     "ai": "^6.0.145",
     "commander": "^14.0.3",
     "dotenv": "^17.4.0",
+    "hono": "^4.12.12",
     "mupdf": "^1.27.0",
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
