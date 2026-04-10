@@ -21,7 +21,7 @@ export function maskPdf(
   inputPath: string,
   blocks: MaskBlock[],
   outputPath: string,
-  dpi = 150
+  dpi = 72
 ): void {
   const buf = fs.readFileSync(inputPath);
   const srcDoc = mupdf.Document.openDocument(buf, "application/pdf");
