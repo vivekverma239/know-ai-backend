@@ -23,7 +23,7 @@ function parseBboxAnnotation(raw: string | null | undefined): BboxAnnotation | n
   }
 }
 
-const OCR_MODELS = ["mistral-ocr-latest", "mistral-ocr-2503"] as const;
+const OCR_MODELS = ["mistral-ocr-2503"] as const;
 
 const OCR_OPTIONS = {
   model: OCR_MODELS[0],
