@@ -23,8 +23,10 @@ function parseBboxAnnotation(raw: string | null | undefined): BboxAnnotation | n
   }
 }
 
+const OCR_MODELS = ["mistral-ocr-latest", "mistral-ocr-2503"] as const;
+
 const OCR_OPTIONS = {
-  model: "mistral-ocr-latest" as const,
+  model: OCR_MODELS[0],
   includeImageBase64: false,
   tableFormat: "markdown" as const,
   extractHeader: true,
@@ -104,6 +106,72 @@ function flattenPdf(inputPath: string): string {
   }
 }
 
+/**
+ * Run OCR with model fallback and PDF flatten retry.
+ * Tries each model in OCR_MODELS. If all models fail with an invalid PDF
+ * error, flattens the PDF via rasterization and retries all models.
+ */
+async function runOcrWithFallbacks(
+  client: Mistral,
+  pdfPath: string,
+  signedUrl: string,
+): Promise<Awaited<ReturnType<typeof client.ocr.process>>> {
+  const isInvalidPdfError = (err: unknown) => {
+    const msg = (err as Error).message ?? "";
+    return msg.includes("document_parser_invalid_file") || msg.includes("not a valid PDF");
+  };
+
+  // Try each model on the original PDF
+  for (const model of OCR_MODELS) {
+    try {
+      return await client.ocr.process({
+        ...OCR_OPTIONS,
+        model,
+        document: { type: "document_url", documentUrl: signedUrl },
+      });
+    } catch (err) {
+      if (isInvalidPdfError(err)) {
+        console.warn(`  Mistral OCR (${model}) rejected PDF as invalid, trying next model...`);
+        continue;
+      }
+      // For non-invalid-PDF errors (500s, timeouts), try fallback model
+      console.warn(`  Mistral OCR (${model}) failed: ${(err as Error).message?.slice(0, 100)}`);
+      if (model !== OCR_MODELS[OCR_MODELS.length - 1]) continue;
+      throw err;
+    }
+  }
+
+  // All models failed on original PDF — flatten and retry
+  console.warn("  All OCR models failed, flattening PDF and retrying...");
+  const flatPath = flattenPdf(pdfPath);
+  try {
+    const flatContent = fs.readFileSync(flatPath);
+    const flatBlob = new Blob([flatContent], { type: "application/pdf" });
+    const flatUploaded = await client.files.upload({
+      file: { fileName: "document.pdf", content: flatBlob },
+      purpose: "ocr",
+    });
+    const flatSigned = await client.files.getSignedUrl({ fileId: flatUploaded.id });
+
+    for (const model of OCR_MODELS) {
+      try {
+        return await client.ocr.process({
+          ...OCR_OPTIONS,
+          model,
+          document: { type: "document_url", documentUrl: flatSigned.url },
+        });
+      } catch (err) {
+        console.warn(`  Flattened OCR (${model}) failed: ${(err as Error).message?.slice(0, 100)}`);
+        if (model === OCR_MODELS[OCR_MODELS.length - 1]) throw err;
+      }
+    }
+  } finally {
+    try { fs.unlinkSync(flatPath); } catch { /* ignore */ }
+  }
+
+  throw new Error("All Mistral OCR attempts exhausted");
+}
+
 /** Process a single PDF file through Mistral OCR and return page results. */
 async function processOnePdf(
   client: Mistral,
@@ -135,36 +203,7 @@ async function processOnePdf(
     }
   }
 
-  let ocrResponse;
-  try {
-    ocrResponse = await client.ocr.process({
-      ...OCR_OPTIONS,
-      document: { type: "document_url", documentUrl: signed.url },
-    });
-  } catch (err) {
-    const msg = (err as Error).message ?? "";
-    if (msg.includes("document_parser_invalid_file") || msg.includes("not a valid PDF")) {
-      console.warn("  Mistral rejected PDF, flattening and retrying...");
-      const flatPath = flattenPdf(pdfPath);
-      try {
-        const flatContent = fs.readFileSync(flatPath);
-        const flatBlob = new Blob([flatContent], { type: "application/pdf" });
-        const flatUploaded = await client.files.upload({
-          file: { fileName: "document.pdf", content: flatBlob },
-          purpose: "ocr",
-        });
-        const flatSigned = await client.files.getSignedUrl({ fileId: flatUploaded.id });
-        ocrResponse = await client.ocr.process({
-          ...OCR_OPTIONS,
-          document: { type: "document_url", documentUrl: flatSigned.url },
-        });
-      } finally {
-        try { fs.unlinkSync(flatPath); } catch { /* ignore */ }
-      }
-    } else {
-      throw err;
-    }
-  }
+  const ocrResponse = await runOcrWithFallbacks(client, pdfPath, signed.url);
 
   const pages: PageResult[] = [];
 
