@@ -137,7 +137,7 @@ export async function runMistralOCR(
   pdfPath: string,
   apiKey: string
 ): Promise<EvalResult> {
-  const client = new Mistral({ apiKey });
+  const client = new Mistral({ apiKey, timeoutMs: 600_000 });
 
   console.log("Uploading PDF to Mistral...");
   console.log("Running Mistral OCR...");
@@ -156,7 +156,7 @@ export async function runMistralOCRChunked(
   apiKey: string,
   concurrency = 3
 ): Promise<EvalResult> {
-  const client = new Mistral({ apiKey });
+  const client = new Mistral({ apiKey, timeoutMs: 600_000 });
   const limit = pLimit(concurrency);
 
   console.log(`Running Mistral OCR on ${chunks.length} chunk(s) (concurrency=${concurrency})...`);
