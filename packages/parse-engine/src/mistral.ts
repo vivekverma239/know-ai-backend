@@ -1,5 +1,8 @@
 import { Mistral } from "@mistralai/mistralai";
+import mupdf from "mupdf";
 import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 import pLimit from "p-limit";
 import type { DetectedMedia, PageResult, EvalResult } from "./types.js";
 import type { ChunkInfo } from "./pdf.js";
@@ -50,6 +53,57 @@ const OCR_OPTIONS = {
   },
 };
 
+/**
+ * Flatten a PDF by rasterizing all pages to images.
+ * Fixes PDFs with broken structure trees that Mistral rejects.
+ */
+function flattenPdf(inputPath: string): string {
+  const buf = fs.readFileSync(inputPath);
+  const srcDoc = mupdf.Document.openDocument(buf, "application/pdf");
+  const outDoc = new mupdf.PDFDocument();
+
+  try {
+    for (let i = 0; i < srcDoc.countPages(); i++) {
+      const page = srcDoc.loadPage(i);
+      const [px0, py0, px1, py1] = page.getBounds();
+      const pageW = px1 - px0;
+      const pageH = py1 - py0;
+
+      const pixmap = page.toPixmap(
+        mupdf.Matrix.identity,
+        mupdf.ColorSpace.DeviceRGB,
+        false,
+        false
+      );
+      const image = outDoc.addImage(new mupdf.Image(pixmap));
+
+      const resDict = outDoc.newDictionary();
+      const xObjDict = outDoc.newDictionary();
+      xObjDict.put("Im0", image);
+      resDict.put("XObject", xObjDict);
+
+      const content = `q ${pageW} 0 0 ${pageH} ${px0} ${py0} cm /Im0 Do Q`;
+      outDoc.insertPage(
+        -1,
+        outDoc.addPage([px0, py0, px1, py1], 0, resDict, content)
+      );
+      pixmap.destroy();
+    }
+
+    const outPath = path.join(
+      os.tmpdir(),
+      `flattened-${path.basename(inputPath)}`
+    );
+    const outBuf = outDoc.saveToBuffer("compress");
+    fs.writeFileSync(outPath, outBuf.asUint8Array());
+    console.log(`Flattened PDF: ${(outBuf.asUint8Array().length / 1024).toFixed(0)} KB → ${outPath}`);
+    return outPath;
+  } finally {
+    outDoc.destroy();
+    srcDoc.destroy();
+  }
+}
+
 /** Process a single PDF file through Mistral OCR and return page results. */
 async function processOnePdf(
   client: Mistral,
@@ -64,12 +118,53 @@ async function processOnePdf(
     purpose: "ocr",
   });
 
-  const signed = await client.files.getSignedUrl({ fileId: uploaded.id });
+  // Retry signed URL — Mistral can return 500 if the file isn't ready yet
+  let signed!: Awaited<ReturnType<typeof client.files.getSignedUrl>>;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      signed = await client.files.getSignedUrl({ fileId: uploaded.id });
+      break;
+    } catch (err) {
+      if (attempt < 2) {
+        const delay = 2000 * (attempt + 1);
+        console.warn(`  getSignedUrl failed (attempt ${attempt + 1}), retrying in ${delay}ms...`);
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
 
-  const ocrResponse = await client.ocr.process({
-    ...OCR_OPTIONS,
-    document: { type: "document_url", documentUrl: signed.url },
-  });
+  let ocrResponse;
+  try {
+    ocrResponse = await client.ocr.process({
+      ...OCR_OPTIONS,
+      document: { type: "document_url", documentUrl: signed.url },
+    });
+  } catch (err) {
+    const msg = (err as Error).message ?? "";
+    if (msg.includes("document_parser_invalid_file") || msg.includes("not a valid PDF")) {
+      console.warn("  Mistral rejected PDF, flattening and retrying...");
+      const flatPath = flattenPdf(pdfPath);
+      try {
+        const flatContent = fs.readFileSync(flatPath);
+        const flatBlob = new Blob([flatContent], { type: "application/pdf" });
+        const flatUploaded = await client.files.upload({
+          file: { fileName: "document.pdf", content: flatBlob },
+          purpose: "ocr",
+        });
+        const flatSigned = await client.files.getSignedUrl({ fileId: flatUploaded.id });
+        ocrResponse = await client.ocr.process({
+          ...OCR_OPTIONS,
+          document: { type: "document_url", documentUrl: flatSigned.url },
+        });
+      } finally {
+        try { fs.unlinkSync(flatPath); } catch { /* ignore */ }
+      }
+    } else {
+      throw err;
+    }
+  }
 
   const pages: PageResult[] = [];
 

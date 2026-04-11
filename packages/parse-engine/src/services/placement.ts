@@ -89,24 +89,21 @@ export function placeMediaBlocks(
 
     for (const block of parsedBlocks) {
       if (!block.parsedData || placed.has(block.idx)) continue;
-      if (block.page !== page.pageIndex) continue;
 
-      let matched = false;
-
-      // Try Mistral sourceId markers first
-      if (block.sourceId) {
+      // Mistral sourceId markers — only match on the block's own page
+      if (block.sourceId && block.page === page.pageIndex) {
         for (const pattern of mistralMarkerPatterns(block.sourceId)) {
           if (content.includes(pattern)) {
             content = content.replace(pattern, `\n\n${block.parsedData}\n\n`);
             placed.add(block.idx);
-            matched = true;
             break;
           }
         }
       }
 
-      // Fall back to "Insert table/media N here" markers (Paddle)
-      if (!matched) {
+      // Paddle markers — scan all pages since mask indices may not
+      // match media block indices due to sort order differences
+      if (!placed.has(block.idx)) {
         const fallbackPatterns = [
           `[${block.referenceIdx}]`,
           block.referenceIdx,

@@ -52,7 +52,7 @@
     "@hono/node-server": "^1.19.13",
     "@hono/zod-openapi": "^1.2.4",
     "@llamaindex/liteparse": "^1.4.4",
-    "@mistralai/mistralai": "^2.1.2",
+    "@mistralai/mistralai": "2.1.2",
     "@upstash/workflow": "^1.2.0",
     "ai": "^6.0.145",
     "commander": "^14.0.3",

@@ -79,7 +79,7 @@ export const workflowHandler = serve<WorkflowPayload>(
         // Mask runs outside context.run — needs file on disk every replay
         if (!fs.existsSync(maskedPath)) {
           const maskBlocks = mediasToMaskBlocks([], paddleTables);
-          maskPdf(pdfPath, maskBlocks, maskedPath);
+          await maskPdf(pdfPath, maskBlocks, maskedPath);
         }
         pdfForMistral = maskedPath;
       }

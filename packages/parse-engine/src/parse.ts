@@ -141,7 +141,7 @@ export async function parsePdf(
         log(verbose, "Masking table blocks...");
         const maskBlocks = mediasToMaskBlocks([], paddleTables);
         pdfForMistral = path.join(workDir, `${baseName}_masked.pdf`);
-        maskPdf(resolvedPdf, maskBlocks, pdfForMistral);
+        await maskPdf(resolvedPdf, maskBlocks, pdfForMistral);
       }
     }
 

@@ -74,7 +74,7 @@ export async function paddleMaskStep(
       allMedia.filter((m) => m.type === "image"),
       allMedia.filter((m) => m.type === "table")
     );
-    maskPdf(pdf.filePath, maskBlocks, opts.maskedPdfPath);
+    await maskPdf(pdf.filePath, maskBlocks, opts.maskedPdfPath);
     pdfForMistral = opts.maskedPdfPath;
   }
 
