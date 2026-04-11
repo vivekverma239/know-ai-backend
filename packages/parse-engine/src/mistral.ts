@@ -23,6 +23,9 @@ function parseBboxAnnotation(raw: string | null | undefined): BboxAnnotation | n
   }
 }
 
+// TODO: Re-enable "mistral-ocr-latest" (currently mistral-ocr-2505) when stable.
+// It has reliability issues: intermittent 500s, invalid PDF rejections, and timeouts.
+// To enable: ["mistral-ocr-latest", "mistral-ocr-2503"] — latest tried first, 2503 as fallback.
 const OCR_MODELS = ["mistral-ocr-2503"] as const;
 
 const OCR_OPTIONS = {
