@@ -56,11 +56,17 @@ export async function maskPdf(
         borderWidth: 0.5,
       });
 
-      // Placeholder text
-      const fontSize = 7;
+      // Placeholder text — scale font to fit the masked region
+      const maxFontSize = 24;
+      const minFontSize = 10;
+      const textWidth = font.widthOfTextAtSize(block.label, maxFontSize);
+      const fontSize = textWidth > w - 10
+        ? Math.max(minFontSize, maxFontSize * ((w - 10) / textWidth))
+        : maxFontSize;
+
       page.drawText(block.label, {
         x: x + 5,
-        y: y + h / 2 - 3,
+        y: y + h / 2 - fontSize / 2,
         size: fontSize,
         font,
         color: rgb(0, 0, 0),
