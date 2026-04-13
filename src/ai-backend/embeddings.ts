@@ -27,14 +27,17 @@ export const getEmbeddings = async (
       : model === "gemini"
         ? google.textEmbedding("gemini-embedding-001")
         : google.textEmbedding("text-embedding-004");
+  // Replace empty/whitespace-only strings to avoid "empty Part" errors from Google
+  const sanitizedValues = values.map((v) => (v.trim() === "" ? "NO TEXT" : v));
+
   const embeddings: number[][] = [];
-  for (let i = 0; i < values.length; i += 100) {
+  for (let i = 0; i < sanitizedValues.length; i += 100) {
     let retries = 0;
     while (true) {
       try {
         const { embeddings: embeddingsBatch } = await embedMany({
           model: embeddingModel,
-          values: values.slice(i, i + 100),
+          values: sanitizedValues.slice(i, i + 100),
           providerOptions: {
             openai: { dimensions: 768 },
             google: { outputDimensionality: 768 },
