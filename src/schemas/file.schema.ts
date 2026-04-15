@@ -2,20 +2,20 @@ import { Type } from "@sinclair/typebox";
 
 export const UserFileSchema = Type.Object({
   id: Type.String(),
-  name: Type.String(),
-  status: Type.String(),
-  metadata: Type.Optional(Type.Object({}, { additionalProperties: true })),
+  name: Type.Union([Type.String(), Type.Null()]),
+  status: Type.Union([Type.String(), Type.Null()]),
+  metadata: Type.Union([Type.Object({}, { additionalProperties: true }), Type.Null()]),
   userId: Type.String(),
-  createdAt: Type.String(),
-  updatedAt: Type.Optional(Type.String()),
+  createdAt: Type.Union([Type.String(), Type.Null()]),
+  updatedAt: Type.Union([Type.String(), Type.Null()]),
 });
 
 export const UserFileWithMetaSchema = Type.Intersect([
   UserFileSchema,
   Type.Object({
-    numPages: Type.Optional(Type.Number()),
-    numChunks: Type.Optional(Type.Number()),
-    numChapters: Type.Optional(Type.Number()),
+    numPages: Type.Union([Type.Number(), Type.Null()]),
+    numChunks: Type.Union([Type.Number(), Type.Null()]),
+    numChapters: Type.Union([Type.Number(), Type.Null()]),
   }),
 ]);
 

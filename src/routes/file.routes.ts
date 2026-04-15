@@ -149,6 +149,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
         .select({
           id: userFiles.id,
           name: userFiles.name,
+          userId: userFiles.userId,
           status: userFiles.status,
           metadata: userFiles.metadata,
           numPages: pageCount.count,
