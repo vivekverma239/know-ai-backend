@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { generateSecret, generateURI } from "otplib";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import QRCode from "qrcode";
 
@@ -37,18 +37,30 @@ const secretsFile = process.env.ADMIN_SECRETS_FILE ?? "data/admin-secrets.json";
 
 const sanitizeFileSegment = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, "_");
 
+const loadExistingUsers = async (filePath: string): Promise<AdminUserRecord[]> => {
+  try {
+    const raw = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(raw) as { users?: AdminUserRecord[] };
+    return Array.isArray(parsed.users) ? parsed.users : [];
+  } catch {
+    return [];
+  }
+};
+
 const run = async () => {
-  const users: AdminUserRecord[] = [];
+  const absoluteQrOutputDir = path.resolve(process.cwd(), qrOutputDir);
+  const absoluteSecretsFilePath = path.resolve(process.cwd(), secretsFile);
+  await mkdir(absoluteQrOutputDir, { recursive: true });
+  await mkdir(path.dirname(absoluteSecretsFilePath), { recursive: true });
+
+  const existingUsers = await loadExistingUsers(absoluteSecretsFilePath);
+  const users: AdminUserRecord[] = [...existingUsers];
   const enrollmentData: Array<{
     userId: string;
     totpSecret: string;
     otpAuthUri: string;
     qrPngPath: string;
   }> = [];
-  const absoluteQrOutputDir = path.resolve(process.cwd(), qrOutputDir);
-  const absoluteSecretsFilePath = path.resolve(process.cwd(), secretsFile);
-  await mkdir(absoluteQrOutputDir, { recursive: true });
-  await mkdir(path.dirname(absoluteSecretsFilePath), { recursive: true });
 
   for (let i = 0; i < args.length; i += 2) {
     const userId = args[i]?.trim();
@@ -59,7 +71,7 @@ const run = async () => {
     }
 
     if (users.some((user) => user.userId === userId)) {
-      throw new Error(`Duplicate userId provided: ${userId}`);
+      throw new Error(`User "${userId}" already exists. Remove them first or choose a different userId.`);
     }
 
     const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -101,11 +113,14 @@ const run = async () => {
   });
 
   console.log(`Admin secrets file written to: ${absoluteSecretsFilePath}`);
-  console.log("Set this in your .env:");
+  console.log(`  Existing users kept: ${existingUsers.length}`);
+  console.log(`  New users added: ${enrollmentData.length}`);
+  console.log(`  Total users: ${users.length}`);
+  console.log("\nSet this in your .env:");
   console.log(`ADMIN_SECRETS_FILE=${absoluteSecretsFilePath}`);
   console.log(`ADMIN_JWT_SECRET=${process.env.ADMIN_JWT_SECRET ?? "<set_a_long_random_secret>"}`);
   console.log(`ADMIN_USERS_JSON=${JSON.stringify(adminSecrets.users)}`);
-  console.log("\nTOTP enrollment data (save securely):\n");
+  console.log("\nTOTP enrollment data for NEW users (save securely):\n");
   console.log(JSON.stringify(enrollmentData, null, 2));
   console.log(`\nQR images written to: ${absoluteQrOutputDir}`);
 };

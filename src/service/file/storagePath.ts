@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import type { GoogleStorageService } from "@/service/googleStorage";
 
 // In-memory cache for resolved storage paths (TTL: 5 minutes)
@@ -107,4 +108,44 @@ export const resolveExistingPdfStoragePath = async (
 
 export const invalidateStoragePathCache = (fileId: string) => {
   pathCache.delete(fileId);
+};
+
+/**
+ * Download the PDF buffer for a file, falling back to sourceDocumentUrl if
+ * the file is missing from GCS. When the fallback is used the PDF is
+ * re-uploaded to GCS so subsequent attempts find it directly.
+ */
+export const downloadPdfBuffer = async (
+  storage: GoogleStorageService,
+  file: PdfStorageTarget & { sourceDocumentUrl?: string | null },
+): Promise<Buffer> => {
+  const gcsPath = await resolveExistingPdfStoragePath(storage, file);
+
+  if (gcsPath) {
+    return storage.downloadFile(gcsPath);
+  }
+
+  if (file.sourceDocumentUrl && /^https?:\/\//i.test(file.sourceDocumentUrl)) {
+    logger.warn("PDF not in GCS, falling back to sourceDocumentUrl", {
+      fileId: file.id,
+      sourceDocumentUrl: file.sourceDocumentUrl,
+    });
+
+    const res = await fetch(file.sourceDocumentUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to download PDF from source URL (${res.status}): ${file.id}`);
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    // Re-upload so future lookups find it in GCS
+    const uploadPath = file.isAdminFile
+      ? `files/admin/${file.orgId}/${file.id}/document.pdf`
+      : `files/${file.userId}/${file.id}/document.pdf`;
+    await storage.uploadFile({ data: buffer, contentType: "application/pdf", path: uploadPath });
+    logger.info("Re-uploaded PDF to GCS from source URL", { fileId: file.id, uploadPath });
+
+    return buffer;
+  }
+
+  throw new Error(`PDF not found in storage: ${file.id}`);
 };

@@ -13,7 +13,7 @@ import {
   updateParsedMetadata,
   updateParsedPages,
 } from "@/service/file/parsing";
-import { resolveExistingPdfStoragePath } from "@/service/file/storagePath";
+import { downloadPdfBuffer } from "@/service/file/storagePath";
 import { getStorage } from "@/service/googleStorage";
 import { logError, logger } from "@/utils/logger";
 import { eq } from "drizzle-orm";
@@ -33,15 +33,14 @@ async function ensurePdfOnDisk(fileId: string, pdfPath: string, tempDir: string)
   if (!file) throw new Error(`File not found: ${fileId}`);
 
   const storage = getStorage();
-  const gcsPath = await resolveExistingPdfStoragePath(storage, {
+  const pdfBuffer = await downloadPdfBuffer(storage, {
     id: fileId,
     userId: file.userId,
     orgId: file.orgId,
     isAdminFile: file.isAdminFile,
+    sourceDocumentUrl: file.sourceDocumentUrl,
   });
-  if (!gcsPath) throw new Error(`PDF not found in storage: ${fileId}`);
 
-  const pdfBuffer = await storage.downloadFile(gcsPath);
   fs.mkdirSync(tempDir, { recursive: true });
   fs.writeFileSync(pdfPath, pdfBuffer);
 

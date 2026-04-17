@@ -16,6 +16,7 @@ const envSchema = z.object({
   GOOGLE_APPLICATION_CREDENTIALS_BASE64: z.string().optional(),
 
   // AI Providers (at least one required)
+  ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),

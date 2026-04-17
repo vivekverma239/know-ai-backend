@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { type SQLWrapper, and, count, desc, eq, or, sql } from "drizzle-orm";
+import { type SQLWrapper, and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";
@@ -741,7 +741,7 @@ const fileRoutes = async (fastify: FastifyInstance) => {
                 .where(
                   and(
                     eq(userFilePage.fileId, citation.fileId),
-                    sql`${userFilePage.pageNumber} = ANY(${citation.pageNumbers})`,
+                    inArray(userFilePage.pageNumber, citation.pageNumbers),
                   ),
                 )
             : [];

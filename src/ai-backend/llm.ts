@@ -4,6 +4,7 @@ import { getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
 import { recordTokenUsage as persistTokenUsageRecord } from "@/utils/asyncHook";
 import { traceManager, withActiveSpan } from "@/utils/tracing";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -27,6 +28,10 @@ import type { z } from "zod";
 const logger = initLogger({
   projectName: "LaraAI",
   apiKey: process.env.BRAINTRUST_API_KEY,
+});
+
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 const openrouter = createOpenRouter({
@@ -102,9 +107,9 @@ export function getLLM(model: MODELS | string) {
     case MODELS.GPT_5_NANO:
       return wrapAISDKModel(openai("gpt-5-nano"));
     case MODELS.CLAUDE_3_5_SONNET:
-      return wrapAISDKModel(openrouter("anthropic/claude-3.5-sonnet"));
+      return wrapAISDKModel(anthropic("claude-3-5-sonnet-latest"));
     case MODELS.CLAUDE_4_SONNET:
-      return wrapAISDKModel(openrouter("anthropic/claude-sonnet-4"));
+      return wrapAISDKModel(anthropic("claude-sonnet-4-6-20250627"));
     case MODELS.DEEPSEEK_R1_0528:
       return wrapAISDKModel(openrouter("deepseek/deepseek-r1-0528"));
     case MODELS.DEEPSEEK_V3:

@@ -10,6 +10,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:4173",
   "http://127.0.0.1:4173",
   "https://dev-lara-admin.up.railway.app",
+  "https://lara-admin.up.railway.app",
 ];
 
 const parseAllowedOrigins = () => {

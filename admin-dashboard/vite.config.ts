@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   preview: {
-    allowedHosts: ["dev-lara-admin.up.railway.app"],
+    allowedHosts: true,
   },
   resolve: {
     alias: {

@@ -24,6 +24,8 @@
     "admin:dev": "pnpm --dir admin-dashboard dev",
     "admin:build": "pnpm --dir admin-dashboard build",
     "admin:preview": "pnpm --dir admin-dashboard preview",
+    "admin:deploy:dev": "cd admin-dashboard && railway environment dev && railway up",
+    "admin:deploy:prod": "cd admin-dashboard && railway environment production && railway up",
     "admin:create-users": "tsx scripts/generateAdminUsersJson.ts",
     "admin:generate-users-json": "tsx scripts/generateAdminUsersJson.ts",
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev",
@@ -36,6 +38,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
     "@ai-sdk/google": "^3.0.58",
     "@ai-sdk/openai": "^3.0.50",
     "@ai-sdk/perplexity": "^3.0.27",

@@ -45,7 +45,7 @@ echo "Setting gcloud project: ${PROJECT_ID}"
 #   --description "Docker images for ${PROJECT_ID}" >/dev/null
 
 # echo "Building and pushing image via Cloud Build: ${IMAGE_URI}"
-gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
+# gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
 
 DEPLOY_ARGS=(
   --project "${PROJECT_ID}"
@@ -89,7 +89,7 @@ append_env_var "PROJECT_ID" "${PROJECT_ID}"
 append_env_var "REGION" "${REGION}"
 
 # Parse and include from env file if present
-env_vars_file="${ENV_VARS_FILE:-.env.dev}"
+env_vars_file="${ENV_VARS_FILE:-.env.${ENV:-dev}}"
 if [[ -f "${env_vars_file}" ]]; then
   echo "Loading environment variables from ${env_vars_file}"
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -113,8 +113,16 @@ fi
 
 if [[ "${HAS_ADMIN_USERS_JSON}" == "false" && -f "data/admin-secrets.json" ]]; then
   echo "Injecting ADMIN_USERS_JSON from data/admin-secrets.json"
-  admin_users_json="$(node -e 'const fs=require("fs"); const file=JSON.parse(fs.readFileSync("data/admin-secrets.json","utf8")); if(!Array.isArray(file.users)||file.users.length===0){process.exit(1)} process.stdout.write(JSON.stringify(file.users))')"
-  append_env_var "ADMIN_USERS_JSON" "${admin_users_json}"
+  # Write directly to the env vars file to avoid shell expansion of $ in bcrypt hashes
+  node -e '
+    const fs = require("fs");
+    const file = JSON.parse(fs.readFileSync("data/admin-secrets.json", "utf8"));
+    if (!Array.isArray(file.users) || file.users.length === 0) process.exit(1);
+    const json = JSON.stringify(file.users);
+    const escaped = json.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    process.stdout.write("ADMIN_USERS_JSON: \"" + escaped + "\"\n");
+  ' >> "${TMP_ENV_VARS_FILE}"
+  HAS_ADMIN_USERS_JSON=true
 fi
 
 DEPLOY_ARGS+=(--env-vars-file "${TMP_ENV_VARS_FILE}")
