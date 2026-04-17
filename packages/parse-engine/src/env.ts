@@ -33,6 +33,7 @@ export const env = {
 
   // Modal (PaddleOCR)
   get modalEndpointUrl() { return get("MODAL_ENDPOINT_URL"); },
+
 };
 
 /**

@@ -9,6 +9,7 @@ const app = new OpenAPIHono();
 
 // Auth for all routes except health and workflow callback
 app.use("/parse/*", apiKeyAuth());
+app.use("/download", apiKeyAuth());
 
 // Mount routes
 app.route("/", healthApp);

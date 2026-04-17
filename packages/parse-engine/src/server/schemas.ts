@@ -25,6 +25,23 @@ export const ParseQuerySchema = z.object({
   textract: z.coerce.boolean().optional().default(false),
 });
 
+export const ParseUrlBody = z.object({
+  url: z.string().url(),
+  paddle: z.boolean().optional().default(false),
+  textract: z.boolean().optional().default(false),
+});
+
+export const DownloadBody = z.object({
+  url: z.string().url(),
+});
+
+export const DownloadResponse = z.object({
+  success: z.boolean(),
+  pdfUrl: z.string().url().optional(),
+  sizeBytes: z.number().optional(),
+  error: z.string().optional(),
+});
+
 // -- Job Result --
 
 export const JobStatus = z.enum(["processing", "completed", "failed", "not_found"]);
@@ -111,6 +128,7 @@ export const JobResultResponse = z.object({
   jobId: z.string(),
   status: JobStatus,
   result: ParsedDocumentSchema.optional(),
+  pdfUrl: z.string().optional(),
   error: z.string().optional(),
 });
 

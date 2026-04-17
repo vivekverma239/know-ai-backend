@@ -67,6 +67,24 @@ export async function writeJobError(jobId: string, error: string): Promise<void>
   });
 }
 
+/** Generate a signed URL for the stored PDF (1 hour expiry). */
+export async function getJobPdfSignedUrl(jobId: string): Promise<string | null> {
+  const bucket = getBucket();
+  const file = bucket.file(`${jobPrefix(jobId)}/document.pdf`);
+  try {
+    const [exists] = await file.exists();
+    if (!exists) return null;
+    const [url] = await file.getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: Date.now() + 3600 * 1000,
+    });
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 /** Read job status and result/error from GCS. */
 export async function readJobStatus(jobId: string): Promise<{
   status: "processing" | "completed" | "failed" | "not_found";
