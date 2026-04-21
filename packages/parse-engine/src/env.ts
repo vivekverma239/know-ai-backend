@@ -34,8 +34,10 @@ export const env = {
   // Modal (PaddleOCR)
   get modalEndpointUrl() { return get("MODAL_ENDPOINT_URL"); },
 
-  // Anthropic (image parser, vision LLM)
-  get anthropicApiKey() { return get("ANTHROPIC_API_KEY"); },
+  // Google Gemini (image parser, vision LLM)
+  get googleGenerativeAiApiKey() {
+    return get("GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY");
+  },
 };
 
 /**

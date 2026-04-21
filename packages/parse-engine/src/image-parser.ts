@@ -1,6 +1,6 @@
 /**
  * Image parser. Takes an image buffer (PNG/JPEG/WebP/GIF) and uses a vision
- * LLM (Claude Sonnet) to extract the content as markdown. Output shape is
+ * LLM (Gemini Pro) to extract the content as markdown. Output shape is
  * the same single-page ParsedDocument contract used by the HTML and PDF
  * parsers — one page per image.
  *
@@ -9,7 +9,7 @@
  * handles grid inference directly from the image).
  */
 
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 
 export interface ParsedImagePage {
@@ -29,13 +29,13 @@ export interface ParsedImageDocument {
 }
 
 export interface ImageParserOptions {
-  /** Anthropic model id. Defaults to latest Sonnet. */
+  /** Gemini model id. Defaults to latest Pro. */
   model?: string;
-  /** Override API key (falls back to ANTHROPIC_API_KEY env var). */
+  /** Override API key (falls back to GOOGLE_GENERATIVE_AI_API_KEY env var). */
   apiKey?: string;
 }
 
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+const DEFAULT_MODEL = "gemini-3-pro-preview";
 
 const SUPPORTED_MIMES = new Set([
   "image/png",
@@ -111,12 +111,12 @@ export async function parseImageToMarkdown(
   }
 
   const modelId = options.model ?? DEFAULT_MODEL;
-  const anthropic = createAnthropic({
-    apiKey: options.apiKey ?? process.env.ANTHROPIC_API_KEY,
+  const google = createGoogleGenerativeAI({
+    apiKey: options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY,
   });
 
   const response = await generateText({
-    model: anthropic(modelId),
+    model: google(modelId),
     system: SYSTEM_PROMPT,
     messages: [
       {
