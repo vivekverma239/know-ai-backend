@@ -1,0 +1,308 @@
+# Parse Engine API
+
+A standalone document parsing service that converts files (PDF, HTML, images,
+DOCX, XLSX, PPTX) into a uniform markdown-based `ParsedDocument`. Tables are
+rendered as markdown tables with merged-cell markers; content is split into
+pages regardless of source.
+
+Deployed at: `https://lara-parsing-engine.up.railway.app` (dev)
+
+## Authentication
+
+All `/parse*` and `/download` routes require the `x-api-key` header. The
+`/health`, `/docs`, `/openapi.json`, and `/workflow` routes are open.
+
+```
+x-api-key: <API_KEY>
+```
+
+## Unified endpoint — RECOMMENDED
+
+### POST /parse-any
+
+Single entry point that auto-detects the file format and returns a uniform
+response. Accepts either a URL or a base64-encoded file body.
+
+**Request body:**
+```json
+{
+  "url": "https://example.com/file.pdf",        // one of url or fileBase64
+  "fileBase64": "<base64>",                      // alternative to url
+  "filename": "report.xlsx",                     // optional; helps detection
+  "mimeType": "application/pdf",                 // optional; helps detection
+  "userAgent": "Knowsis AI contact@knowsis.ai",  // optional; per-request UA
+  "options": {                                    // optional; type-scoped
+    "pdf":   { "paddle": false, "textract": false },
+    "html":  { "maxCharsPerPage": 8000 },
+    "image": { "model": "google/gemini-3-pro-preview" },
+    "xlsx":  { "maxRowsPerSheet": 100 }
+  }
+}
+```
+
+**Detection precedence:** MIME → magic bytes → filename extension.
+
+**Response (sync formats — html, image, docx, xlsx):**
+```json
+{
+  "jobId": "uuid",
+  "status": "completed",
+  "type": "html" | "image" | "docx" | "xlsx",
+  "title": "Document Title",
+  "totalPages": 9,
+  "sourceUrl": "https://.../document.{ext}?<signed>",
+  "result": {
+    "totalPages": 9,
+    "pages": [
+      { "pageNumber": 1, "content": "# markdown ..." }
+    ]
+  },
+  "usage": { "inputTokens": 0, "outputTokens": 0, "totalTokens": 0 }
+}
+```
+
+**Response (async format — pdf):**
+```json
+{
+  "jobId": "uuid",
+  "status": "processing",
+  "type": "pdf",
+  "sourceUrl": "https://.../document.pdf?<signed>"
+}
+```
+
+Poll `GET /parse/:jobId` until `status === "completed"`.
+
+---
+
+## Individual endpoints (still supported)
+
+### POST /parse  (PDF upload, async)
+Multipart upload of a PDF. Query params: `?paddle=true&textract=true`.
+Returns `{ jobId, status: "processing" }` — poll `GET /parse/:jobId`.
+
+### POST /parse/url  (PDF from URL, async)
+Body: `{ "url": "...", "paddle": false, "textract": false }`. Downloads via
+browser bot-protection bypass and stores at `parse-jobs/{jobId}/document.pdf`,
+then triggers the async workflow. Poll `GET /parse/:jobId`.
+
+### POST /parse/html  (HTML, sync)
+Body: `{ "url": "..." }` or `{ "html": "<html>..." }` plus optional
+`userAgent` and `maxCharsPerPage`. Downloads/parses immediately; returns
+`status: "completed"` with the parsed pages. Cleaned HTML is stored at
+`parse-jobs/{jobId}/document.html` for client preview.
+
+### POST /parse/image  (Image, sync)
+Body: `{ "url": "..." }` or `{ "imageBase64": "...", "mimeType": "image/png" }`.
+Runs Gemini 3 Pro vision via the AI Gateway; returns a single-page
+`ParsedDocument` with the extracted markdown.
+
+### POST /download  (Download only, sync)
+Body: `{ "url": "...", "userAgent": "..." }`. Downloads a PDF or HTML with
+3-tier browser bot-protection bypass and stores it; returns a signed URL.
+```json
+{
+  "success": true,
+  "type": "pdf" | "html",
+  "url": "https://.../document.{ext}?<signed>",
+  "title": "Extracted title (HTML only)",
+  "sizeBytes": 145138
+}
+```
+
+### GET /parse/:jobId  (Poll)
+Returns the current job status and the parsed result once complete:
+```json
+{
+  "jobId": "uuid",
+  "status": "processing" | "completed" | "failed" | "not_found",
+  "result": { ... },      // present when completed
+  "pdfUrl": "<signed>",   // signed URL to the source PDF
+  "error": "..."           // present when failed
+}
+```
+
+### GET /health
+Returns `{ "status": "ok", "timestamp": "..." }`. No auth.
+
+---
+
+## ParsedDocument shape (the common contract)
+
+Every parser produces the same output regardless of source format:
+
+```typescript
+{
+  totalPages: number,
+  pages: Array<{
+    pageNumber: number,       // 1-indexed
+    content: string           // markdown
+  }>,
+  title?: string,
+  summary?: { ... },          // PDF only (LLM-generated)
+  metadata?: { ... },         // PDF only (LLM-generated)
+  outline?: [...],            // PDF only
+  chapters?: [...],           // PDF only
+  mediaBlocks: [...]          // PDF only (extracted tables/charts)
+}
+```
+
+**What "page" means per format:**
+- PDF: actual document page
+- HTML: section split by `<h1>` (else `<h2>`, else char budget)
+- Image: single page
+- DOCX: paginated like HTML after mammoth conversion
+- XLSX: one page per sheet
+- PPTX (deferred): one slide per page
+
+---
+
+## Table rendering convention
+
+All parsers output markdown tables with the same merged-cell encoding:
+
+```markdown
+<!-- Note: Merged cells are indicated with [rowspan=X] and [colspan=X] markers -->
+
+| Region | 2023 [colspan=2] |  | 2022 [colspan=2] |  |
+| --- | --- | --- | --- | --- |
+| Revenue | 100 | 110 | 90 | 95 |
+| Growth [rowspan=2] | +10% | +12% | -5% | +3% |
+|  | +8%  | +15% | +2% | +6% |
+```
+
+**Rules:**
+- `[rowspan=N]` / `[colspan=N]` markers are appended **only** to cells with
+  actual text. Empty origin cells are rendered as empty strings.
+- Cells spanned over by a merge are rendered as empty strings.
+- The `<!-- Note: … -->` comment is included only when merges are present.
+- Empty columns (every row has an empty cell at that position) are dropped
+  to keep SEC-style tables readable.
+
+---
+
+## File format detection
+
+`detectFormat({ buffer, mimeType, filename })` precedence:
+
+1. **MIME type** — stripped of parameters (`text/html; charset=utf-8` → `text/html`).
+2. **Magic bytes** — PDF (`%PDF`), PNG, JPEG, GIF, WebP.
+3. **Filename extension** — `.docx`, `.xlsx`, `.pptx`, `.pdf`, `.html`, etc.
+
+Returns `"unknown"` if nothing matches — caller gets HTTP 400 with a clear
+message asking for `mimeType` or `filename`.
+
+Office formats (DOCX/XLSX/PPTX) are ZIP archives under the hood, so magic
+bytes alone can't disambiguate them. Always pass a `filename` or `mimeType`
+for Office files.
+
+---
+
+## Bot-protection bypass
+
+The downloader uses a 3-tier fallback with a stealth Playwright browser:
+
+1. **Direct fetch** with a browser User-Agent.
+2. **Browser context fetch** (stealth plugin, real cookies).
+3. **Full browser navigation** — intercepts embedded PDF responses during
+   rendering (catches PDF-viewer pages like `cdn.amegroups.cn`), and
+   extracts PDFs from `<iframe src="viewer.html?file=…">` patterns.
+
+**User-Agent auto-selection:**
+- `*.sec.gov` → identifying UA (default `"Knowsis AI contact@knowsis.ai"`,
+  overridable via `SEC_USER_AGENT` env var) per SEC fair access policy.
+- Everything else → rotating realistic desktop Chrome UA via `user-agents` pkg.
+- Per-request `userAgent` field always wins.
+
+---
+
+## Storage layout
+
+All artifacts live under `parse-jobs/{jobId}/` in the GCS bucket:
+
+| File | Written by | Purpose |
+|---|---|---|
+| `document.pdf` | PDF workflow, HTML downloader | Source binary |
+| `document.html` | HTML parser | Cleaned HTML for client preview |
+| `document.png/jpg/webp/gif` | Image parser | Source image |
+| `document.docx/xlsx/pptx` | Office parsers | Source file |
+| `result.json` | All parsers | Parsed `ParsedDocument` |
+| `error.json` | Workflow failure | `{ error, timestamp }` |
+
+Signed URLs from the API expire after **1 hour**.
+
+---
+
+## Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `API_KEY` | yes | Auth for `/parse*` and `/download` |
+| `APP_URL` | yes | Base URL for QStash workflow callbacks |
+| `GOOGLE_STORAGE_BUCKET` | yes | GCS bucket for job artifacts |
+| `GOOGLE_APPLICATION_CREDENTIALS_BASE64` | yes | GCS service account (base64 JSON) |
+| `AI_GATEWAY_API_KEY` | yes | All LLM calls (image parsing, PDF metadata) |
+| `MISTRAL_API_KEY` | yes | Mistral OCR in the PDF pipeline |
+| `QSTASH_TOKEN` | yes (for PDF) | Upstash workflow trigger |
+| `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY` | yes (for PDF) | QStash signature verification |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION_NAME` | optional | Textract in the PDF pipeline |
+| `MODAL_ENDPOINT_URL` | optional | PaddleOCR in the PDF pipeline |
+| `SEC_USER_AGENT` | optional | Override the default SEC UA |
+| `PORT` | optional | Default 3001 |
+
+---
+
+## Example flows
+
+**Parse a public PDF (sync-ish via polling):**
+```bash
+# Kick off
+curl -X POST $BASE/parse-any \
+  -H "x-api-key: $KEY" \
+  -H "content-type: application/json" \
+  -d '{"url":"https://arxiv.org/pdf/1706.03762"}'
+# → { "jobId": "abc...", "status": "processing", "type": "pdf" }
+
+# Poll
+curl $BASE/parse/abc... -H "x-api-key: $KEY"
+# → { "status": "completed", "result": { "pages": [...] }, "pdfUrl": "..." }
+```
+
+**Parse an HTML page from a URL (sync):**
+```bash
+curl -X POST $BASE/parse-any \
+  -H "x-api-key: $KEY" \
+  -H "content-type: application/json" \
+  -d '{"url":"https://www.sec.gov/.../aapl-20230701.htm"}'
+# → { "status": "completed", "type": "html", "totalPages": 14, "result": {...} }
+```
+
+**Parse an Excel file (sync):**
+```bash
+B64=$(base64 -i revenue.xlsx)
+curl -X POST $BASE/parse-any \
+  -H "x-api-key: $KEY" \
+  -H "content-type: application/json" \
+  -d "{\"fileBase64\":\"$B64\",\"filename\":\"revenue.xlsx\"}"
+# → { "status": "completed", "type": "xlsx", ... }
+```
+
+**Just download a bot-protected PDF:**
+```bash
+curl -X POST $BASE/download \
+  -H "x-api-key: $KEY" \
+  -H "content-type: application/json" \
+  -d '{"url":"https://apm.amegroups.org/article/view/85100/pdf"}'
+# → { "success": true, "type": "pdf", "url": "<signed>", "sizeBytes": 954525 }
+```
+
+---
+
+## Roadmap
+
+- **PPTX support** — deferred (requires `pptx-to-pdf` + LibreOffice in the
+  Docker image). Will route through the existing PDF workflow once added.
+- **Table column-merger for SEC filings** — merge `$` + number columns into
+  single cells for nicer rendering.
+- **Rowspan/colspan marker reconciliation** — update markers after dropping
+  empty columns so the counts match the final rendered table.
