@@ -34,6 +34,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/parse-engine/dist ./packages/parse-engine/dist
 COPY --from=build /app/packages/parse-engine/node_modules ./packages/parse-engine/node_modules
 COPY --from=build /app/packages/parse-engine/package.json ./packages/parse-engine/
+COPY --from=build /app/packages/parse-engine/llms.txt ./packages/parse-engine/
 
 # Install Chromium for Playwright
 RUN ./packages/parse-engine/node_modules/.bin/playwright install chromium

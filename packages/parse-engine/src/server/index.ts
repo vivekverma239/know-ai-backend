@@ -1,9 +1,15 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { serve } from "@hono/node-server";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { apiKeyAuth } from "./middleware/auth.js";
 import { healthApp } from "./routes/health.js";
 import { parseApp } from "./routes/parse.js";
 import { workflowHandler } from "./workflow.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = new OpenAPIHono();
 
@@ -25,6 +31,31 @@ app.doc("/openapi.json", {
     version: "1.0.0",
     description: "Standalone document parsing service powered by parse-engine",
   },
+});
+
+// /llms.txt — canonical API reference for LLMs and integrators.
+// See https://llmstxt.org. Served from the package root regardless of whether
+// we are running tsx (src/) or compiled output (dist/).
+const LLMS_TXT_CANDIDATES = [
+  join(__dirname, "../../llms.txt"),        // dist/server/index.js → packages/parse-engine/llms.txt
+  join(__dirname, "../../../llms.txt"),     // src/server/index.ts via tsx → same target
+  join(process.cwd(), "packages/parse-engine/llms.txt"),
+  join(process.cwd(), "llms.txt"),
+];
+
+let llmsTxtContent: string | null = null;
+for (const candidate of LLMS_TXT_CANDIDATES) {
+  try {
+    llmsTxtContent = readFileSync(candidate, "utf-8");
+    break;
+  } catch {
+    /* try next */
+  }
+}
+
+app.get("/llms.txt", (c) => {
+  if (!llmsTxtContent) return c.text("llms.txt not found", 404);
+  return c.text(llmsTxtContent, 200, { "content-type": "text/plain; charset=utf-8" });
 });
 
 app.get("/docs", (c) => {
