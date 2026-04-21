@@ -7,7 +7,12 @@
  */
 
 import mammoth from "mammoth";
-import { parseHtmlToMarkdown, type HtmlParserOptions, type ParsedHtmlDocument } from "./html-parser.js";
+import {
+  parseHtmlToMarkdown,
+  parseHtmlToMarkdownWithOutline,
+  type HtmlParserOptions,
+  type ParsedHtmlDocument,
+} from "./html-parser.js";
 
 export type DocxParserOptions = HtmlParserOptions;
 
@@ -17,5 +22,7 @@ export async function parseDocxToMarkdown(
   options: DocxParserOptions = {},
 ): Promise<ParsedHtmlDocument> {
   const { value: html } = await mammoth.convertToHtml({ buffer });
-  return parseHtmlToMarkdown(html, options);
+  return options.generateOutline
+    ? parseHtmlToMarkdownWithOutline(html, options)
+    : parseHtmlToMarkdown(html, options);
 }

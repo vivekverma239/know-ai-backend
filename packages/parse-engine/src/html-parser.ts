@@ -18,7 +18,10 @@
 
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
+import { generateHtmlOutline, type HtmlOutlineOptions } from "./html-outline.js";
 import { cellsToMarkdownTable, type TableCell } from "./services/table-to-markdown.js";
+import type { ChapterWithSections } from "./services/outline.js";
+import type { Section } from "./types.js";
 
 export interface ParsedHtmlPage {
   pageNumber: number;
@@ -29,11 +32,24 @@ export interface ParsedHtmlDocument {
   title: string;
   pages: ParsedHtmlPage[];
   totalPages: number;
+  /** LLM-generated chapter tree. Present when generateOutline=true. */
+  chapters?: ChapterWithSections[];
+  /** Flat list of all sections across chapters. Present when generateOutline=true. */
+  outline?: Section[];
 }
 
 export interface HtmlParserOptions {
   /** Max characters per page when falling back to length-based pagination. */
   maxCharsPerPage?: number;
+  /**
+   * When true, runs the LLM-based page-summary + chapter-detection pipeline
+   * (same as PDFs) to populate `chapters` and `outline` on the result.
+   * Adds one LLM call per batch of 20 pages plus one per chapter. Opt-in
+   * because it costs tokens and adds seconds to the parse.
+   */
+  generateOutline?: boolean;
+  /** Forwarded to generateHtmlOutline when generateOutline=true. */
+  outlineOptions?: HtmlOutlineOptions;
 }
 
 const DEFAULT_MAX_CHARS_PER_PAGE = 8000;
@@ -169,7 +185,10 @@ function paginate(markdown: string, maxChars: number): string[] {
   return pages;
 }
 
-/** Main entry point. Returns a ParsedHtmlDocument with markdown pages. */
+/**
+ * Synchronous markdown-only entry point. Does not generate chapters/outline —
+ * use parseHtmlToMarkdownWithOutline for that (it's async because LLM calls).
+ */
 export function parseHtmlToMarkdown(
   html: string,
   options: HtmlParserOptions = {},
@@ -221,4 +240,26 @@ export function parseHtmlToMarkdown(
     pages,
     totalPages: pages.length,
   };
+}
+
+/**
+ * Async entry point that runs the markdown parser and then the LLM-based
+ * chapter/outline generator. Produces the same `chapters` and `outline`
+ * fields as the PDF pipeline — useful for long HTML documents (SEC filings,
+ * research papers) where navigation structure is valuable.
+ */
+export async function parseHtmlToMarkdownWithOutline(
+  html: string,
+  options: Omit<HtmlParserOptions, "generateOutline"> = {},
+): Promise<ParsedHtmlDocument> {
+  const doc = parseHtmlToMarkdown(html, options);
+  if (doc.pages.length === 0) return doc;
+
+  const { chapters, outline } = await generateHtmlOutline(
+    doc.pages,
+    doc.title,
+    options.outlineOptions,
+  );
+
+  return { ...doc, chapters, outline };
 }

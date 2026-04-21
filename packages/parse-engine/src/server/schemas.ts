@@ -42,10 +42,39 @@ export const ParseHtmlBody = z
     html: z.string().optional(),
     userAgent: z.string().optional(),
     maxCharsPerPage: z.number().int().positive().optional(),
+    /**
+     * When true, runs the LLM-based chapter + outline generation pipeline.
+     * Adds a few seconds and costs tokens but produces navigable structure
+     * for long documents (SEC filings, research papers).
+     */
+    generateOutline: z.boolean().optional(),
   })
   .refine((v) => Boolean(v.url) !== Boolean(v.html), {
     message: "Provide exactly one of `url` or `html`",
   });
+
+const HtmlSubsectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  summary: z.string(),
+});
+const HtmlSectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  summary: z.string(),
+  subsections: z.array(HtmlSubsectionSchema),
+});
+const HtmlChapterSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  sections: z.array(HtmlSectionSchema),
+});
 
 export const ParseHtmlResponse = z.object({
   jobId: z.string().uuid(),
@@ -56,6 +85,8 @@ export const ParseHtmlResponse = z.object({
   result: z.object({
     totalPages: z.number(),
     pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
+    chapters: z.array(HtmlChapterSchema).optional(),
+    outline: z.array(HtmlSectionSchema).optional(),
   }),
 });
 
@@ -81,7 +112,12 @@ export const ParseAnyBody = z
     userAgent: z.string().optional(),
     options: z
       .object({
-        html: z.object({ maxCharsPerPage: z.number().int().positive().optional() }).optional(),
+        html: z
+          .object({
+            maxCharsPerPage: z.number().int().positive().optional(),
+            generateOutline: z.boolean().optional(),
+          })
+          .optional(),
         image: z.object({ model: z.string().optional() }).optional(),
         xlsx: z.object({ maxRowsPerSheet: z.number().int().positive().optional() }).optional(),
         pdf: z

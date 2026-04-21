@@ -28,7 +28,7 @@ import {
   getJobFileSignedUrl,
 } from "../job-storage.js";
 import { downloadFromUrl, downloadHtmlFromUrl, downloadPdfFromUrl } from "../download.js";
-import { parseHtmlToMarkdown } from "../../html-parser.js";
+import { parseHtmlToMarkdown, parseHtmlToMarkdownWithOutline } from "../../html-parser.js";
 import { parseImageToMarkdown, detectImageMime } from "../../image-parser.js";
 import { parseDocxToMarkdown } from "../../docx-parser.js";
 import { parseXlsxToMarkdown } from "../../xlsx-parser.js";
@@ -178,7 +178,7 @@ const postParseHtmlRoute = createRoute({
 });
 
 parseApp.openapi(postParseHtmlRoute, async (c) => {
-  const { url, html, userAgent, maxCharsPerPage } = c.req.valid("json");
+  const { url, html, userAgent, maxCharsPerPage, generateOutline } = c.req.valid("json");
 
   let rawHtml: string;
   let downloadedTitle: string | undefined;
@@ -195,9 +195,11 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
     return c.json({ error: `HTML fetch failed: ${msg}` }, 400);
   }
 
-  let parsed: ReturnType<typeof parseHtmlToMarkdown>;
+  let parsed: Awaited<ReturnType<typeof parseHtmlToMarkdownWithOutline>>;
   try {
-    parsed = parseHtmlToMarkdown(rawHtml, { maxCharsPerPage });
+    parsed = generateOutline
+      ? await parseHtmlToMarkdownWithOutline(rawHtml, { maxCharsPerPage })
+      : parseHtmlToMarkdown(rawHtml, { maxCharsPerPage });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return c.json({ error: `HTML parse failed: ${msg}` }, 400);
@@ -211,6 +213,8 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
       pages: parsed.pages,
       title: parsed.title || downloadedTitle || "",
       mediaBlocks: [],
+      chapters: parsed.chapters,
+      outline: parsed.outline,
     }),
   ]);
   const htmlUrl = await getJobFileSignedUrl(jobId, "document.html");
@@ -225,6 +229,8 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
       result: {
         totalPages: parsed.totalPages,
         pages: parsed.pages,
+        ...(parsed.chapters ? { chapters: parsed.chapters } : {}),
+        ...(parsed.outline ? { outline: parsed.outline } : {}),
       },
     },
     200,
@@ -449,7 +455,10 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
 
     if (format === "html") {
       const html = buffer.toString("utf-8");
-      const parsed = parseHtmlToMarkdown(html, options?.html);
+      const { generateOutline: shouldOutline, ...htmlParseOpts } = options?.html ?? {};
+      const parsed = shouldOutline
+        ? await parseHtmlToMarkdownWithOutline(html, htmlParseOpts)
+        : parseHtmlToMarkdown(html, htmlParseOpts);
       await Promise.all([
         uploadJobHtml(jobId, html),
         writeJobResult(jobId, {
@@ -457,6 +466,8 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           pages: parsed.pages,
           title: parsed.title,
           mediaBlocks: [],
+          chapters: parsed.chapters,
+          outline: parsed.outline,
         }),
       ]);
       const sourceUrl = await getJobFileSignedUrl(jobId, "document.html");
