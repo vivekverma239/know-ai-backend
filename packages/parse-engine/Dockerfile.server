@@ -1,29 +1,73 @@
 # syntax=docker/dockerfile:1.7
+#
+# Railway builds this file with the parse-engine directory as the build
+# context (NOT the repo root). Keep all COPY paths relative to
+# packages/parse-engine/.
+#
+# Uses node:22-slim (glibc) rather than alpine because Playwright's
+# Chromium binaries are built for glibc and don't run on musl.
 
-FROM node:20-alpine AS base
+# ── Build stage ──
+FROM node:22-slim AS builder
+
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable
-# System deps for mupdf (parse-engine) and sharp
-RUN apk add --no-cache python3 make g++ libstdc++
+RUN corepack enable && corepack prepare pnpm@10 --activate
+
+# System deps for native modules (sharp, mupdf)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Build stage
-FROM base AS builder
 COPY package.json ./
 RUN pnpm install --no-frozen-lockfile
+
 COPY . .
 RUN pnpm build
 
-# Production stage
-FROM base AS production
+# ── Runtime stage ──
+FROM node:22-slim
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@10 --activate
+
+# System deps for Chromium (Playwright). See
+# https://playwright.dev/docs/docker#alternative-installation-via-manual-apt-get
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 \
+    libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 \
+    libcups2 libdrm2 libgbm1 libasound2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libpango-1.0-0 libcairo2 \
+    libxshmfence1 libx11-xcb1 \
+    fonts-liberation fonts-noto-color-emoji \
+    ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 ENV NODE_ENV=production
+
+# Install production deps only
 COPY package.json ./
 RUN pnpm install --prod --no-frozen-lockfile
 
+# Copy built output, package metadata, and the llms.txt API reference
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/llms.txt ./llms.txt
 
+# Pin Playwright's browser directory so install + runtime use the same path.
+# Install both `chromium` and `chromium-headless-shell` — Playwright 1.49+
+# uses the lightweight headless shell by default for { headless: true }.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN mkdir -p /ms-playwright && \
+    ./node_modules/.bin/playwright install chromium chromium-headless-shell && \
+    chmod -R a+rx /ms-playwright
+
+ENV PORT=3001
 EXPOSE 3001
 
 CMD ["node", "dist/server/index.js"]
