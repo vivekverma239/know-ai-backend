@@ -300,6 +300,9 @@ importers:
       '@mistralai/mistralai':
         specifier: 2.1.2
         version: 2.1.2
+      '@types/turndown':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@upstash/workflow':
         specifier: ^1.2.0
         version: 1.2.0(zod@4.3.6)
@@ -339,6 +342,9 @@ importers:
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
+      turndown:
+        specifier: ^7.2.2
+        version: 7.2.2
       user-agents:
         specifier: ^2.1.37
         version: 2.1.37
