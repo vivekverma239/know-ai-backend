@@ -34,10 +34,6 @@ export const env = {
   // Modal (PaddleOCR)
   get modalEndpointUrl() { return get("MODAL_ENDPOINT_URL"); },
 
-  // Google Gemini (image parser, vision LLM)
-  get googleGenerativeAiApiKey() {
-    return get("GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY");
-  },
 };
 
 /**

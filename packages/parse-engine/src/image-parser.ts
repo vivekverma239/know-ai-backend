@@ -1,15 +1,20 @@
 /**
  * Image parser. Takes an image buffer (PNG/JPEG/WebP/GIF) and uses a vision
- * LLM (Gemini Pro) to extract the content as markdown. Output shape is
- * the same single-page ParsedDocument contract used by the HTML and PDF
- * parsers — one page per image.
+ * LLM (Gemini Pro, routed through the Vercel AI Gateway) to extract the
+ * content as markdown. Output shape is the same single-page ParsedDocument
+ * contract used by the HTML and PDF parsers — one page per image.
+ *
+ * Routing through the gateway means:
+ *   - One credential (AI_GATEWAY_API_KEY) instead of per-provider keys
+ *   - Unified billing and observability
+ *   - Easy to swap models (any gateway model id) without code changes
  *
  * Tables, charts, and diagrams are all converted to markdown tables via the
  * system prompt (not the shared cellsToMarkdownTable helper, since the LLM
  * handles grid inference directly from the image).
  */
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createGateway } from "@ai-sdk/gateway";
 import { generateText } from "ai";
 
 export interface ParsedImagePage {
@@ -29,13 +34,17 @@ export interface ParsedImageDocument {
 }
 
 export interface ImageParserOptions {
-  /** Gemini model id. Defaults to latest Pro. */
+  /**
+   * Gateway model id (e.g. "google/gemini-3-pro-preview",
+   * "anthropic/claude-sonnet-4.6"). Any vision model routable through
+   * AI Gateway will work. Defaults to Gemini 3 Pro.
+   */
   model?: string;
-  /** Override API key (falls back to GOOGLE_GENERATIVE_AI_API_KEY env var). */
+  /** Override the gateway API key (falls back to AI_GATEWAY_API_KEY env var). */
   apiKey?: string;
 }
 
-const DEFAULT_MODEL = "gemini-3-pro-preview";
+const DEFAULT_MODEL = "google/gemini-3-pro-preview";
 
 const SUPPORTED_MIMES = new Set([
   "image/png",
@@ -111,12 +120,12 @@ export async function parseImageToMarkdown(
   }
 
   const modelId = options.model ?? DEFAULT_MODEL;
-  const google = createGoogleGenerativeAI({
-    apiKey: options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+  const gateway = createGateway({
+    apiKey: options.apiKey ?? process.env.AI_GATEWAY_API_KEY,
   });
 
   const response = await generateText({
-    model: google(modelId),
+    model: gateway(modelId),
     system: SYSTEM_PROMPT,
     messages: [
       {
