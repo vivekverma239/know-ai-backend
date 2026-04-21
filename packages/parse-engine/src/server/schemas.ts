@@ -36,6 +36,29 @@ export const DownloadBody = z.object({
   userAgent: z.string().optional(),
 });
 
+export const ParseHtmlBody = z
+  .object({
+    url: z.string().url().optional(),
+    html: z.string().optional(),
+    userAgent: z.string().optional(),
+    maxCharsPerPage: z.number().int().positive().optional(),
+  })
+  .refine((v) => Boolean(v.url) !== Boolean(v.html), {
+    message: "Provide exactly one of `url` or `html`",
+  });
+
+export const ParseHtmlResponse = z.object({
+  jobId: z.string().uuid(),
+  status: z.literal("completed"),
+  title: z.string(),
+  totalPages: z.number(),
+  htmlUrl: z.string().optional(),
+  result: z.object({
+    totalPages: z.number(),
+    pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
+  }),
+});
+
 export const DownloadResponse = z.object({
   success: z.boolean(),
   type: z.enum(["pdf", "html"]).optional(),

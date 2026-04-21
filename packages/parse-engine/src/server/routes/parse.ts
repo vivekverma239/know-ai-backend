@@ -6,6 +6,8 @@ import {
   ParseResponse,
   ParseQuerySchema,
   ParseUrlBody,
+  ParseHtmlBody,
+  ParseHtmlResponse,
   DownloadBody,
   DownloadResponse,
   JobResultResponse,
@@ -14,11 +16,13 @@ import {
 import {
   uploadJobPdf,
   uploadJobHtml,
+  writeJobResult,
   readJobStatus,
   getJobPdfSignedUrl,
   getJobFileSignedUrl,
 } from "../job-storage.js";
-import { downloadFromUrl, downloadPdfFromUrl } from "../download.js";
+import { downloadFromUrl, downloadHtmlFromUrl, downloadPdfFromUrl } from "../download.js";
+import { parseHtmlToMarkdown } from "../../html-parser.js";
 
 export const parseApp = new OpenAPIHono();
 
@@ -132,6 +136,89 @@ parseApp.openapi(postParseUrlRoute, async (c) => {
   await triggerWorkflow(jobId, textract, paddle);
 
   return c.json({ jobId, status: "processing" as const }, 202);
+});
+
+// ── POST /parse/html ──
+
+const postParseHtmlRoute = createRoute({
+  method: "post",
+  path: "/parse/html",
+  tags: ["Parse"],
+  summary: "Parse HTML into markdown pages",
+  description:
+    "Parses an HTML document into a ParsedDocument with markdown pages and merged-cell-aware tables. " +
+    "Accepts either a URL (which is downloaded via the stealth browser so bot protection is bypassed) " +
+    "or a raw HTML string. The cleaned HTML is stored alongside the result for client preview.",
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: ParseHtmlBody } },
+    },
+  },
+  responses: {
+    200: {
+      description: "HTML parsed successfully",
+      content: { "application/json": { schema: ParseHtmlResponse } },
+    },
+    400: {
+      description: "Download or parse failed",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+parseApp.openapi(postParseHtmlRoute, async (c) => {
+  const { url, html, userAgent, maxCharsPerPage } = c.req.valid("json");
+
+  let rawHtml: string;
+  let downloadedTitle: string | undefined;
+  try {
+    if (url) {
+      const downloaded = await downloadHtmlFromUrl(url, { userAgent });
+      rawHtml = downloaded.html;
+      downloadedTitle = downloaded.title;
+    } else {
+      rawHtml = html!;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `HTML fetch failed: ${msg}` }, 400);
+  }
+
+  let parsed: ReturnType<typeof parseHtmlToMarkdown>;
+  try {
+    parsed = parseHtmlToMarkdown(rawHtml, { maxCharsPerPage });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `HTML parse failed: ${msg}` }, 400);
+  }
+
+  const jobId = randomUUID();
+  await Promise.all([
+    uploadJobHtml(jobId, rawHtml),
+    writeJobResult(jobId, {
+      totalPages: parsed.totalPages,
+      pages: parsed.pages,
+      title: parsed.title || downloadedTitle || "",
+      mediaBlocks: [],
+    }),
+  ]);
+  const htmlUrl = await getJobFileSignedUrl(jobId, "document.html");
+
+  return c.json(
+    {
+      jobId,
+      status: "completed" as const,
+      title: parsed.title || downloadedTitle || "",
+      totalPages: parsed.totalPages,
+      htmlUrl: htmlUrl ?? undefined,
+      result: {
+        totalPages: parsed.totalPages,
+        pages: parsed.pages,
+      },
+    },
+    200,
+  );
 });
 
 // ── POST /download ──
