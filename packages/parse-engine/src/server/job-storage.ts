@@ -79,6 +79,28 @@ export async function uploadJobHtml(jobId: string, html: string): Promise<void> 
   await file.save(html, { contentType: "text/html; charset=utf-8" });
 }
 
+const MIME_TO_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+/** Upload the source image for a job. Returns the stored filename. */
+export async function uploadJobImage(
+  jobId: string,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<string> {
+  const ext = MIME_TO_EXT[mimeType.toLowerCase()] ?? "bin";
+  const filename = `document.${ext}`;
+  const bucket = getBucket();
+  const file = bucket.file(`${jobPrefix(jobId)}/${filename}`);
+  await file.save(buffer, { contentType: mimeType });
+  return filename;
+}
+
 /** Generate a signed URL for a stored job file (1 hour expiry). */
 export async function getJobFileSignedUrl(
   jobId: string,

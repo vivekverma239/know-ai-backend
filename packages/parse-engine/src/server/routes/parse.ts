@@ -8,6 +8,8 @@ import {
   ParseUrlBody,
   ParseHtmlBody,
   ParseHtmlResponse,
+  ParseImageBody,
+  ParseImageResponse,
   DownloadBody,
   DownloadResponse,
   JobResultResponse,
@@ -16,6 +18,7 @@ import {
 import {
   uploadJobPdf,
   uploadJobHtml,
+  uploadJobImage,
   writeJobResult,
   readJobStatus,
   getJobPdfSignedUrl,
@@ -23,6 +26,7 @@ import {
 } from "../job-storage.js";
 import { downloadFromUrl, downloadHtmlFromUrl, downloadPdfFromUrl } from "../download.js";
 import { parseHtmlToMarkdown } from "../../html-parser.js";
+import { parseImageToMarkdown, detectImageMime } from "../../image-parser.js";
 
 export const parseApp = new OpenAPIHono();
 
@@ -216,6 +220,108 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
         totalPages: parsed.totalPages,
         pages: parsed.pages,
       },
+    },
+    200,
+  );
+});
+
+// ── POST /parse/image ──
+
+const postParseImageRoute = createRoute({
+  method: "post",
+  path: "/parse/image",
+  tags: ["Parse"],
+  summary: "Parse an image into markdown",
+  description:
+    "Extracts content from an image (PNG/JPEG/WebP/GIF) using Claude Sonnet " +
+    "vision. Tables and charts are converted to markdown tables. Accepts " +
+    "either a URL (downloaded via the stealth browser) or a base64-encoded " +
+    "image payload. Output mirrors the PDF/HTML ParsedDocument shape with a " +
+    "single page.",
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: ParseImageBody } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Image parsed successfully",
+      content: { "application/json": { schema: ParseImageResponse } },
+    },
+    400: {
+      description: "Download or parse failed",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+parseApp.openapi(postParseImageRoute, async (c) => {
+  const { url, imageBase64, mimeType: providedMime, userAgent } = c.req.valid("json");
+
+  // Load image bytes + infer MIME
+  let imageBuffer: Buffer;
+  let mimeType: string;
+  try {
+    if (url) {
+      const res = await fetch(url, {
+        headers: { "User-Agent": userAgent ?? "Mozilla/5.0 (compatible; KnowsisAI/1.0)" },
+        redirect: "follow",
+      });
+      if (!res.ok) throw new Error(`Image download failed: ${res.status} ${res.statusText}`);
+      imageBuffer = Buffer.from(await res.arrayBuffer());
+      mimeType =
+        providedMime ??
+        res.headers.get("content-type")?.split(";")[0] ??
+        detectImageMime(imageBuffer) ??
+        "";
+    } else {
+      imageBuffer = Buffer.from(imageBase64!, "base64");
+      mimeType = providedMime ?? detectImageMime(imageBuffer) ?? "";
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `Image fetch failed: ${msg}` }, 400);
+  }
+
+  if (!mimeType) {
+    return c.json({ error: "Could not determine image MIME type" }, 400);
+  }
+
+  // Parse via Claude vision
+  let parsed: Awaited<ReturnType<typeof parseImageToMarkdown>>;
+  try {
+    parsed = await parseImageToMarkdown(imageBuffer, mimeType);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `Image parse failed: ${msg}` }, 400);
+  }
+
+  // Store source image + parsed result
+  const jobId = randomUUID();
+  const [storedFilename] = await Promise.all([
+    uploadJobImage(jobId, imageBuffer, mimeType),
+    writeJobResult(jobId, {
+      totalPages: parsed.totalPages,
+      pages: parsed.pages,
+      title: parsed.title,
+      mediaBlocks: [],
+    }),
+  ]);
+  const imageUrl = await getJobFileSignedUrl(jobId, storedFilename);
+
+  return c.json(
+    {
+      jobId,
+      status: "completed" as const,
+      title: parsed.title,
+      totalPages: parsed.totalPages,
+      imageUrl: imageUrl ?? undefined,
+      result: {
+        totalPages: parsed.totalPages,
+        pages: parsed.pages,
+      },
+      usage: parsed.usage,
     },
     200,
   );

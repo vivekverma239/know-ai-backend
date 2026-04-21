@@ -59,6 +59,36 @@ export const ParseHtmlResponse = z.object({
   }),
 });
 
+export const ParseImageBody = z
+  .object({
+    url: z.string().url().optional(),
+    imageBase64: z.string().optional(),
+    mimeType: z.string().optional(),
+    userAgent: z.string().optional(),
+  })
+  .refine((v) => Boolean(v.url) !== Boolean(v.imageBase64), {
+    message: "Provide exactly one of `url` or `imageBase64`",
+  });
+
+export const ParseImageResponse = z.object({
+  jobId: z.string().uuid(),
+  status: z.literal("completed"),
+  title: z.string(),
+  totalPages: z.number(),
+  imageUrl: z.string().optional(),
+  result: z.object({
+    totalPages: z.number(),
+    pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
+  }),
+  usage: z
+    .object({
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      totalTokens: z.number(),
+    })
+    .optional(),
+});
+
 export const DownloadResponse = z.object({
   success: z.boolean(),
   type: z.enum(["pdf", "html"]).optional(),
