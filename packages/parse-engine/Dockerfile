@@ -47,8 +47,12 @@ COPY --from=build /app/packages/parse-engine/llms.txt ./packages/parse-engine/
 # path. Without this, Playwright defaults to ~/.cache/ms-playwright, which
 # breaks when the container runs under a different user or a read-only HOME.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Install both `chromium` and `chromium-headless-shell`: Playwright 1.49+
+# uses the lightweight headless shell by default for `{ headless: true }`,
+# but some operations (download events, stealth plugin) still fall back to
+# full Chromium. Installing both avoids any missing-binary surprises.
 RUN mkdir -p /ms-playwright && \
-    ./packages/parse-engine/node_modules/.bin/playwright install chromium && \
+    ./packages/parse-engine/node_modules/.bin/playwright install chromium chromium-headless-shell && \
     chmod -R a+rx /ms-playwright
 
 ENV NODE_ENV=production
