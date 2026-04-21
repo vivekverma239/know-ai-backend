@@ -45,9 +45,10 @@ export const ParseHtmlBody = z
     /**
      * When true, runs the LLM-based chapter + outline generation pipeline.
      * Adds a few seconds and costs tokens but produces navigable structure
-     * for long documents (SEC filings, research papers).
+     * for long documents (SEC filings, research papers). Defaults to true —
+     * pass false to skip and get a faster markdown-only response.
      */
-    generateOutline: z.boolean().optional(),
+    generateOutline: z.boolean().optional().default(true),
   })
   .refine((v) => Boolean(v.url) !== Boolean(v.html), {
     message: "Provide exactly one of `url` or `html`",
@@ -115,7 +116,8 @@ export const ParseAnyBody = z
         html: z
           .object({
             maxCharsPerPage: z.number().int().positive().optional(),
-            generateOutline: z.boolean().optional(),
+            /** Defaults to true — pass false to skip LLM outline generation. */
+            generateOutline: z.boolean().optional().default(true),
           })
           .optional(),
         image: z.object({ model: z.string().optional() }).optional(),
