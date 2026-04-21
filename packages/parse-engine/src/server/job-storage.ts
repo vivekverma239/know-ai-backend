@@ -101,6 +101,26 @@ export async function uploadJobImage(
   return filename;
 }
 
+/**
+ * Generic source file uploader. Stores the buffer at
+ * parse-jobs/{jobId}/document.{ext} and returns the stored filename.
+ * Use the format-specific helpers (uploadJobPdf, uploadJobImage, etc.)
+ * when the extension is fixed; this is for the unified dispatcher where
+ * the file type is resolved at runtime.
+ */
+export async function uploadJobFile(
+  jobId: string,
+  buffer: Buffer,
+  ext: string,
+  contentType: string,
+): Promise<string> {
+  const filename = `document.${ext}`;
+  const bucket = getBucket();
+  const file = bucket.file(`${jobPrefix(jobId)}/${filename}`);
+  await file.save(buffer, { contentType });
+  return filename;
+}
+
 /** Generate a signed URL for a stored job file (1 hour expiry). */
 export async function getJobFileSignedUrl(
   jobId: string,

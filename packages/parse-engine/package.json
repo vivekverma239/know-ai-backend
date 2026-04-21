@@ -60,6 +60,7 @@
     "commander": "^14.0.3",
     "dotenv": "^17.4.0",
     "hono": "^4.12.12",
+    "mammoth": "^1.12.0",
     "mupdf": "^1.27.0",
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
@@ -69,6 +70,7 @@
     "sharp": "^0.34.5",
     "turndown": "^7.2.2",
     "user-agents": "^2.1.37",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -10,6 +10,8 @@ import {
   ParseHtmlResponse,
   ParseImageBody,
   ParseImageResponse,
+  ParseAnyBody,
+  ParseAnyResponse,
   DownloadBody,
   DownloadResponse,
   JobResultResponse,
@@ -19,6 +21,7 @@ import {
   uploadJobPdf,
   uploadJobHtml,
   uploadJobImage,
+  uploadJobFile,
   writeJobResult,
   readJobStatus,
   getJobPdfSignedUrl,
@@ -27,6 +30,9 @@ import {
 import { downloadFromUrl, downloadHtmlFromUrl, downloadPdfFromUrl } from "../download.js";
 import { parseHtmlToMarkdown } from "../../html-parser.js";
 import { parseImageToMarkdown, detectImageMime } from "../../image-parser.js";
+import { parseDocxToMarkdown } from "../../docx-parser.js";
+import { parseXlsxToMarkdown } from "../../xlsx-parser.js";
+import { detectFormat, type ParseFormat } from "../../parse-dispatch.js";
 
 export const parseApp = new OpenAPIHono();
 
@@ -325,6 +331,253 @@ parseApp.openapi(postParseImageRoute, async (c) => {
     },
     200,
   );
+});
+
+// ── POST /parse-any (unified dispatcher) ──
+
+const FORMAT_TO_EXT: Record<Exclude<ParseFormat, "unknown">, string> = {
+  pdf: "pdf",
+  html: "html",
+  image: "png", // refined per-request from actual MIME
+  docx: "docx",
+  xlsx: "xlsx",
+  pptx: "pptx",
+};
+
+const postParseAnyRoute = createRoute({
+  method: "post",
+  path: "/parse-any",
+  tags: ["Parse"],
+  summary: "Parse any supported file format",
+  description:
+    "Unified entry point: accepts a URL or base64 file, auto-detects the " +
+    "format (PDF, HTML, image, DOCX, XLSX, PPTX) from MIME / magic bytes / " +
+    "filename, and returns the same ParsedDocument shape regardless of " +
+    "source. PDF and PPTX jobs are async (returns status: 'processing' with " +
+    "jobId to poll); HTML, image, DOCX, and XLSX are synchronous.",
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: ParseAnyBody } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Parse completed or accepted",
+      content: { "application/json": { schema: ParseAnyResponse } },
+    },
+    400: {
+      description: "Download, detection, or parse failed",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+parseApp.openapi(postParseAnyRoute, async (c) => {
+  const { url, fileBase64, filename, mimeType, userAgent, options } = c.req.valid("json");
+
+  // Step 1: load bytes + compute a best-effort MIME hint
+  let buffer: Buffer;
+  let effectiveMime = mimeType ?? "";
+  let effectiveFilename = filename ?? "";
+
+  try {
+    if (url) {
+      // Try HEAD first for a MIME probe; then do a GET with browser fallback
+      try {
+        const head = await fetch(url, {
+          method: "HEAD",
+          headers: { "User-Agent": userAgent ?? "Mozilla/5.0 (compatible; KnowsisAI/1.0)" },
+          redirect: "follow",
+        });
+        if (head.ok) effectiveMime = effectiveMime || head.headers.get("content-type") || "";
+      } catch { /* HEAD unsupported — continue */ }
+
+      effectiveFilename = effectiveFilename || new URL(url).pathname.split("/").pop() || "";
+
+      // Decide fetch strategy based on probable type
+      const probable = detectFormat({ mimeType: effectiveMime, filename: effectiveFilename });
+      if (probable === "html") {
+        const dl = await downloadHtmlFromUrl(url, { userAgent });
+        buffer = Buffer.from(dl.html, "utf-8");
+        effectiveMime = "text/html; charset=utf-8";
+      } else {
+        // For everything else (PDF/image/office), do a browser-aware GET
+        const res = await fetch(url, {
+          headers: { "User-Agent": userAgent ?? "Mozilla/5.0 (compatible; KnowsisAI/1.0)" },
+          redirect: "follow",
+        });
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        buffer = Buffer.from(await res.arrayBuffer());
+        effectiveMime = effectiveMime || res.headers.get("content-type") || "";
+      }
+    } else {
+      buffer = Buffer.from(fileBase64!, "base64");
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `Fetch failed: ${msg}` }, 400);
+  }
+
+  // Step 2: resolve format
+  const format = detectFormat({ buffer, mimeType: effectiveMime, filename: effectiveFilename });
+  if (format === "unknown") {
+    return c.json(
+      {
+        error:
+          "Could not determine file format. Provide mimeType, filename, or ensure the file has recognisable magic bytes.",
+      },
+      400,
+    );
+  }
+
+  const jobId = randomUUID();
+
+  // Step 3: dispatch
+  try {
+    if (format === "pdf") {
+      await uploadJobPdf(jobId, buffer);
+      const paddle = options?.pdf?.paddle ?? false;
+      const textract = options?.pdf?.textract ?? false;
+      await triggerWorkflow(jobId, textract, paddle);
+      const sourceUrl = await getJobPdfSignedUrl(jobId);
+      return c.json(
+        { jobId, status: "processing" as const, type: "pdf" as const, sourceUrl: sourceUrl ?? undefined },
+        200,
+      );
+    }
+
+    if (format === "html") {
+      const html = buffer.toString("utf-8");
+      const parsed = parseHtmlToMarkdown(html, options?.html);
+      await Promise.all([
+        uploadJobHtml(jobId, html),
+        writeJobResult(jobId, {
+          totalPages: parsed.totalPages,
+          pages: parsed.pages,
+          title: parsed.title,
+          mediaBlocks: [],
+        }),
+      ]);
+      const sourceUrl = await getJobFileSignedUrl(jobId, "document.html");
+      return c.json(
+        {
+          jobId,
+          status: "completed" as const,
+          type: "html" as const,
+          title: parsed.title,
+          totalPages: parsed.totalPages,
+          sourceUrl: sourceUrl ?? undefined,
+          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+        },
+        200,
+      );
+    }
+
+    if (format === "image") {
+      const sniffedMime = detectImageMime(buffer) ?? effectiveMime.split(";")[0].trim();
+      if (!sniffedMime) throw new Error("Could not determine image MIME type");
+      const parsed = await parseImageToMarkdown(buffer, sniffedMime, {
+        model: options?.image?.model,
+      });
+      const [storedFilename] = await Promise.all([
+        uploadJobImage(jobId, buffer, sniffedMime),
+        writeJobResult(jobId, {
+          totalPages: parsed.totalPages,
+          pages: parsed.pages,
+          title: parsed.title,
+          mediaBlocks: [],
+        }),
+      ]);
+      const sourceUrl = await getJobFileSignedUrl(jobId, storedFilename);
+      return c.json(
+        {
+          jobId,
+          status: "completed" as const,
+          type: "image" as const,
+          title: parsed.title,
+          totalPages: parsed.totalPages,
+          sourceUrl: sourceUrl ?? undefined,
+          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+          usage: parsed.usage,
+        },
+        200,
+      );
+    }
+
+    if (format === "docx") {
+      const parsed = await parseDocxToMarkdown(buffer, options?.html);
+      await Promise.all([
+        uploadJobFile(
+          jobId,
+          buffer,
+          FORMAT_TO_EXT.docx,
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
+        writeJobResult(jobId, {
+          totalPages: parsed.totalPages,
+          pages: parsed.pages,
+          title: parsed.title,
+          mediaBlocks: [],
+        }),
+      ]);
+      const sourceUrl = await getJobFileSignedUrl(jobId, "document.docx");
+      return c.json(
+        {
+          jobId,
+          status: "completed" as const,
+          type: "docx" as const,
+          title: parsed.title,
+          totalPages: parsed.totalPages,
+          sourceUrl: sourceUrl ?? undefined,
+          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+        },
+        200,
+      );
+    }
+
+    if (format === "xlsx") {
+      const parsed = parseXlsxToMarkdown(buffer, options?.xlsx);
+      await Promise.all([
+        uploadJobFile(
+          jobId,
+          buffer,
+          FORMAT_TO_EXT.xlsx,
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ),
+        writeJobResult(jobId, {
+          totalPages: parsed.totalPages,
+          pages: parsed.pages.map(({ pageNumber, content }) => ({ pageNumber, content })),
+          title: parsed.title,
+          mediaBlocks: [],
+        }),
+      ]);
+      const sourceUrl = await getJobFileSignedUrl(jobId, "document.xlsx");
+      return c.json(
+        {
+          jobId,
+          status: "completed" as const,
+          type: "xlsx" as const,
+          title: parsed.title,
+          totalPages: parsed.totalPages,
+          sourceUrl: sourceUrl ?? undefined,
+          result: {
+            totalPages: parsed.totalPages,
+            pages: parsed.pages.map(({ pageNumber, content }) => ({ pageNumber, content })),
+          },
+        },
+        200,
+      );
+    }
+
+    // PPTX is intentionally not implemented yet — it needs pptx-to-pdf
+    // (LibreOffice) and routes through the PDF workflow. Return a clear
+    // 400 so callers know it's on the roadmap.
+    return c.json({ error: `Format '${format}' is not yet implemented` }, 400);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ error: `Parse failed (${format}): ${msg}` }, 400);
+  }
 });
 
 // ── POST /download ──
