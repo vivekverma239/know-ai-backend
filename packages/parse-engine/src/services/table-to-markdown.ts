@@ -28,6 +28,13 @@ export interface CellsToMarkdownOptions {
    * cell has rowSpan > 1 or colSpan > 1. Defaults to true.
    */
   includeMergedCellsNote?: boolean;
+  /**
+   * Drop columns where every origin cell has empty text. HTML sources such as
+   * SEC filings use lots of empty `<td colspan="N">` spacer cells for visual
+   * alignment — collapsing them dramatically improves readability without
+   * losing data. Defaults to true.
+   */
+  dropEmptyColumns?: boolean;
 }
 
 const MERGED_CELLS_NOTE =
@@ -45,7 +52,7 @@ export function cellsToMarkdownTable(
 ): string {
   if (cells.length === 0) return "";
 
-  const { includeMergedCellsNote = true } = options;
+  const { includeMergedCellsNote = true, dropEmptyColumns = true } = options;
 
   // Determine grid dimensions — including span reach
   let maxRow = 0;
@@ -73,21 +80,44 @@ export function cellsToMarkdownTable(
     const cs = cell.colSpan ?? 1;
     let value = cell.text;
 
-    if (rs > 1 && value !== "") {
-      value = `${value} [rowspan=${rs}]`;
-      hasMerged = true;
-    }
-    if (cs > 1) {
-      // Note: the original Textract logic appended colspan even for empty
-      // cells (which happens when a column header spans multiple sub-columns
-      // and has no text). Preserve that behavior so downstream parsers can
-      // still detect the merge.
-      value = value === "" ? `[colspan=${cs}]` : `${value} [colspan=${cs}]`;
-      hasMerged = true;
+    // Only annotate span markers when the cell has actual text. Empty origin
+    // cells with spans are usually layout-only (common in HTML tables with
+    // visual spacer cells) and leaving them as plain empty strings lets the
+    // drop-empty-columns pass collapse them cleanly.
+    if (value !== "") {
+      if (rs > 1) {
+        value = `${value} [rowspan=${rs}]`;
+        hasMerged = true;
+      }
+      if (cs > 1) {
+        value = `${value} [colspan=${cs}]`;
+        hasMerged = true;
+      }
     }
 
     // Place at origin
     grid[cell.row - 1][cell.col - 1] = value;
+  }
+
+  // Optionally drop columns that are empty in every row. Common with HTML
+  // tables (especially SEC filings) that use empty `<td>` spacer cells for
+  // visual alignment.
+  let finalGrid = grid;
+  if (dropEmptyColumns) {
+    const keepCols: number[] = [];
+    for (let c = 0; c < maxCol; c++) {
+      let anyContent = false;
+      for (let r = 0; r < maxRow; r++) {
+        if (grid[r][c] !== "") {
+          anyContent = true;
+          break;
+        }
+      }
+      if (anyContent) keepCols.push(c);
+    }
+    if (keepCols.length < maxCol && keepCols.length > 0) {
+      finalGrid = grid.map((row) => keepCols.map((c) => row[c]));
+    }
   }
 
   // Render markdown rows
@@ -97,10 +127,10 @@ export function cellsToMarkdownTable(
     lines.push("");
   }
 
-  for (let r = 0; r < maxRow; r++) {
-    lines.push(`| ${grid[r].join(" | ")} |`);
+  for (let r = 0; r < finalGrid.length; r++) {
+    lines.push(`| ${finalGrid[r].join(" | ")} |`);
     if (r === 0) {
-      lines.push(`| ${grid[r].map(() => "---").join(" | ")} |`);
+      lines.push(`| ${finalGrid[r].map(() => "---").join(" | ")} |`);
     }
   }
 

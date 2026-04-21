@@ -137,8 +137,10 @@ describe("cellsToMarkdownTable", () => {
     );
   });
 
-  it("renders a colspan marker on an empty origin cell (matches Textract behavior)", () => {
-    // Edge case: a header that spans multiple columns but has no text
+  it("does not emit span markers on empty-origin cells (HTML spacer-friendly)", () => {
+    // Empty <td colspan=N> cells are treated as layout-only and rendered as
+    // empty — no [colspan=N] marker. Combined with dropEmptyColumns this
+    // collapses the layout spacers cleanly.
     const cells: TableCell[] = [
       { row: 1, col: 1, text: "" },
       { row: 1, col: 2, text: "", colSpan: 2 },
@@ -148,7 +150,59 @@ describe("cellsToMarkdownTable", () => {
     ];
 
     const output = cellsToMarkdownTable(cells);
-    expect(output).toContain("|  | [colspan=2] |  |");
+    // With drop-empty-columns default on, col 1 (empty in both rows has "a")
+    // has content in row 2. Col 2 has "b" (row 2). Col 3 has "c" (row 2).
+    // So no columns get dropped; just no marker on the empty col-2 cell.
+    expect(output).not.toContain("[colspan=2]");
+    expect(output).toContain("| a | b | c |");
+  });
+
+  it("drops columns that are empty in every row (SEC-style spacers)", () => {
+    // Mimics SEC HTML: spacer <td>s between real data cells
+    const cells: TableCell[] = [
+      { row: 1, col: 1, text: "Label" },
+      { row: 1, col: 2, text: "" },
+      { row: 1, col: 3, text: "" },
+      { row: 1, col: 4, text: "$100" },
+      { row: 2, col: 1, text: "Other" },
+      { row: 2, col: 2, text: "" },
+      { row: 2, col: 3, text: "" },
+      { row: 2, col: 4, text: "$200" },
+    ];
+
+    const output = cellsToMarkdownTable(cells);
+    expect(output).toBe(
+      ["| Label | $100 |", "| --- | --- |", "| Other | $200 |"].join("\n"),
+    );
+  });
+
+  it("preserves columns that have data in some rows even if empty in others", () => {
+    // Column 2 is empty in row 1 (spanned over) but has data in row 2 → keep
+    const cells: TableCell[] = [
+      { row: 1, col: 1, text: "Header", colSpan: 2 },
+      { row: 2, col: 1, text: "a" },
+      { row: 2, col: 2, text: "b" },
+    ];
+
+    const output = cellsToMarkdownTable(cells);
+    expect(output).toContain("| Header [colspan=2] |  |");
+    expect(output).toContain("| a | b |");
+  });
+
+  it("respects dropEmptyColumns: false to keep all columns", () => {
+    const cells: TableCell[] = [
+      { row: 1, col: 1, text: "A" },
+      { row: 1, col: 2, text: "" },
+      { row: 1, col: 3, text: "B" },
+      { row: 2, col: 1, text: "1" },
+      { row: 2, col: 2, text: "" },
+      { row: 2, col: 3, text: "2" },
+    ];
+
+    const output = cellsToMarkdownTable(cells, { dropEmptyColumns: false });
+    // Three-column table preserved
+    expect(output).toContain("| A |  | B |");
+    expect(output).toContain("| 1 |  | 2 |");
   });
 
   it("handles multiple merged regions in a complex table", () => {
