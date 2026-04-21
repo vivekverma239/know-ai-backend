@@ -33,11 +33,14 @@ export const ParseUrlBody = z.object({
 
 export const DownloadBody = z.object({
   url: z.string().url(),
+  userAgent: z.string().optional(),
 });
 
 export const DownloadResponse = z.object({
   success: z.boolean(),
-  pdfUrl: z.string().url().optional(),
+  type: z.enum(["pdf", "html"]).optional(),
+  url: z.string().url().optional(),
+  title: z.string().optional(),
   sizeBytes: z.number().optional(),
   error: z.string().optional(),
 });

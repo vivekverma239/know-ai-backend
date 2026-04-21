@@ -11,8 +11,14 @@ import {
   JobResultResponse,
   ErrorResponse,
 } from "../schemas.js";
-import { uploadJobPdf, readJobStatus, getJobPdfSignedUrl } from "../job-storage.js";
-import { downloadPdfFromUrl } from "../download.js";
+import {
+  uploadJobPdf,
+  uploadJobHtml,
+  readJobStatus,
+  getJobPdfSignedUrl,
+  getJobFileSignedUrl,
+} from "../job-storage.js";
+import { downloadFromUrl, downloadPdfFromUrl } from "../download.js";
 
 export const parseApp = new OpenAPIHono();
 
@@ -156,18 +162,32 @@ const postDownloadRoute = createRoute({
 });
 
 parseApp.openapi(postDownloadRoute, async (c) => {
-  const { url } = c.req.valid("json");
+  const { url, userAgent } = c.req.valid("json");
 
   try {
-    const buffer = await downloadPdfFromUrl(url);
     const jobId = randomUUID();
-    await uploadJobPdf(jobId, buffer);
-    const pdfUrl = await getJobPdfSignedUrl(jobId);
+    const result = await downloadFromUrl(url, { userAgent });
 
+    if (result.type === "pdf") {
+      await uploadJobPdf(jobId, result.buffer);
+      const signedUrl = await getJobPdfSignedUrl(jobId);
+      return c.json({
+        success: true,
+        type: "pdf" as const,
+        url: signedUrl ?? undefined,
+        sizeBytes: result.buffer.length,
+      }, 200);
+    }
+
+    // HTML
+    await uploadJobHtml(jobId, result.html);
+    const signedUrl = await getJobFileSignedUrl(jobId, "document.html");
     return c.json({
       success: true,
-      pdfUrl: pdfUrl ?? undefined,
-      sizeBytes: buffer.length,
+      type: "html" as const,
+      url: signedUrl ?? undefined,
+      title: result.title,
+      sizeBytes: Buffer.byteLength(result.html, "utf-8"),
     }, 200);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

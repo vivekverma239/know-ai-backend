@@ -69,8 +69,23 @@ export async function writeJobError(jobId: string, error: string): Promise<void>
 
 /** Generate a signed URL for the stored PDF (1 hour expiry). */
 export async function getJobPdfSignedUrl(jobId: string): Promise<string | null> {
+  return getJobFileSignedUrl(jobId, "document.pdf");
+}
+
+/** Upload the source HTML for a job. */
+export async function uploadJobHtml(jobId: string, html: string): Promise<void> {
   const bucket = getBucket();
-  const file = bucket.file(`${jobPrefix(jobId)}/document.pdf`);
+  const file = bucket.file(`${jobPrefix(jobId)}/document.html`);
+  await file.save(html, { contentType: "text/html; charset=utf-8" });
+}
+
+/** Generate a signed URL for a stored job file (1 hour expiry). */
+export async function getJobFileSignedUrl(
+  jobId: string,
+  filename: string,
+): Promise<string | null> {
+  const bucket = getBucket();
+  const file = bucket.file(`${jobPrefix(jobId)}/${filename}`);
   try {
     const [exists] = await file.exists();
     if (!exists) return null;
