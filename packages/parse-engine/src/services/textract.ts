@@ -12,6 +12,7 @@ import {
   type Block as TextractBlock,
 } from "@aws-sdk/client-textract";
 import { env } from "../env.js";
+import { cellsToMarkdownTable, type TableCell } from "./table-to-markdown.js";
 
 let _client: TextractClient | null = null;
 
@@ -60,17 +61,10 @@ export async function parseTableWithTextract(
   return "";
 }
 
-interface CellInfo {
-  row: number;
-  col: number;
-  rowSpan: number;
-  colSpan: number;
-  text: string;
-}
-
 /**
- * Extract tables from Textract blocks and convert to markdown with merged cell support.
- * Mirrors the Python excel_to_markdown() function.
+ * Extract tables from Textract blocks and convert to markdown with merged cell
+ * support. Cell rendering is delegated to cellsToMarkdownTable for consistency
+ * with other table sources (HTML, XLSX, DOCX).
  */
 function extractTablesAsMarkdown(blocks: TextractBlock[]): string {
   const blockMap = new Map<string, TextractBlock>();
@@ -83,26 +77,12 @@ function extractTablesAsMarkdown(blocks: TextractBlock[]): string {
   for (const block of blocks) {
     if (block.BlockType !== "TABLE") continue;
 
-    // Collect all cells with their span info
-    const cells: CellInfo[] = [];
-    let maxRow = 0;
-    let maxCol = 0;
-
+    const cells: TableCell[] = [];
     const childIds = block.Relationships?.find((r) => r.Type === "CHILD")?.Ids ?? [];
     for (const cellId of childIds) {
       const cell = blockMap.get(cellId);
       if (!cell || cell.BlockType !== "CELL") continue;
 
-      const row = cell.RowIndex ?? 0;
-      const col = cell.ColumnIndex ?? 0;
-      const rowSpan = cell.RowSpan ?? 1;
-      const colSpan = cell.ColumnSpan ?? 1;
-
-      // Account for span when computing max dimensions
-      maxRow = Math.max(maxRow, row + rowSpan - 1);
-      maxCol = Math.max(maxCol, col + colSpan - 1);
-
-      // Get cell text from child WORD/SELECTION blocks
       const wordIds = cell.Relationships?.find((r) => r.Type === "CHILD")?.Ids ?? [];
       const words: string[] = [];
       for (const wordId of wordIds) {
@@ -115,70 +95,16 @@ function extractTablesAsMarkdown(blocks: TextractBlock[]): string {
       }
 
       cells.push({
-        row,
-        col,
-        rowSpan,
-        colSpan,
+        row: cell.RowIndex ?? 0,
+        col: cell.ColumnIndex ?? 0,
+        rowSpan: cell.RowSpan ?? 1,
+        colSpan: cell.ColumnSpan ?? 1,
         text: words.join(" ").replace(/\n/g, " ").trim(),
       });
     }
 
-    if (maxRow === 0) continue;
-
-    // Build a grid — track which cells are occupied by spans
-    const grid: string[][] = Array.from({ length: maxRow }, () =>
-      Array(maxCol).fill("")
-    );
-    const skipCells = new Set<string>();
-
-    // Sort cells by row, col for deterministic processing
-    cells.sort((a, b) => a.row - b.row || a.col - b.col);
-
-    for (const cell of cells) {
-      let value = cell.text;
-
-      // Add span markers matching Python's format
-      if (cell.rowSpan > 1 && value !== "") {
-        value = `${value} [rowspan=${cell.rowSpan}]`;
-      }
-      if (cell.colSpan > 1) {
-        value = `${value} [colspan=${cell.colSpan}]`;
-      }
-
-      // Place in grid
-      grid[cell.row - 1][cell.col - 1] = value;
-
-      // Mark spanned cells to skip
-      for (let r = cell.row; r < cell.row + cell.rowSpan; r++) {
-        for (let c = cell.col; c < cell.col + cell.colSpan; c++) {
-          if (r !== cell.row || c !== cell.col) {
-            skipCells.add(`${r}-${c}`);
-            grid[r - 1][c - 1] = "";
-          }
-        }
-      }
-    }
-
-    // Generate markdown table
-    const mdRows: string[] = [];
-
-    // Add merged cell note (matching Python output)
-    const hasMergedCells = cells.some((c) => c.rowSpan > 1 || c.colSpan > 1);
-    if (hasMergedCells) {
-      mdRows.push("<!-- Note: Merged cells are indicated with [rowspan=X] and [colspan=X] markers -->");
-      mdRows.push("");
-    }
-
-    for (let r = 0; r < maxRow; r++) {
-      mdRows.push("| " + grid[r].join(" | ") + " |");
-
-      // Separator after first row (header)
-      if (r === 0) {
-        mdRows.push("| " + grid[r].map(() => "---").join(" | ") + " |");
-      }
-    }
-
-    tables.push(mdRows.join("\n"));
+    const markdown = cellsToMarkdownTable(cells);
+    if (markdown) tables.push(markdown);
   }
 
   return tables.join("\n\n");
