@@ -20,12 +20,19 @@ FROM node:22-slim
 
 RUN corepack enable && corepack prepare pnpm@10 --activate
 
-# System deps for Chromium (Playwright)
+# System deps for Chromium (Playwright). See
+# https://playwright.dev/docs/docker#alternative-installation-via-manual-apt-get
+# Keep apt lists around until after playwright install so `playwright
+# install` can fetch any extra deps its version expects.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnss3 libatk-bridge2.0-0 libdrm2 libxcomposite1 libxdamage1 \
-    libxrandr2 libgbm1 libasound2 libpango-1.0-0 libcairo2 \
-    libxshmfence1 libx11-xcb1 fonts-liberation fonts-noto-color-emoji \
-    ca-certificates \
+    libnss3 libnspr4 \
+    libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 \
+    libcups2 libdrm2 libgbm1 libasound2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libpango-1.0-0 libcairo2 \
+    libxshmfence1 libx11-xcb1 \
+    fonts-liberation fonts-noto-color-emoji \
+    ca-certificates wget \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -36,8 +43,13 @@ COPY --from=build /app/packages/parse-engine/node_modules ./packages/parse-engin
 COPY --from=build /app/packages/parse-engine/package.json ./packages/parse-engine/
 COPY --from=build /app/packages/parse-engine/llms.txt ./packages/parse-engine/
 
-# Install Chromium for Playwright
-RUN ./packages/parse-engine/node_modules/.bin/playwright install chromium
+# Pin Playwright's browser directory so the install + runtime use the same
+# path. Without this, Playwright defaults to ~/.cache/ms-playwright, which
+# breaks when the container runs under a different user or a read-only HOME.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN mkdir -p /ms-playwright && \
+    ./packages/parse-engine/node_modules/.bin/playwright install chromium && \
+    chmod -R a+rx /ms-playwright
 
 ENV NODE_ENV=production
 ENV PORT=3001
