@@ -21,7 +21,7 @@ import TurndownService from "turndown";
 import { generateHtmlOutline, type HtmlOutlineOptions } from "./html-outline.js";
 import { cellsToMarkdownTable, type TableCell } from "./services/table-to-markdown.js";
 import type { ChapterWithSections } from "./services/outline.js";
-import type { Section } from "./types.js";
+import type { Section, DocumentSummary, DocumentMetadata } from "./types.js";
 
 export interface ParsedHtmlPage {
   pageNumber: number;
@@ -36,6 +36,10 @@ export interface ParsedHtmlDocument {
   chapters?: ChapterWithSections[];
   /** Flat list of all sections across chapters. Present when generateOutline=true. */
   outline?: Section[];
+  /** LLM-generated document summary. Present when generateOutline=true (and enrich isn't disabled). */
+  summary?: DocumentSummary;
+  /** LLM-generated document metadata. Present when generateOutline=true (and enrich isn't disabled). */
+  metadata?: DocumentMetadata;
 }
 
 export interface HtmlParserOptions {
@@ -255,11 +259,11 @@ export async function parseHtmlToMarkdownWithOutline(
   const doc = parseHtmlToMarkdown(html, options);
   if (doc.pages.length === 0) return doc;
 
-  const { chapters, outline } = await generateHtmlOutline(
+  const { chapters, outline, summary, metadata } = await generateHtmlOutline(
     doc.pages,
     doc.title,
     options.outlineOptions,
   );
 
-  return { ...doc, chapters, outline };
+  return { ...doc, chapters, outline, summary, metadata };
 }

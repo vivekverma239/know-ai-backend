@@ -1,14 +1,14 @@
 /**
- * LLM-based chapter + outline generation for HTML documents. Uses the same
- * services as the PDF pipeline (generatePageSummaries + generateOutlineWithChapters)
- * so the output structure is identical across sources.
+ * LLM-based chapter + outline generation for HTML documents, with optional
+ * document-level enrichment (summary + metadata). Uses the same services as
+ * the PDF pipeline so the output structure is identical across sources.
  *
  * The pipeline:
  *   1. Each page's markdown is summarised via the LITE tier model.
- *   2. The medium-tier model groups summaries into chapters (spanning ranges
- *      of pages).
- *   3. For every chapter, a section-detection pass runs against that page
- *      range, producing nested sections.
+ *   2. Two parallel branches run on the page summaries:
+ *      a. Chapter + section detection (outline).
+ *      b. Document-level summary + metadata (enrichment), when enabled.
+ *   3. Chapter section extraction runs per-chapter after chapter detection.
  *
  * Caching is disabled by default (one-shot request, no replay) but a custom
  * PersistenceProvider can be passed in to share summaries across requests.
@@ -19,8 +19,9 @@ import { PipelineContext } from "./context.js";
 import { getModelConfig } from "./models.js";
 import type { PersistenceProvider } from "./persistence.js";
 import { generatePageSummaries } from "./services/cluster.js";
+import { enrichDocument } from "./services/enrich.js";
 import { generateOutlineWithChapters, type ChapterWithSections } from "./services/outline.js";
-import type { Section } from "./types.js";
+import type { ParsedPage, Section, DocumentSummary, DocumentMetadata } from "./types.js";
 
 /** No-op persistence provider — every cache lookup misses, every write is a noop. */
 class NullPersistence implements PersistenceProvider {
@@ -38,6 +39,10 @@ export interface HtmlOutlineResult {
   chapters: ChapterWithSections[];
   /** Flat list of all sections across chapters (matches ParsedDocument.outline shape). */
   outline: Section[];
+  /** LLM-generated document summary. Present when enrich !== false. */
+  summary?: DocumentSummary;
+  /** LLM-generated document metadata. Present when enrich !== false. */
+  metadata?: DocumentMetadata;
 }
 
 export interface HtmlOutlineOptions {
@@ -48,17 +53,24 @@ export interface HtmlOutlineOptions {
   persistence?: PersistenceProvider;
   /** Document-level summary passed to the LLM prompt. Defaults to "". */
   docSummary?: string;
+  /**
+   * Generate DocumentSummary + DocumentMetadata alongside the outline.
+   * Shares the same page-summary pass as the outline so cost is just the
+   * summary + metadata LLM calls. Defaults to true.
+   */
+  enrich?: boolean;
 }
 
 /**
- * Generate LLM-based chapters + outline for a set of markdown pages.
+ * Generate LLM-based chapters + outline (and, by default, summary + metadata)
+ * for a set of markdown pages.
  *
  * Token cost scales linearly with the number of pages (one LITE-tier summary
- * per page, plus one MEDIUM-tier chapter + one-per-chapter section pass).
- * For small docs (≤3 pages) the overhead is typically 2-3 LLM calls total.
+ * per page, plus outline + enrichment passes). For small docs (≤3 pages) the
+ * overhead is typically 3-4 LLM calls total.
  */
 export async function generateHtmlOutline(
-  pages: { pageNumber: number; content: string }[],
+  pages: ParsedPage[],
   docTitle: string,
   options: HtmlOutlineOptions = {},
 ): Promise<HtmlOutlineResult> {
@@ -77,20 +89,44 @@ export async function generateHtmlOutline(
     documentHash,
   });
 
-  // Step 1 — page summaries (LITE tier, batched)
+  // Step 1 — page summaries (LITE tier, batched). Shared downstream.
   const { pageSummaries } = await generatePageSummaries(pages, ctx);
 
-  // Step 2 — detect chapters and generate sections per chapter (MEDIUM tier)
-  const result = await generateOutlineWithChapters(
-    pageSummaries,
-    docTitle,
-    options.docSummary ?? "",
-    ctx,
-  );
+  // Step 2 — run outline + enrichment in parallel. Both depend only on
+  // pageSummaries, and failures in one shouldn't kill the other.
+  const runEnrich = options.enrich !== false;
+  const [outlineResult, enrichResult] = await Promise.allSettled([
+    generateOutlineWithChapters(
+      pageSummaries,
+      docTitle,
+      options.docSummary ?? "",
+      ctx,
+    ),
+    runEnrich
+      ? enrichDocument(pages, { ctx, pageSummaries, title: docTitle })
+      : Promise.resolve({}),
+  ]);
 
-  const chapters = result.chapters;
-  // Flatten all sections across chapters for the ParsedDocument.outline field
-  const outline: Section[] = chapters.flatMap((c) => c.sections);
+  let chapters: ChapterWithSections[] = [];
+  let outline: Section[] = [];
+  if (outlineResult.status === "fulfilled") {
+    chapters = outlineResult.value.chapters;
+    outline = chapters.flatMap((c) => c.sections);
+  } else {
+    console.error("  Outline generation failed:", (outlineResult.reason as Error)?.message);
+  }
 
-  return { chapters, outline };
+  const enrichment = enrichResult.status === "fulfilled"
+    ? enrichResult.value as { summary?: DocumentSummary; metadata?: DocumentMetadata }
+    : {};
+  if (enrichResult.status === "rejected") {
+    console.error("  Enrichment failed:", (enrichResult.reason as Error)?.message);
+  }
+
+  return {
+    chapters,
+    outline,
+    summary: enrichment.summary,
+    metadata: enrichment.metadata,
+  };
 }

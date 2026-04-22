@@ -36,6 +36,61 @@ export const DownloadBody = z.object({
   userAgent: z.string().optional(),
 });
 
+// -- Shared document-structure schemas (used by both /parse responses
+//    and the polled /parse/:jobId response) --
+
+const SubsectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  summary: z.string(),
+});
+
+const SectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  summary: z.string(),
+  subsections: z.array(SubsectionSchema),
+});
+
+const ChapterSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  startPage: z.number(),
+  endPage: z.number(),
+  sections: z.array(SectionSchema),
+});
+
+const DocumentSummarySchema = z.object({
+  title: z.string(),
+  shortSummary: z.string(),
+  year: z.number().optional(),
+  date: z.string().optional(),
+  companies: z.array(z.string()),
+  documentType: z.string().optional(),
+  sectors: z.array(z.string()).optional(),
+});
+
+const DocumentMetadataSchema = z.object({
+  title: z.string(),
+  publicationDate: z.string().optional(),
+  year: z.string().optional(),
+  summary: z.string().optional(),
+  category: z.string(),
+  subcategory: z.string(),
+  industry: z.string().optional(),
+  companies: z.array(z.string()).optional(),
+  country: z.string().optional(),
+  publisher: z.string().optional(),
+  documentSubtype: z.string().optional(),
+  categoryMetadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+// -- Parse HTML --
+
 export const ParseHtmlBody = z
   .object({
     url: z.string().url().optional(),
@@ -49,33 +104,16 @@ export const ParseHtmlBody = z
      * pass false to skip and get a faster markdown-only response.
      */
     generateOutline: z.boolean().optional().default(true),
+    /**
+     * When true, runs the LLM-based document summary + metadata extraction.
+     * Shares page summaries with the outline pass when both are enabled,
+     * so the marginal cost is ~2 extra LLM calls. Defaults to true.
+     */
+    generateEnrichment: z.boolean().optional().default(true),
   })
   .refine((v) => Boolean(v.url) !== Boolean(v.html), {
     message: "Provide exactly one of `url` or `html`",
   });
-
-const HtmlSubsectionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  summary: z.string(),
-});
-const HtmlSectionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  summary: z.string(),
-  subsections: z.array(HtmlSubsectionSchema),
-});
-const HtmlChapterSchema = z.object({
-  title: z.string(),
-  summary: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  sections: z.array(HtmlSectionSchema),
-});
 
 export const ParseHtmlResponse = z.object({
   jobId: z.string().uuid(),
@@ -86,8 +124,10 @@ export const ParseHtmlResponse = z.object({
   result: z.object({
     totalPages: z.number(),
     pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
-    chapters: z.array(HtmlChapterSchema).optional(),
-    outline: z.array(HtmlSectionSchema).optional(),
+    chapters: z.array(ChapterSchema).optional(),
+    outline: z.array(SectionSchema).optional(),
+    summary: DocumentSummarySchema.optional(),
+    metadata: DocumentMetadataSchema.optional(),
   }),
 });
 
@@ -97,6 +137,11 @@ export const ParseImageBody = z
     imageBase64: z.string().optional(),
     mimeType: z.string().optional(),
     userAgent: z.string().optional(),
+    /**
+     * When true, runs the LLM-based document summary + metadata pass on the
+     * extracted markdown. Adds ~2 LLM calls. Defaults to true.
+     */
+    generateEnrichment: z.boolean().optional().default(true),
   })
   .refine((v) => Boolean(v.url) !== Boolean(v.imageBase64), {
     message: "Provide exactly one of `url` or `imageBase64`",
@@ -118,10 +163,24 @@ export const ParseAnyBody = z
             maxCharsPerPage: z.number().int().positive().optional(),
             /** Defaults to true — pass false to skip LLM outline generation. */
             generateOutline: z.boolean().optional().default(true),
+            /** Defaults to true — pass false to skip summary + metadata generation. */
+            generateEnrichment: z.boolean().optional().default(true),
           })
           .optional(),
-        image: z.object({ model: z.string().optional() }).optional(),
-        xlsx: z.object({ maxRowsPerSheet: z.number().int().positive().optional() }).optional(),
+        image: z
+          .object({
+            model: z.string().optional(),
+            /** Defaults to true — pass false to skip summary + metadata generation. */
+            generateEnrichment: z.boolean().optional().default(true),
+          })
+          .optional(),
+        xlsx: z
+          .object({
+            maxRowsPerSheet: z.number().int().positive().optional(),
+            /** Defaults to true — pass false to skip summary + metadata generation. */
+            generateEnrichment: z.boolean().optional().default(true),
+          })
+          .optional(),
         pdf: z
           .object({
             paddle: z.boolean().optional(),
@@ -155,8 +214,10 @@ export const ParseAnyResponse = z.object({
     .object({
       totalPages: z.number(),
       pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
-      chapters: z.array(HtmlChapterSchema).optional(),
-      outline: z.array(HtmlSectionSchema).optional(),
+      chapters: z.array(ChapterSchema).optional(),
+      outline: z.array(SectionSchema).optional(),
+      summary: DocumentSummarySchema.optional(),
+      metadata: DocumentMetadataSchema.optional(),
     })
     .optional(),
   usage: z
@@ -177,6 +238,8 @@ export const ParseImageResponse = z.object({
   result: z.object({
     totalPages: z.number(),
     pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
+    summary: DocumentSummarySchema.optional(),
+    metadata: DocumentMetadataSchema.optional(),
   }),
   usage: z
     .object({
@@ -211,54 +274,6 @@ const ParsedMediaBlockSchema = z.object({
   page: z.number(),
   idx: z.number(),
   bounds: z.array(z.number()),
-});
-
-const SubsectionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  summary: z.string(),
-});
-
-const SectionSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  summary: z.string(),
-  subsections: z.array(SubsectionSchema),
-});
-
-const ChapterSchema = z.object({
-  title: z.string(),
-  summary: z.string(),
-  startPage: z.number(),
-  endPage: z.number(),
-  sections: z.array(SectionSchema),
-});
-
-const DocumentSummarySchema = z.object({
-  title: z.string(),
-  shortSummary: z.string(),
-  year: z.number().optional(),
-  date: z.string().optional(),
-  companies: z.array(z.string()),
-  documentType: z.string().optional(),
-});
-
-const DocumentMetadataSchema = z.object({
-  title: z.string(),
-  publicationDate: z.string().optional(),
-  year: z.string().optional(),
-  summary: z.string().optional(),
-  category: z.string(),
-  subcategory: z.string(),
-  industry: z.string().optional(),
-  companies: z.array(z.string()).optional(),
-  country: z.string().optional(),
-  publisher: z.string().optional(),
-  documentSubtype: z.string().optional(),
 });
 
 const ParsedDocumentSchema = z.object({

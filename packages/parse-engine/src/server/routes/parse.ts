@@ -33,6 +33,7 @@ import { parseImageToMarkdown, detectImageMime } from "../../image-parser.js";
 import { parseDocxToMarkdown } from "../../docx-parser.js";
 import { parseXlsxToMarkdown } from "../../xlsx-parser.js";
 import { detectFormat, type ParseFormat } from "../../parse-dispatch.js";
+import { enrichDocument } from "../../services/enrich.js";
 
 export const parseApp = new OpenAPIHono();
 
@@ -178,7 +179,8 @@ const postParseHtmlRoute = createRoute({
 });
 
 parseApp.openapi(postParseHtmlRoute, async (c) => {
-  const { url, html, userAgent, maxCharsPerPage, generateOutline } = c.req.valid("json");
+  const { url, html, userAgent, maxCharsPerPage, generateOutline, generateEnrichment } =
+    c.req.valid("json");
 
   let rawHtml: string;
   let downloadedTitle: string | undefined;
@@ -198,11 +200,22 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
   let parsed: Awaited<ReturnType<typeof parseHtmlToMarkdownWithOutline>>;
   try {
     parsed = generateOutline
-      ? await parseHtmlToMarkdownWithOutline(rawHtml, { maxCharsPerPage })
+      ? await parseHtmlToMarkdownWithOutline(rawHtml, {
+          maxCharsPerPage,
+          outlineOptions: { enrich: generateEnrichment },
+        })
       : parseHtmlToMarkdown(rawHtml, { maxCharsPerPage });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return c.json({ error: `HTML parse failed: ${msg}` }, 400);
+  }
+
+  // When outline is off but enrichment is on, run enrichment standalone.
+  if (!generateOutline && generateEnrichment && parsed.pages.length > 0) {
+    const enrichResult = await enrichDocument(parsed.pages, {
+      title: parsed.title || downloadedTitle || "",
+    });
+    parsed = { ...parsed, summary: enrichResult.summary, metadata: enrichResult.metadata };
   }
 
   const jobId = randomUUID();
@@ -215,6 +228,8 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
       mediaBlocks: [],
       chapters: parsed.chapters,
       outline: parsed.outline,
+      summary: parsed.summary,
+      metadata: parsed.metadata,
     }),
   ]);
   const htmlUrl = await getJobFileSignedUrl(jobId, "document.html");
@@ -231,6 +246,8 @@ parseApp.openapi(postParseHtmlRoute, async (c) => {
         pages: parsed.pages,
         ...(parsed.chapters ? { chapters: parsed.chapters } : {}),
         ...(parsed.outline ? { outline: parsed.outline } : {}),
+        ...(parsed.summary ? { summary: parsed.summary } : {}),
+        ...(parsed.metadata ? { metadata: parsed.metadata } : {}),
       },
     },
     200,
@@ -269,7 +286,8 @@ const postParseImageRoute = createRoute({
 });
 
 parseApp.openapi(postParseImageRoute, async (c) => {
-  const { url, imageBase64, mimeType: providedMime, userAgent } = c.req.valid("json");
+  const { url, imageBase64, mimeType: providedMime, userAgent, generateEnrichment } =
+    c.req.valid("json");
 
   // Load image bytes + infer MIME
   let imageBuffer: Buffer;
@@ -309,6 +327,11 @@ parseApp.openapi(postParseImageRoute, async (c) => {
     return c.json({ error: `Image parse failed: ${msg}` }, 400);
   }
 
+  // Optional enrichment — 2 extra LLM calls, defaults on.
+  const enrichment = generateEnrichment && parsed.pages.length > 0
+    ? await enrichDocument(parsed.pages, { title: parsed.title })
+    : {};
+
   // Store source image + parsed result
   const jobId = randomUUID();
   const [storedFilename] = await Promise.all([
@@ -318,6 +341,8 @@ parseApp.openapi(postParseImageRoute, async (c) => {
       pages: parsed.pages,
       title: parsed.title,
       mediaBlocks: [],
+      summary: enrichment.summary,
+      metadata: enrichment.metadata,
     }),
   ]);
   const imageUrl = await getJobFileSignedUrl(jobId, storedFilename);
@@ -332,6 +357,8 @@ parseApp.openapi(postParseImageRoute, async (c) => {
       result: {
         totalPages: parsed.totalPages,
         pages: parsed.pages,
+        ...(enrichment.summary ? { summary: enrichment.summary } : {}),
+        ...(enrichment.metadata ? { metadata: enrichment.metadata } : {}),
       },
       usage: parsed.usage,
     },
@@ -455,13 +482,27 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
 
     if (format === "html") {
       const html = buffer.toString("utf-8");
-      // Destructuring default covers the case where the caller omits
-      // `options` entirely — zod's nested default only fires when
+      // Destructuring defaults cover the case where the caller omits
+      // `options` entirely — zod's nested defaults only fire when
       // `options.html` is actually parsed.
-      const { generateOutline: shouldOutline = true, ...htmlParseOpts } = options?.html ?? {};
-      const parsed = shouldOutline
-        ? await parseHtmlToMarkdownWithOutline(html, htmlParseOpts)
+      const {
+        generateOutline: shouldOutline = true,
+        generateEnrichment: shouldEnrich = true,
+        ...htmlParseOpts
+      } = options?.html ?? {};
+      let parsed = shouldOutline
+        ? await parseHtmlToMarkdownWithOutline(html, {
+            ...htmlParseOpts,
+            outlineOptions: { enrich: shouldEnrich },
+          })
         : parseHtmlToMarkdown(html, htmlParseOpts);
+
+      // Enrichment-without-outline path (runs its own pageSummaries pass).
+      if (!shouldOutline && shouldEnrich && parsed.pages.length > 0) {
+        const enrichResult = await enrichDocument(parsed.pages, { title: parsed.title });
+        parsed = { ...parsed, summary: enrichResult.summary, metadata: enrichResult.metadata };
+      }
+
       await Promise.all([
         uploadJobHtml(jobId, html),
         writeJobResult(jobId, {
@@ -471,6 +512,8 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           mediaBlocks: [],
           chapters: parsed.chapters,
           outline: parsed.outline,
+          summary: parsed.summary,
+          metadata: parsed.metadata,
         }),
       ]);
       const sourceUrl = await getJobFileSignedUrl(jobId, "document.html");
@@ -487,6 +530,8 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
             pages: parsed.pages,
             ...(parsed.chapters ? { chapters: parsed.chapters } : {}),
             ...(parsed.outline ? { outline: parsed.outline } : {}),
+            ...(parsed.summary ? { summary: parsed.summary } : {}),
+            ...(parsed.metadata ? { metadata: parsed.metadata } : {}),
           },
         },
         200,
@@ -499,6 +544,12 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
       const parsed = await parseImageToMarkdown(buffer, sniffedMime, {
         model: options?.image?.model,
       });
+
+      const shouldEnrich = options?.image?.generateEnrichment ?? true;
+      const enrichment = shouldEnrich && parsed.pages.length > 0
+        ? await enrichDocument(parsed.pages, { title: parsed.title })
+        : {};
+
       const [storedFilename] = await Promise.all([
         uploadJobImage(jobId, buffer, sniffedMime),
         writeJobResult(jobId, {
@@ -506,6 +557,8 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           pages: parsed.pages,
           title: parsed.title,
           mediaBlocks: [],
+          summary: enrichment.summary,
+          metadata: enrichment.metadata,
         }),
       ]);
       const sourceUrl = await getJobFileSignedUrl(jobId, storedFilename);
@@ -517,7 +570,12 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           title: parsed.title,
           totalPages: parsed.totalPages,
           sourceUrl: sourceUrl ?? undefined,
-          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+          result: {
+            totalPages: parsed.totalPages,
+            pages: parsed.pages,
+            ...(enrichment.summary ? { summary: enrichment.summary } : {}),
+            ...(enrichment.metadata ? { metadata: enrichment.metadata } : {}),
+          },
           usage: parsed.usage,
         },
         200,
@@ -525,7 +583,16 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
     }
 
     if (format === "docx") {
-      const parsed = await parseDocxToMarkdown(buffer, options?.html);
+      const {
+        generateOutline: shouldOutline = true,
+        generateEnrichment: shouldEnrich = true,
+        ...htmlParseOpts
+      } = options?.html ?? {};
+      const parsed = await parseDocxToMarkdown(buffer, {
+        ...htmlParseOpts,
+        generateOutline: shouldOutline,
+        generateEnrichment: shouldEnrich,
+      });
       await Promise.all([
         uploadJobFile(
           jobId,
@@ -538,6 +605,10 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           pages: parsed.pages,
           title: parsed.title,
           mediaBlocks: [],
+          chapters: parsed.chapters,
+          outline: parsed.outline,
+          summary: parsed.summary,
+          metadata: parsed.metadata,
         }),
       ]);
       const sourceUrl = await getJobFileSignedUrl(jobId, "document.docx");
@@ -549,14 +620,28 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           title: parsed.title,
           totalPages: parsed.totalPages,
           sourceUrl: sourceUrl ?? undefined,
-          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+          result: {
+            totalPages: parsed.totalPages,
+            pages: parsed.pages,
+            ...(parsed.chapters ? { chapters: parsed.chapters } : {}),
+            ...(parsed.outline ? { outline: parsed.outline } : {}),
+            ...(parsed.summary ? { summary: parsed.summary } : {}),
+            ...(parsed.metadata ? { metadata: parsed.metadata } : {}),
+          },
         },
         200,
       );
     }
 
     if (format === "xlsx") {
-      const parsed = parseXlsxToMarkdown(buffer, options?.xlsx);
+      const { generateEnrichment: shouldEnrich = true, ...xlsxParseOpts } = options?.xlsx ?? {};
+      const parsed = parseXlsxToMarkdown(buffer, xlsxParseOpts);
+      const flatPages = parsed.pages.map(({ pageNumber, content }) => ({ pageNumber, content }));
+
+      const enrichment = shouldEnrich && flatPages.length > 0
+        ? await enrichDocument(flatPages, { title: parsed.title })
+        : {};
+
       await Promise.all([
         uploadJobFile(
           jobId,
@@ -566,9 +651,11 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
         ),
         writeJobResult(jobId, {
           totalPages: parsed.totalPages,
-          pages: parsed.pages.map(({ pageNumber, content }) => ({ pageNumber, content })),
+          pages: flatPages,
           title: parsed.title,
           mediaBlocks: [],
+          summary: enrichment.summary,
+          metadata: enrichment.metadata,
         }),
       ]);
       const sourceUrl = await getJobFileSignedUrl(jobId, "document.xlsx");
@@ -582,7 +669,9 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           sourceUrl: sourceUrl ?? undefined,
           result: {
             totalPages: parsed.totalPages,
-            pages: parsed.pages.map(({ pageNumber, content }) => ({ pageNumber, content })),
+            pages: flatPages,
+            ...(enrichment.summary ? { summary: enrichment.summary } : {}),
+            ...(enrichment.metadata ? { metadata: enrichment.metadata } : {}),
           },
         },
         200,
