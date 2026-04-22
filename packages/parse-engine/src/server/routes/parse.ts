@@ -455,7 +455,10 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
 
     if (format === "html") {
       const html = buffer.toString("utf-8");
-      const { generateOutline: shouldOutline, ...htmlParseOpts } = options?.html ?? {};
+      // Destructuring default covers the case where the caller omits
+      // `options` entirely — zod's nested default only fires when
+      // `options.html` is actually parsed.
+      const { generateOutline: shouldOutline = true, ...htmlParseOpts } = options?.html ?? {};
       const parsed = shouldOutline
         ? await parseHtmlToMarkdownWithOutline(html, htmlParseOpts)
         : parseHtmlToMarkdown(html, htmlParseOpts);
@@ -479,7 +482,12 @@ parseApp.openapi(postParseAnyRoute, async (c) => {
           title: parsed.title,
           totalPages: parsed.totalPages,
           sourceUrl: sourceUrl ?? undefined,
-          result: { totalPages: parsed.totalPages, pages: parsed.pages },
+          result: {
+            totalPages: parsed.totalPages,
+            pages: parsed.pages,
+            ...(parsed.chapters ? { chapters: parsed.chapters } : {}),
+            ...(parsed.outline ? { outline: parsed.outline } : {}),
+          },
         },
         200,
       );

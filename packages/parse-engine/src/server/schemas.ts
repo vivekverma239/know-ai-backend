@@ -155,6 +155,8 @@ export const ParseAnyResponse = z.object({
     .object({
       totalPages: z.number(),
       pages: z.array(z.object({ pageNumber: z.number(), content: z.string() })),
+      chapters: z.array(HtmlChapterSchema).optional(),
+      outline: z.array(HtmlSectionSchema).optional(),
     })
     .optional(),
   usage: z
