@@ -22,7 +22,7 @@ export const env = {
   get aiGatewayApiKey() { return get("AI_GATEWAY_API_KEY"); },
 
   // Google Cloud Storage
-  get gcsBucket() { return get("GOOGLE_STORAGE_BUCKET", "GOOGLE_BUCKET_NAME", "google_bucket_name"); },
+  get gcsBucket() { return get("GOOGLE_STORAGE_BUCKET", "GOOGLE_BUCKET_NAME", "google_bucket_name", "GOOGLE_CLOUD_BUCKET_NAME"); },
   get gcsCredentialsRaw() { return get("GOOGLE_APPLICATION_CREDENTIALS_RAW"); },
   get gcsCredentialsBase64() { return get("GOOGLE_APPLICATION_CREDENTIALS_BASE64", "google_application_credentials_base64"); },
 

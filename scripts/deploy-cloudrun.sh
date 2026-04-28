@@ -16,8 +16,8 @@ IMAGE_NAME=${IMAGE_NAME:-knowsis-backend}
 IMAGE_TAG=${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}
 # IMAGE_TAG=${IMAGE_TAG:-latest}
 PORT=${PORT:-3000}
-CPU=${CLOUD_RUN_CPU:-1}
-MEMORY=${CLOUD_RUN_MEMORY:-512Mi}
+CPU=${CLOUD_RUN_CPU:-2}
+MEMORY=${CLOUD_RUN_MEMORY:-4Gi}
 MAX_INSTANCES=${CLOUD_RUN_MAX_INSTANCES:-10}
 MIN_INSTANCES=${CLOUD_RUN_MIN_INSTANCES:-0}
 ALLOW_UNAUTH=${CLOUD_RUN_ALLOW_UNAUTH:-true}
@@ -45,7 +45,7 @@ echo "Setting gcloud project: ${PROJECT_ID}"
 #   --description "Docker images for ${PROJECT_ID}" >/dev/null
 
 # echo "Building and pushing image via Cloud Build: ${IMAGE_URI}"
-# gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
+gcloud builds submit --tag "${IMAGE_URI}" --quiet --project "${PROJECT_ID}"
 
 DEPLOY_ARGS=(
   --project "${PROJECT_ID}"

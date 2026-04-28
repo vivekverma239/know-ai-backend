@@ -34,7 +34,7 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
 
   const prompt = getFileSearchAgentPrompt();
 
-  const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
+  const llm = getLLM(MODELS.GEMINI_3_FLASH);
   const response = await generateText({
     tools: tools,
     model: llm,

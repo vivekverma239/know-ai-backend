@@ -2,16 +2,18 @@ import type { Message as SQLMessage } from "@/@types";
 import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getDb } from "@/db";
 import { accounts, accountsMemberships } from "@/db/external_schema";
-import { createSession, getSessionWithMessages, syncMessages } from "@/db/queries/message";
+import { createSession, getSession, getSessionWithMessages, syncMessages } from "@/db/queries/message";
 import {
   type ModelConfig,
   structuredReportTemplate,
   structuredReports,
   userFile,
 } from "@/db/schema";
+import { runChatStream } from "@/routes/chatStream.routes";
 import { sendQstashMessage } from "@/service/qstash";
 import { getUserTeamIds } from "@/service/userTeams";
-import { NotFoundError } from "@/utils/errorHandler";
+import { AuthorizationError, NotFoundError } from "@/utils/errorHandler";
+import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
@@ -223,6 +225,68 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
           },
         }),
       );
+    },
+  });
+
+  // 2b. POST /chat-stream — Admin proxy for /api/v1/chat (KB + agentSearch).
+  //     Uses admin JWT auth, impersonates {userId, orgId} from the body, and
+  //     auto-creates the session if missing. Delegates to the same
+  //     runChatStream helper used by /api/v1/chat.
+  fastify.post("/chat-stream", {
+    preHandler: fastify.authenticateAdmin,
+    schema: {
+      description: "Admin playground proxy for /api/v1/chat (knowledgeBase + agentSearch modes)",
+      tags: ["Admin"],
+      body: Type.Object({
+        messages: Type.Array(Type.Any()),
+        userId: Type.String(),
+        orgId: Type.String(),
+        sessionId: Type.Optional(Type.String()),
+        deepSearch: Type.String(),
+      }),
+    },
+    handler: async (request, reply) => {
+      const {
+        messages,
+        userId,
+        orgId,
+        sessionId: requestSessionId,
+        deepSearch,
+      } = request.body as {
+        messages: KnowsisUIMessage[];
+        userId: string;
+        orgId: string;
+        sessionId?: string;
+        deepSearch: string;
+      };
+
+      logger.warn("Admin action", {
+        adminUserId: request.admin?.userId,
+        action: "impersonation_chat_stream",
+        impersonatedUserId: userId,
+        orgId,
+        deepSearch,
+        ip: request.ip,
+      });
+
+      // Resolve or create session — mirrors the pattern used by /chat above.
+      const sessionId = requestSessionId || uuidv4();
+      const existing = await getSession(sessionId);
+      if (existing && existing.userId !== userId) {
+        throw new AuthorizationError("Session belongs to a different user");
+      }
+      if (!existing) {
+        await createSession(userId, "New Session", sessionId);
+      }
+
+      const response = await runChatStream({
+        userId,
+        orgId,
+        sessionId,
+        messages,
+        deepSearch,
+      });
+      return reply.send(response);
     },
   });
 

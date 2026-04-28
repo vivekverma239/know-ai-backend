@@ -35,16 +35,16 @@ export interface ParsedImageDocument {
 
 export interface ImageParserOptions {
   /**
-   * Gateway model id (e.g. "google/gemini-3-pro-preview",
-   * "anthropic/claude-sonnet-4.6"). Any vision model routable through
-   * AI Gateway will work. Defaults to Gemini 3 Pro.
+   * Gateway model id (e.g. "anthropic/claude-sonnet-4.6",
+   * "google/gemini-3-pro-preview"). Any vision model routable through
+   * AI Gateway will work. Defaults to Claude Sonnet 4.6.
    */
   model?: string;
   /** Override the gateway API key (falls back to AI_GATEWAY_API_KEY env var). */
   apiKey?: string;
 }
 
-const DEFAULT_MODEL = "google/gemini-3-pro-preview";
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4.6";
 
 const SUPPORTED_MIMES = new Set([
   "image/png",

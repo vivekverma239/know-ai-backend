@@ -73,7 +73,7 @@ export async function parseChart(
 
     return withRetry(
       (model) => callVisionLLM(model, messages, ctx, "chart_parse"),
-      ctx.models.smart,
+      ctx.models.vision,
       { maxRetries: ctx.maxRetries, models: ctx.models, label: "Chart parse" }
     );
   };

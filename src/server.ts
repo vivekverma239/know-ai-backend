@@ -38,7 +38,17 @@ import documentParseCallbackRoutes from "./routes/documentParseCallback.routes";
 import documentParseWorkflowRoutes from "./routes/documentParseWorkflow.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
-const fastify = Fastify({ logger: false, ignoreTrailingSlash: true });
+// 50 MiB body limit. Upstash workflow callbacks (e.g. /api/v1/document-parse-workflow)
+// re-POST the accumulated step state on every iteration — for a multi-page PDF this
+// includes mistralResult + parsedBlocks + page summaries and routinely exceeds the
+// Fastify default of 1 MiB.
+const BODY_LIMIT_BYTES = 50 * 1024 * 1024;
+
+const fastify = Fastify({
+  logger: false,
+  ignoreTrailingSlash: true,
+  bodyLimit: BODY_LIMIT_BYTES,
+});
 
 const start = async () => {
   const port = Number.parseInt(process.env.PORT || "3000", 10);
@@ -68,6 +78,8 @@ const start = async () => {
     encoding: "utf8",
     runFirst: true,
     routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback", "/api/v1/toc-meta-callback", "/api/v1/document-parse-workflow"],
+    // Body size is governed by the Fastify root `bodyLimit` set above; this
+    // plugin reads the body via Fastify's pipeline so it inherits that limit.
   });
   //   await fastify.register(multipartPlugin);
   // Swagger / OpenAPI

@@ -129,7 +129,7 @@ importers:
         specifier: ^0.5.16
         version: 0.5.16
       ai:
-        specifier: ^6.0.146
+        specifier: 6.0.146
         version: 6.0.146(zod@4.1.11)
       bcryptjs:
         specifier: ^3.0.3

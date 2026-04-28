@@ -59,7 +59,7 @@ const extractTitle = (content: string, fallback: string) => {
   return title && title.length > 0 ? title : fallback;
 };
 
-const fetchWebpageContent = async (url: string): Promise<{ title: string; content: string }> => {
+export const fetchWebpageContent = async (url: string): Promise<{ title: string; content: string }> => {
   const controller = new AbortController();
   const timeoutMs = Number(process.env.DOCUMENT_DOWNLOAD_TIMEOUT_MS ?? "120000");
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

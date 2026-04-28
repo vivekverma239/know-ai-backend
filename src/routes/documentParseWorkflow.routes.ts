@@ -15,6 +15,8 @@ import {
 } from "@/service/file/parsing";
 import { downloadPdfBuffer } from "@/service/file/storagePath";
 import { getStorage } from "@/service/googleStorage";
+import { fetchWebpageContent } from "@/service/ingestion/documentIngestion";
+import { processWebpageContent } from "@/service/ingestion/webpageProcessing";
 import { logError, logger } from "@/utils/logger";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
@@ -72,7 +74,64 @@ const documentParseWorkflowRoutes = async (fastify: FastifyInstance) => {
           .where(eq(userFile.id, fileId));
       });
 
-      // Download PDF from GCS to temp dir.
+      // Look up the file row so we can dispatch on its declared type.
+      // Without this branch, every queued file is fed to MuPDF as a PDF — which
+      // throws on web articles (HTML/CSS) and can poison GCS via the
+      // downloadPdfBuffer fallback.
+      const file = await getDb().query.userFile.findFirst({
+        where: eq(userFile.id, fileId),
+      });
+      if (!file) throw new Error(`File not found: ${fileId}`);
+
+      if (file.type === "web_article") {
+        await context.run("process-web-article", async () => {
+          const url = file.webArticleMetadata?.url ?? file.sourceDocumentUrl;
+          if (!url) {
+            throw new Error(`web_article file has no URL: ${fileId}`);
+          }
+
+          let title = file.webArticleMetadata?.title ?? file.name ?? url;
+          let content = file.webArticleMetadata?.content;
+
+          if (!content) {
+            const fetched = await fetchWebpageContent(url);
+            title = fetched.title;
+            content = fetched.content;
+            await getDb()
+              .update(userFile)
+              .set({
+                name: title,
+                webArticleMetadata: { url, title, content },
+              })
+              .where(eq(userFile.id, fileId));
+          }
+
+          await processWebpageContent(fileId, content, url, title);
+          logger.info("Web article processed via workflow", { fileId, url });
+        });
+
+        await context.run("mark-completed", async () => {
+          await getDb()
+            .update(userFile)
+            .set({ status: "completed" })
+            .where(eq(userFile.id, fileId));
+          logger.info("Web article parse completed via workflow", { fileId });
+        });
+
+        return;
+      }
+
+      if (file.type !== "pdf") {
+        // structured_report (and any future types) shouldn't be parsed here.
+        // Don't touch status — owner workflows manage these rows.
+        logger.warn("document-parse-workflow received non-pdf, non-web_article type — skipping", {
+          fileId,
+          type: file.type,
+        });
+        return;
+      }
+
+      // PDF path: download from GCS to temp dir.
       // Runs outside context.run because parse-engine needs the file on disk
       // on every invocation (PdfDocument constructor reads it).
       const tempDir = `/tmp/parse-${fileId}`;
@@ -86,7 +145,13 @@ const documentParseWorkflowRoutes = async (fastify: FastifyInstance) => {
       const parseHandler = parsePdfHandler({
         persistence: new LocalPersistence(`${tempDir}/.cache`),
         pdfPath,
-        useTextract: true,
+        // Pipeline defaults: PaddleOCR for table detection + masking, mistral
+        // for OCR + image detection, vision LLM (Claude Sonnet via gateway)
+        // for chart/figure parsing, vision LLM (Gemini 3 Flash) for tables.
+        // Textract is disabled so tables go through the vision LLM tier.
+        paddle: true,
+        mask: true,
+        useTextract: false,
       });
 
       // Cast to parse-engine's WorkflowContext interface (compatible run() method)

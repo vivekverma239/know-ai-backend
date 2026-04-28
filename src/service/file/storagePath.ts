@@ -110,10 +110,24 @@ export const invalidateStoragePathCache = (fileId: string) => {
   pathCache.delete(fileId);
 };
 
+const hasPdfMagicBytes = (buffer: Buffer): boolean => {
+  return (
+    buffer.length >= 4 &&
+    buffer[0] === 0x25 && // %
+    buffer[1] === 0x50 && // P
+    buffer[2] === 0x44 && // D
+    buffer[3] === 0x46    // F
+  );
+};
+
 /**
  * Download the PDF buffer for a file, falling back to sourceDocumentUrl if
  * the file is missing from GCS. When the fallback is used the PDF is
  * re-uploaded to GCS so subsequent attempts find it directly.
+ *
+ * Refuses to upload bytes that don't start with %PDF — otherwise an HTML
+ * response (e.g. a web article URL) would be stored at the .pdf path and
+ * keep failing on every retry.
  */
 export const downloadPdfBuffer = async (
   storage: GoogleStorageService,
@@ -136,6 +150,13 @@ export const downloadPdfBuffer = async (
       throw new Error(`Failed to download PDF from source URL (${res.status}): ${file.id}`);
     }
     const buffer = Buffer.from(await res.arrayBuffer());
+
+    if (!hasPdfMagicBytes(buffer)) {
+      const contentType = res.headers.get("content-type") ?? "unknown";
+      throw new Error(
+        `sourceDocumentUrl returned non-PDF content (content-type=${contentType}, leading bytes=${buffer.slice(0, 4).toString("hex")}); refusing to store as PDF: ${file.id}`,
+      );
+    }
 
     // Re-upload so future lookups find it in GCS
     const uploadPath = file.isAdminFile

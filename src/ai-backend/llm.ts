@@ -109,7 +109,7 @@ export function getLLM(model: MODELS | string) {
     case MODELS.CLAUDE_3_5_SONNET:
       return wrapAISDKModel(anthropic("claude-3-5-sonnet-latest"));
     case MODELS.CLAUDE_4_SONNET:
-      return wrapAISDKModel(anthropic("claude-sonnet-4-6-20250627"));
+      return wrapAISDKModel(anthropic("claude-sonnet-4-6"));
     case MODELS.DEEPSEEK_R1_0528:
       return wrapAISDKModel(openrouter("deepseek/deepseek-r1-0528"));
     case MODELS.DEEPSEEK_V3:

@@ -1,21 +1,22 @@
 import type { Message as SQLMessage } from "@/@types";
-import type { StepMessage } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
-import { processDeepSearchQuery } from "@/agents/deepResearch";
+import {
+  buildDeepResearchStream,
+  persistAssistantSnapshot,
+} from "@/agents/deepResearchStream";
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
 import { parseCitations } from "@/utils/citation";
 import { updateSession } from "@/db/mutation/session";
-import { getLatestSessionId, getSession, syncMessages } from "@/db/queries/message";
+import { getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
 import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errorHandler";
+import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { createContextLogger, logger } from "@/utils/logger";
-import { getTracer, observe } from "@lmnr-ai/lmnr";
+import { observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
 import {
-  type UIMessage,
   convertToModelMessages,
-  createUIMessageStream,
   createUIMessageStreamResponse,
   stepCountIs,
   streamText,
@@ -32,7 +33,7 @@ const DEEP_SEARCH_SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have a
  * Extract text from a UIMessage's parts, parse citations, and attach
  * them as `metadata.sources` on assistant messages.
  */
-const enrichAssistantCitations = async (msgs: CoreMessageExt[]) => {
+const enrichAssistantCitations = async (msgs: KnowsisUIMessage[]) => {
   for (const msg of msgs) {
     if (msg.role !== "assistant") continue;
     const text = msg.parts
@@ -46,21 +47,158 @@ const enrichAssistantCitations = async (msgs: CoreMessageExt[]) => {
   }
 };
 
-type CoreMessageExt = UIMessage & {
-  id: string;
-  metadata?: {
-    agent?: "deepResearch" | "knowledgeBase";
-    steps?: StepMessage[];
-    sources?: Awaited<ReturnType<typeof parseCitations>>;
-    [key: string]: unknown;
-  };
-};
-
 export interface ChatPostBody {
-  messages: CoreMessageExt[];
+  messages: KnowsisUIMessage[];
   sessionId: string;
   deepSearch: string;
 }
+
+interface RunChatStreamOpts {
+  userId: string;
+  orgId: string;
+  sessionId: string;
+  messages: KnowsisUIMessage[];
+  deepSearch: string;
+}
+
+/**
+ * Core chat-stream pipeline shared by the user-auth route and the admin
+ * playground route. Persists incoming user messages, dispatches to either the
+ * deep-research agent (deepSearch === "agentSearch") or the knowledge-base
+ * agent, and returns a Web `Response` ready for `reply.send`.
+ *
+ * Caller is responsible for auth and session lifecycle (create / 404 /
+ * authorize) — this helper assumes the session is already valid.
+ */
+export const runChatStream = async (
+  opts: RunChatStreamOpts,
+): Promise<Response> => {
+  const { userId, orgId, sessionId, messages, deepSearch } = opts;
+  const agentLogger = createContextLogger({
+    agent: "chatStream",
+    sessionId,
+    userId,
+    orgId,
+  });
+
+  const saveMessage = async (msgs: KnowsisUIMessage[]) => {
+    const backendMessages: SQLMessage[] = msgs.map(
+      (m: KnowsisUIMessage) =>
+        ({
+          id: m.id || uuidv4(),
+          role: m.role,
+          metadata: m.metadata,
+          createdAt: new Date(),
+          updatedAt: null,
+          sessionId: sessionId,
+          parts: m.parts,
+          userId: userId,
+        }) as SQLMessage,
+    );
+    await syncMessages(backendMessages);
+    if (backendMessages.length === 2) {
+      summarizeChat(
+        sessionId,
+        msgs.map((m: KnowsisUIMessage) => ({
+          role: m.role as "user" | "assistant",
+          content: m.parts
+            .map((p: KnowsisUIMessage["parts"][number]) => (p.type === "text" ? p.text : ""))
+            .join("\n"),
+        })),
+      )
+        .then((title) => updateSession(sessionId, { title }))
+        .catch((err) =>
+          logger.warn("Title summarization failed", {
+            error: err instanceof Error ? err.message : String(err),
+            sessionId,
+          }),
+        );
+    }
+  };
+
+  // Persist user input before invoking the agent stream.
+  const incomingUserMessages = messages.filter((m) => m.role === "user");
+  if (incomingUserMessages.length > 0) {
+    await saveMessage(incomingUserMessages);
+  }
+
+  const llm = getLLM(MODELS.GEMINI_3_FLASH);
+  if (deepSearch === "agentSearch") {
+    const stream = await buildDeepResearchStream({
+      messages,
+      sessionId,
+      userId,
+      orgId,
+      systemPrompt: DEEP_SEARCH_SYSTEM_PROMPT,
+      llm,
+      logger: agentLogger,
+      persistAssistant: persistAssistantSnapshot({ sessionId, userId }),
+    });
+    return createUIMessageStreamResponse({ stream });
+  }
+
+  const knowledgeBaseModelMessages = await convertToModelMessages(messages);
+  const stream = await observe({ name: "knowledgeBaseAgent" }, () =>
+    streamText({
+      model: llm,
+      system: SYSTEM_PROMPT,
+      stopWhen: stepCountIs(50),
+      tools: {
+        knowledgeBaseTool: {
+          description: "Use this tool to answer questions about the user's documents.",
+          inputSchema: z.object({
+            query: z
+              .string()
+              .describe(
+                "The query to search the knowledge base for, should be fully formulated question with all relevant context",
+              ),
+          }),
+          execute: async ({ query }: { query: string }) => {
+            try {
+              return await similaritySearchChunksWithObserver({
+                query,
+                limit: 5,
+                includeChunkId: false,
+                page: 1,
+                userId,
+                orgId,
+              });
+            } catch (error) {
+              agentLogger.error("Tool call failed", {
+                toolName: "knowledgeBaseTool",
+                toolInput: { query },
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+              });
+              throw error;
+            }
+          },
+        },
+      },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...knowledgeBaseModelMessages,
+      ],
+      experimental_telemetry: { isEnabled: true },
+    }),
+  );
+
+  return stream.toUIMessageStreamResponse<KnowsisUIMessage>({
+    originalMessages: messages,
+    onFinish: async ({ messages: finishedMessages }) => {
+      try {
+        const msgs = finishedMessages;
+        await enrichAssistantCitations(msgs);
+        await saveMessage(msgs);
+      } catch (error) {
+        logger.error("Failed to persist messages on stream finish", {
+          error: error instanceof Error ? error.message : String(error),
+          sessionId,
+        });
+      }
+    },
+  });
+};
 
 const chatStreamRoutes = async (fastify: FastifyInstance) => {
   fastify.post<{ Body: ChatPostBody }>(
@@ -93,213 +231,17 @@ const chatStreamRoutes = async (fastify: FastifyInstance) => {
       const userId: string = user.id;
       const orgId: string = user.orgId;
       const { messages, sessionId, deepSearch } = request.body as ChatPostBody;
-      const agentLogger = createContextLogger({
-        agent: "chatStream",
-        sessionId,
-        userId,
-        orgId,
-      });
 
-      // Check if sessionId is valid
       const session = await getSession(sessionId);
       if (!session) {
         throw new NotFoundError("Session not found");
       }
-
       if (session.userId !== userId) {
         throw new AuthorizationError("Session access denied");
       }
 
-      // Handle invalid model
-
-      const saveMessage = async (msgs: CoreMessageExt[]) => {
-        const backendMessages: SQLMessage[] = msgs.map(
-          (m: CoreMessageExt) =>
-            ({
-              id: m.id || uuidv4(),
-              role: m.role,
-              metadata: m.metadata,
-              createdAt: new Date(),
-              updatedAt: null,
-              sessionId: sessionId,
-              parts: m.parts,
-              userId: userId,
-            }) as SQLMessage,
-        );
-        await syncMessages(backendMessages);
-        if (backendMessages.length === 2) {
-          summarizeChat(
-            sessionId,
-            msgs.map((m: CoreMessageExt) => ({
-              role: m.role as "user" | "assistant",
-              content: m.parts
-                .map((p: CoreMessageExt["parts"][number]) => (p.type === "text" ? p.text : ""))
-                .join("\n"),
-            })),
-          )
-            .then((title) => updateSession(sessionId, { title }))
-            .catch((err) => logger.warn("Title summarization failed", { error: err instanceof Error ? err.message : String(err), sessionId }));
-        }
-      };
-
-      // Persist user input before invoking the agent stream.
-      const incomingUserMessages = messages.filter((m) => m.role === "user");
-      if (incomingUserMessages.length > 0) {
-        await saveMessage(incomingUserMessages);
-      }
-
-      const llm = getLLM(MODELS.GEMINI_3_FLASH);
-      if (deepSearch === "agentSearch") {
-        const steps: StepMessage[] = [];
-        const stream = await observe({ name: "deepSearchAgent" }, () =>
-          createUIMessageStream({
-            execute: async ({ writer }) => {
-              const result = streamText({
-                model: llm,
-                system: DEEP_SEARCH_SYSTEM_PROMPT,
-                tools: {
-                  deepSearchTool: {
-                    description:
-                      "Use this tool do a comprehensive deep search based on user query and return a final report",
-                    inputSchema: z.object({
-                      query: z
-                        .string()
-                        .describe(
-                          "The query to research on, should be fully formulated question with all relevant context",
-                        ),
-                    }),
-                    execute: async ({ query }: { query: string }) => {
-                      try {
-                        return await processDeepSearchQuery({
-                          query,
-                          userId,
-                          orgId,
-                          callback: (step) => {
-                            const index = steps.findIndex((s) => s.id === step.id);
-                            if (index !== -1) steps[index] = step;
-                            else steps.push(step);
-                            writer.write(
-                              // @ts-expect-error - Ignore type error
-                              step,
-                            );
-                          },
-                        });
-                      } catch (error) {
-                        agentLogger.error("Tool call failed", {
-                          toolName: "deepSearchTool",
-                          toolInput: { query },
-                          error: error instanceof Error ? error.message : String(error),
-                          stack: error instanceof Error ? error.stack : undefined,
-                        });
-                        throw error;
-                      }
-                    },
-                  },
-                },
-                messages: [
-                  { role: "system", content: SYSTEM_PROMPT },
-                  ...(await convertToModelMessages(messages)),
-                ],
-                experimental_telemetry: {
-                  isEnabled: true,
-                  tracer: getTracer(),
-                },
-                stopWhen: stepCountIs(50),
-              });
-              writer.merge(
-                result.toUIMessageStream({
-                  onFinish: async ({ messages: finishedMessages }) => {
-                    try {
-                      const msgs = finishedMessages as CoreMessageExt[];
-                      await enrichAssistantCitations(msgs);
-                      await saveMessage(msgs);
-                    } catch (error) {
-                      logger.error("Failed to persist messages on stream finish", {
-                        error: error instanceof Error ? error.message : String(error),
-                        sessionId,
-                      });
-                    }
-                  },
-                }),
-              );
-            },
-            onError: (error) => {
-              agentLogger.error("Chat stream execution failed", {
-                error: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-              });
-              return String(error);
-            },
-          }),
-        );
-        // createDataStreamResponse returns a Response-like. We stream it as raw payload
-        // Fastify: reply.send will handle stream. Here we return result directly.
-        return reply.send(createUIMessageStreamResponse({ stream }));
-      }
-
-      const knowledgeBaseModelMessages = await convertToModelMessages(messages);
-      const stream = await observe({ name: "knowledgeBaseAgent" }, () =>
-        streamText({
-          model: llm,
-          system: SYSTEM_PROMPT,
-          stopWhen: stepCountIs(50),
-          tools: {
-            knowledgeBaseTool: {
-              description: "Use this tool to answer questions about the user's documents.",
-              inputSchema: z.object({
-                query: z
-                  .string()
-                  .describe(
-                    "The query to search the knowledge base for, should be fully formulated question with all relevant context",
-                  ),
-              }),
-              execute: async ({ query }: { query: string }) => {
-                try {
-                  return await similaritySearchChunksWithObserver({
-                    query,
-                    limit: 5,
-                    includeChunkId: false,
-                    page: 1,
-                    userId,
-                    orgId,
-                  });
-                } catch (error) {
-                  agentLogger.error("Tool call failed", {
-                    toolName: "knowledgeBaseTool",
-                    toolInput: { query },
-                    error: error instanceof Error ? error.message : String(error),
-                    stack: error instanceof Error ? error.stack : undefined,
-                  });
-                  throw error;
-                }
-              },
-            },
-          },
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...knowledgeBaseModelMessages,
-          ],
-          experimental_telemetry: { isEnabled: true },
-        }),
-      );
-
-      return reply.send(
-        stream.toUIMessageStreamResponse({
-          originalMessages: messages,
-          onFinish: async ({ messages: finishedMessages }) => {
-            try {
-              const msgs = finishedMessages as CoreMessageExt[];
-              await enrichAssistantCitations(msgs);
-              await saveMessage(msgs);
-            } catch (error) {
-              logger.error("Failed to persist messages on stream finish", {
-                error: error instanceof Error ? error.message : String(error),
-                sessionId,
-              });
-            }
-          },
-        }),
-      );
+      const response = await runChatStream({ userId, orgId, sessionId, messages, deepSearch });
+      return reply.send(response);
     },
   );
 };

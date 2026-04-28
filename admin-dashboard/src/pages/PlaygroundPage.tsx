@@ -83,21 +83,40 @@ function getToolDisplayName(part: ChatToolPart): string {
 
 // ─── Chat Tab ────────────────────────────────────────────────────────────────
 
+type ChatMode = "finAgent" | "knowledgeBase" | "agentSearch";
+
+const CHAT_MODE_LABEL: Record<ChatMode, string> = {
+  finAgent: "FinAgent (admin playground)",
+  knowledgeBase: "Knowledge Base (/api/v1/chat)",
+  agentSearch: "Deep Search (/api/v1/chat)",
+};
+
 function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; orgId: string }) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [sessionId, setSessionId] = useState(() => createSessionId());
+  const [mode, setMode] = useState<ChatMode>("finAgent");
 
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
+  const transport = useMemo(() => {
+    if (mode === "finAgent") {
+      return new DefaultChatTransport({
         api: `${API_BASE_URL}/admin/playground/chat`,
         headers: { Authorization: `Bearer ${accessToken}` },
         body: { userId: selectedMember.id, orgId, sessionId },
-      }),
-    [accessToken, selectedMember.id, orgId, sessionId],
-  );
+      });
+    }
+    return new DefaultChatTransport({
+      api: `${API_BASE_URL}/admin/playground/chat-stream`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: {
+        userId: selectedMember.id,
+        orgId,
+        sessionId,
+        deepSearch: mode === "agentSearch" ? "agentSearch" : "knowledgeBase",
+      },
+    });
+  }, [accessToken, selectedMember.id, orgId, sessionId, mode]);
 
   const { messages, sendMessage, status, setMessages } = useChat({ transport });
 
@@ -108,11 +127,11 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Reset chat when user changes
+  // Reset chat when user, org, or mode changes
   useEffect(() => {
     setSessionId(createSessionId());
     setMessages([]);
-  }, [selectedMember.id, orgId, setMessages]);
+  }, [selectedMember.id, orgId, mode, setMessages]);
 
   const handleSend = () => {
     const text = inputValue.trim();
@@ -123,11 +142,32 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
 
   return (
     <div className="flex flex-col h-[calc(100vh-220px)]">
+      {/* Mode selector */}
+      <div className="flex items-center gap-2 px-2 pb-2 border-b border-border">
+        <span className="text-xs text-muted-foreground">Mode:</span>
+        <Select value={mode} onValueChange={(v) => setMode(v as ChatMode)} disabled={isActive}>
+          <SelectTrigger className="h-8 w-[280px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(CHAT_MODE_LABEL) as ChatMode[]).map((m) => (
+              <SelectItem key={m} value={m}>
+                {CHAT_MODE_LABEL[m]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-[11px] text-muted-foreground ml-2">
+          Switching mode resets the session.
+        </span>
+      </div>
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-3 p-2">
         {messages.length === 0 && (
           <p className="text-muted-foreground text-sm text-center mt-8">
-            Send a message to start chatting as {MemberLabel(selectedMember)}
+            Send a message to start chatting as {MemberLabel(selectedMember)} in{" "}
+            <span className="font-medium">{CHAT_MODE_LABEL[mode]}</span> mode
           </p>
         )}
         {messages.map((msg) => {
