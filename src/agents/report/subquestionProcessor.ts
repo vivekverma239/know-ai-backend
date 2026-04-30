@@ -17,7 +17,7 @@ export const processIndividualSubQuestion = async ({
   referencePeriod,
   userId,
   orgId,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   taskDescription: string;
   subQuestion: SubQuestionsIdentificationOutput["subQuestions"][0];
@@ -144,7 +144,7 @@ export const processIndividualSubQuestionWithChunkSearch = async ({
   referencePeriod,
   userId,
   orgId,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   taskDescription: string;
   subQuestion: SubQuestionsIdentificationOutput["subQuestions"][0];

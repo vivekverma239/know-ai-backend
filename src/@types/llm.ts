@@ -42,4 +42,5 @@ export enum MODELS {
   SONOMA_SKY_ALPHA = "openrouter/sonoma-sky-alpha",
   QWEN_3_NEXT_80B_A3B_THINKING = "qwen/qwen3-next-80b-a3b-thinking",
   GROK_CODE_FAST_1 = "x-ai/grok-code-fast-1",
+  GROK_4_1_FAST = "x-ai/grok-4.1-fast",
 }

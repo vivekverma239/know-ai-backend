@@ -19,7 +19,7 @@ const getFileToc = (fileId: string) => {
 
 export const getFileAnswerTool = (
   addUsage?: (addUsage: { usage: LanguageModelUsage; model: string }) => void,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 ) => {
   return tool({
     description:
@@ -228,7 +228,7 @@ Remember: Your goal is to create a comprehensive, well-researched report section
   const fileSearchTool = getFileSearchTool(userId, orgId);
   const fileAnswerTool = getFileAnswerTool();
   const answer = await generateTextWrapper({
-    model: MODELS.GROK_CODE_FAST_1,
+    model: MODELS.GROK_4_1_FAST,
     messages: [
       { role: "system", content: prompt },
       {

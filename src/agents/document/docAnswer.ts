@@ -347,7 +347,7 @@ export const getAnswerFromDocUsingPageImages = async ({
   documentSummary,
   toc,
   getPagesFn,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   query: string;
   documentTitle: string;
@@ -388,7 +388,7 @@ export const getAnswerFromDocUsingSubPDF = async ({
   toc,
   getSubPDFFn,
   addUsage,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   query: string;
   documentTitle: string;
@@ -478,7 +478,7 @@ export const getAnswerFromDocUsingParsedPDF = async ({
   getPageContentFn,
   similaritySearchChunksFn,
   addUsage,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   query: string;
   documentTitle: string;

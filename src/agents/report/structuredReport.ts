@@ -1,5 +1,5 @@
 import { MODELS } from "@/@types/llm";
-import { getLLM } from "@/ai-backend/llm";
+import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { structuredReportTemplate, structuredReports, userFile } from "@/db/schema";
 import { parseSources } from "@/service/citations";
@@ -83,7 +83,7 @@ export const processInitialResearch = async ({
   referencePeriod,
   userId,
   orgId,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   taskDescription: string;
   initialResearchPrompt: string;
@@ -118,6 +118,7 @@ ${COMMON_CITATION_PROMPT}
 
   const usage: Record<string, LanguageModelUsage> = {};
   const llm = getLLM(model);
+  const providerOptions = getProviderOptions(model, "default");
   const response = await executeWithRetries(
     async () => {
       return await generateText({
@@ -137,6 +138,7 @@ ${COMMON_CITATION_PROMPT}
             },
           ),
         },
+        providerOptions,
         stopWhen: stepCountIs(50),
         temperature: 1,
         experimental_telemetry: {
@@ -163,7 +165,7 @@ export const processSubQuestionsIdentification = async ({
   subQuestionsIdentificationPrompt,
   topic,
   referencePeriod,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   taskDescription: string;
   initialResearchOutput: string;
@@ -236,7 +238,7 @@ export const processFinalReport = async ({
   referencePeriod,
   initialResearchOutput,
   subQuestions,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   taskDescription: string;
   finalReportPrompt: string;
@@ -250,6 +252,7 @@ export const processFinalReport = async ({
   usage: Record<string, LanguageModelUsage>;
 }> => {
   const llm = getLLM(model);
+  const providerOptions = getProviderOptions(model, "default");
   const finalPrompt = `
 	You are part of a multi-step process to generate a complete report related to a topic.
 Your task is the final one: the creation of the actual final report using inputs from previous steps.
@@ -290,6 +293,7 @@ ${finalReportPrompt}
         content: userMessage,
       },
     ],
+    providerOptions,
     experimental_telemetry: {
       isEnabled: true,
       tracer: getTracer(),
@@ -333,7 +337,7 @@ const updateReportStatus = async (
 
 export const getReportTitleAndSummary = async (
   reportContent: string,
-  model: MODELS = MODELS.GROK_CODE_FAST_1,
+  model: MODELS = MODELS.GROK_4_1_FAST,
 ) => {
   const llm = getLLM(model);
   const response = await generateObject({

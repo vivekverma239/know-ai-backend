@@ -1,6 +1,6 @@
 import { type StepMessage, StepType } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
-import { getLLM } from "@/ai-backend/llm";
+import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { structuredReports, userFile } from "@/db/schema";
 import { similaritySearchChunks, similaritySearchDocuments } from "@/service/simSearch";
@@ -215,8 +215,9 @@ const documentFilter = async (
     observe(
       { name: "documentFilter" },
       async (query: string) => {
-        const model = MODELS.GROK_CODE_FAST_1;
+        const model = MODELS.GROK_4_1_FAST;
         const llm = getLLM(model);
+        const providerOptions = getProviderOptions(model, "default");
 
         const allDocuments: {
           id: string;
@@ -225,6 +226,7 @@ const documentFilter = async (
 
         const response = await generateText({
           model: llm,
+          providerOptions,
           messages: [
             {
               role: "system",
@@ -283,7 +285,7 @@ const documentFilter = async (
         if (addUsage) {
           addUsage({
             usage: documentFilterUsage,
-            model: MODELS.GROK_CODE_FAST_1,
+            model,
           });
         }
 
@@ -317,7 +319,7 @@ export const fileAnswerChunkSearchAgent = async ({
   fileIds,
   userId,
   orgId,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
   maxIterations = 15,
   addUsage,
   callback,
@@ -351,10 +353,12 @@ export const fileAnswerChunkSearchAgent = async ({
       };
       callback?.(queryExpansionStep);
 
-      const expansionModel = MODELS.GROK_CODE_FAST_1;
+      const expansionModel = MODELS.GROK_4_1_FAST;
       const expansionLlm = getLLM(expansionModel);
+      const expansionProviderOptions = getProviderOptions(expansionModel, "default");
       const expansionResponse = await generateText({
         model: expansionLlm,
+        providerOptions: expansionProviderOptions,
         messages: [
           {
             role: "system",
@@ -459,11 +463,13 @@ export const fileAnswerChunkSearchAgent = async ({
     }
 
     const llm = getLLM(model);
+    const providerOptions = getProviderOptions(model, "default");
     const response = await generateText({
       model: llm,
       system: DATA_EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
       tools: { documentAnalysisTool },
+      providerOptions,
       experimental_telemetry: { isEnabled: true, tracer: getTracer() },
       stopWhen: stepCountIs(maxIterations),
     });

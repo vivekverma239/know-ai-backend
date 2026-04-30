@@ -6,7 +6,7 @@ import {
 } from "@/agents/document/docAnswer";
 import { mergeTokenUsage } from "@/agents/report/utils";
 import { getPageContentFn } from "@/agents/utils";
-import { getLLM } from "@/ai-backend/llm";
+import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 // import { db } from "@/server/db"; // Use getDb
 import { getDb } from "@/db";
 import { structuredReports, userFile, userFileToCMeta } from "@/db/schema";
@@ -161,7 +161,7 @@ export const fileAnswerAgent = async ({
   fileIds,
   userId,
   orgId,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
   maxIterations = 15,
   addUsage,
 }: {
@@ -421,11 +421,13 @@ ${tocSections}
 `;
 
     const llm = getLLM(model);
+    const providerOptions = getProviderOptions(model, "default");
     const response = await generateText({
       model: llm,
       system: systemPrompt,
       messages: [{ role: "user", content: query }],
       tools,
+      providerOptions,
       experimental_telemetry: {
         isEnabled: true,
         tracer: getTracer(),
@@ -479,7 +481,7 @@ ${tocSections}
  */
 export const getFileAnswerAgentTool = ({
   context,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   context: ToolContext;
   model?: MODELS;
@@ -541,7 +543,7 @@ export const getFileAnswerAgentTool = ({
 
 export const getFileAnswerTool = ({
   context,
-  model = MODELS.GROK_CODE_FAST_1,
+  model = MODELS.GROK_4_1_FAST,
 }: {
   context: ToolContext;
   model?: MODELS;

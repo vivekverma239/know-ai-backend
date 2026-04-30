@@ -56,7 +56,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
         throw new ValidationError("Invalid sessionId");
       }
 
-      const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GEMINI_2_5_FLASH;
+      const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GROK_4_1_FAST;
 
       const saveMessages = async (messagesToSave: FinAgentUIMessage[]) => {
         const sqlMessages: SQLMessage[] = messagesToSave.map((message) => {

@@ -140,6 +140,8 @@ export function getLLM(model: MODELS | string) {
       return wrapAISDKModel(openrouter("qwen/qwen3-next-80b-a3b-thinking"));
     case MODELS.GROK_CODE_FAST_1:
       return wrapAISDKModel(openrouter("x-ai/grok-code-fast-1"));
+    case MODELS.GROK_4_1_FAST:
+      return wrapAISDKModel(openrouter("x-ai/grok-4.1-fast"));
     default:
       throw new Error("Invalid model");
   }
@@ -152,6 +154,7 @@ export const REASONING_MODELS = [
   // MODELS.GEMINI_3_FLASH, // Not in target types yet, add if needed or comment out
   MODELS.O4_MINI,
   MODELS.GPT_5,
+  MODELS.GROK_4_1_FAST,
 ];
 
 /**

@@ -118,20 +118,104 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
     });
   }, [accessToken, selectedMember.id, orgId, sessionId, mode]);
 
-  const { messages, sendMessage, status, setMessages } = useChat({ transport });
+  // useChat caches its internal Chat instance via useRef and only recreates it
+  // when the `id` (or `chat`) option changes. Without `id`, switching the
+  // impersonated user / mode rebuilds `transport` but the Chat keeps using the
+  // OLD transport — so requests still carry the old userId. Tying `id` to the
+  // user+org+mode forces a fresh Chat whenever any of those change.
+  const chatId = `${selectedMember.id}|${orgId}|${mode}`;
+
+  const { messages, sendMessage, status, setMessages, stop, error } = useChat({
+    id: chatId,
+    transport,
+    onError: (err) => {
+      console.error(
+        `[ChatTab ${new Date().toISOString().slice(11, 23)}] useChat onError:`,
+        err,
+        err?.stack,
+      );
+    },
+    onFinish: (event) => {
+      console.log(
+        `[ChatTab ${new Date().toISOString().slice(11, 23)}] useChat onFinish:`,
+        event,
+      );
+    },
+  });
+
+  useEffect(() => {
+    if (error) {
+      console.error(
+        `[ChatTab ${new Date().toISOString().slice(11, 23)}] error state:`,
+        error,
+        error?.stack,
+      );
+    }
+  }, [error]);
 
   const isActive = status === "streaming" || status === "submitted";
 
-  // Auto-scroll to bottom
+  // === DEBUG: log every status / messages change with timestamps ===
+  // Remove these effects once the streaming issue is resolved.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    console.log(
+      `[ChatTab ${new Date().toISOString().slice(11, 23)}] status=${status} mode=${mode}`,
+    );
+  }, [status, mode]);
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    const lastParts = (last?.parts as Array<{ type: string }> | undefined)?.map((p) => p.type);
+    console.log(
+      `[ChatTab ${new Date().toISOString().slice(11, 23)}] messages=${messages.length} lastRole=${last?.role} lastParts=${JSON.stringify(lastParts)}`,
+    );
+  }, [messages]);
+  useEffect(() => {
+    return () => {
+      console.warn(
+        `[ChatTab ${new Date().toISOString().slice(11, 23)}] ChatTab UNMOUNT — this will abort the stream`,
+      );
+    };
+  }, []);
+  // capture stop calls so we can see if anyone is invoking it
+  const stopRef = useRef(stop);
+  stopRef.current = stop;
+  useEffect(() => {
+    const original = stopRef.current;
+    const wrapped = async () => {
+      console.warn(
+        `[ChatTab ${new Date().toISOString().slice(11, 23)}] stop() CALLED`,
+        new Error("stop callsite").stack,
+      );
+      return original();
+    };
+    stopRef.current = wrapped;
+    return () => {
+      stopRef.current = original;
+    };
+  }, []);
+
+  // Auto-scroll to bottom — but only if the user is already near the bottom.
+  // Otherwise, every streaming chunk yanks them away from whatever they're reading.
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom < 120) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
-  // Reset chat when user, org, or mode changes
+  // Reset chat when user, org, or mode changes.
+  // setMessages is intentionally NOT in the deps: useChat's setter identity
+  // can churn during streaming, and re-firing this effect mid-stream would
+  // wipe the in-progress assistant message and visually freeze the chat.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: stable setter usage
   useEffect(() => {
     setSessionId(createSessionId());
     setMessages([]);
-  }, [selectedMember.id, orgId, mode, setMessages]);
+  }, [selectedMember.id, orgId, mode]);
 
   const handleSend = () => {
     const text = inputValue.trim();
@@ -162,8 +246,10 @@ function ChatTab({ selectedMember, orgId }: { selectedMember: PlaygroundMember; 
         </span>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-3 p-2">
+      {/* Messages area — `min-h-0` is required so the flex child can shrink
+          below its content height and let `overflow-y-auto` actually scroll.
+          Without it, long assistant messages push the input below the viewport. */}
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto space-y-3 p-2">
         {messages.length === 0 && (
           <p className="text-muted-foreground text-sm text-center mt-8">
             Send a message to start chatting as {MemberLabel(selectedMember)} in{" "}

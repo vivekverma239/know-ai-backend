@@ -64,7 +64,7 @@ export function AdminLayout() {
         {/* Navigation */}
         <nav className="flex flex-col gap-1">
           <NavLink to="/dashboard/documents" className="contents">
-            {({ isActive }) => (
+            {({ isActive }: { isActive: boolean }) => (
               <Button
                 variant={isActive ? "default" : "ghost"}
                 className="w-full justify-start"
@@ -74,7 +74,7 @@ export function AdminLayout() {
             )}
           </NavLink>
           <NavLink to="/dashboard/entities" className="contents">
-            {({ isActive }) => (
+            {({ isActive }: { isActive: boolean }) => (
               <Button
                 variant={isActive ? "default" : "ghost"}
                 className="w-full justify-start"
@@ -84,7 +84,7 @@ export function AdminLayout() {
             )}
           </NavLink>
           <NavLink to="/dashboard/playground" className="contents">
-            {({ isActive }) => (
+            {({ isActive }: { isActive: boolean }) => (
               <Button
                 variant={isActive ? "default" : "ghost"}
                 className="w-full justify-start"

@@ -25,9 +25,48 @@ import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
-const SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool which can provide you with \nadditional information about any topic. Feel free to use it to answer\nany of the user questions.\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [file_{documentId}/page={pageNumber}]\nwhere documentId is the id of the document and pageNumber is the page number of the document.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
+const SYSTEM_PROMPT = `
+You are a helpful assistant.
 
-const DEEP_SEARCH_SYSTEM_PROMPT = `\nYou are a helpful assistant.\n\nYou  have an access to knowledge base tool and a deep research tool. By default \nuse the deep research tool for any financial query. If it's a very specific \nquestion, you can use the knowledge base tool to answer it.\n\n\nWhen using the knowledge base tool, make sure you use appropriate inline \ncitations in the following format:\nApples net revenue was $100 million in 2022 [file_{documentId}/page={pageNumber}]\nwhere documentId is the id of the document and pageNumber is the page number of the document. Call the tool one by \none only if you don't get the coorect information in previous call.\n\nCurrent date is ${new Date().toISOString()}.    \n`;
+You have access to a knowledge base tool which can provide you with
+additional information about any topic. Feel free to use it to answer
+any of the user's questions.
+
+After a tool returns, always write a clear text response to the user based
+on the tool output — never end the conversation immediately after a tool
+call without producing a response.
+
+When using the knowledge base tool, make sure you use appropriate inline
+citations in the following format:
+Apple's net revenue was $100 million in 2022 [file_{documentId}/page={pageNumber}]
+where documentId is the id of the document and pageNumber is the page number of the document.
+
+Current date is ${new Date().toISOString()}.
+`;
+
+const DEEP_SEARCH_SYSTEM_PROMPT = `
+You are a helpful assistant.
+
+You have access to a knowledge base tool and a deep research tool. By default
+use the deep research tool for any financial query. If it's a very specific
+question, you can use the knowledge base tool to answer it.
+
+CRITICAL: after a tool returns, you MUST write a final response to the user
+in your own words based on the tool output. Never stop after a tool call
+without producing a text response — the user does not see tool output
+directly. If the deep research tool returns a report, present its findings
+as a clear, well-structured answer to the user's question, preserving any
+inline citations from the tool output. If the tool errored or returned
+nothing useful, say so explicitly and answer to the best of your ability.
+
+When using the knowledge base tool, make sure you use appropriate inline
+citations in the following format:
+Apple's net revenue was $100 million in 2022 [file_{documentId}/page={pageNumber}]
+where documentId is the id of the document and pageNumber is the page number of the document.
+Call the tool one by one only if you don't get the correct information in previous call.
+
+Current date is ${new Date().toISOString()}.
+`;
 
 /**
  * Extract text from a UIMessage's parts, parse citations, and attach

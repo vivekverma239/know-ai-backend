@@ -111,7 +111,7 @@ export const finAgent = async ({
   saveMessage,
   model = MODELS.GEMINI_3_FLASH,
   webSearch = false,
-  fileAnswerModel = MODELS.GEMINI_3_FLASH,
+  fileAnswerModel = MODELS.GROK_4_1_FAST,
 }: {
   context: FinAgentContext;
   messages: FinAgentUIMessage[];
