@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { TextPart } from "./parts/TextPart";
 import { FilePart } from "./parts/FilePart";
-import { ToolPart, type ChatToolPart } from "./parts/ToolPart";
+import { ToolList, type ChatToolPart } from "./parts/ToolPart";
 import { ReasoningPart } from "./parts/ReasoningPart";
 import { SourcesPart, type ChatSourcePart } from "./parts/SourcesPart";
 
@@ -93,12 +93,9 @@ export function ChatMessages({ messages, status, onRegenerate }: Props) {
                   <ReasoningPart text={reasoning} isStreaming={isAssistantStreaming} />
                 )}
 
-                {tools.map((t, i) => {
-                  const tp = t as ChatToolPart;
-                  return (
-                    <ToolPart key={tp.toolCallId ?? `tool-${i}`} part={tp} />
-                  );
-                })}
+                {tools.length > 0 && (
+                  <ToolList parts={tools as ChatToolPart[]} />
+                )}
 
                 <TextPart text={text} isUser={msg.role === "user"} />
 

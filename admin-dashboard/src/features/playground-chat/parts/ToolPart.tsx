@@ -132,6 +132,102 @@ function isErrorState(state?: string): boolean {
   return state === "output-error" || state === "output-denied";
 }
 
+function groupConsecutiveTools(parts: ChatToolPart[]): ChatToolPart[][] {
+  const groups: ChatToolPart[][] = [];
+  for (const p of parts) {
+    const name = getRawName(p);
+    const last = groups[groups.length - 1];
+    const lastName = last && last[0] ? getRawName(last[0]) : null;
+    if (last && lastName === name) {
+      last.push(p);
+    } else {
+      groups.push([p]);
+    }
+  }
+  return groups;
+}
+
+export function ToolList({ parts }: { parts: ChatToolPart[] }) {
+  const groups = groupConsecutiveTools(parts);
+  return (
+    <>
+      {groups.map((group, i) => (
+        <ToolGroup
+          key={group[0]?.toolCallId ?? `group-${i}`}
+          parts={group}
+        />
+      ))}
+    </>
+  );
+}
+
+function ToolGroup({ parts }: { parts: ChatToolPart[] }) {
+  const [open, setOpen] = useState(false);
+
+  if (parts.length === 1) {
+    return <ToolPart part={parts[0]!} />;
+  }
+
+  const rawName = getRawName(parts[0]!);
+  const display = TOOL_DISPLAY[rawName];
+  const anyRunning = parts.some((p) => isRunningState(p.state ?? p.type));
+  const errorCount = parts.filter((p) => isErrorState(p.state ?? p.type)).length;
+
+  const baseLabel = display
+    ? anyRunning
+      ? display.running
+      : display.done
+    : `${anyRunning ? "Running" : "Used"} ${humanize(rawName)}`;
+
+  const StatusIcon = anyRunning
+    ? Loader2Icon
+    : errorCount > 0
+      ? XCircleIcon
+      : CheckCircle2Icon;
+  const statusClass = anyRunning
+    ? "size-3.5 animate-spin text-muted-foreground"
+    : errorCount > 0
+      ? "size-3.5 text-destructive"
+      : "size-3.5 text-emerald-600";
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="not-prose -mx-1">
+      <CollapsibleTrigger className="block w-full rounded-md px-1 text-left hover:bg-muted/40">
+        <div className="flex w-full items-center gap-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <span className="flex size-5 items-center justify-center text-muted-foreground">
+            {display ? display.icon : <WrenchIcon className="size-3.5" />}
+          </span>
+          <span
+            className={anyRunning ? "italic text-foreground/80" : "text-foreground"}
+          >
+            {baseLabel}
+            {anyRunning && "…"}
+          </span>
+          <span className="rounded-sm bg-muted/60 px-1 text-[10px] tabular-nums text-muted-foreground">
+            ×{parts.length}
+          </span>
+          {errorCount > 0 && (
+            <span className="text-[10px] text-destructive">
+              ({errorCount} failed)
+            </span>
+          )}
+          <StatusIcon className={statusClass} />
+          <ChevronRightIcon
+            className={`ml-auto size-3.5 text-muted-foreground transition-transform ${
+              open ? "rotate-90" : ""
+            }`}
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="ml-5 space-y-0.5 border-l border-border/60 pb-1 pl-3 pt-1">
+        {parts.map((p, i) => (
+          <ToolPart key={p.toolCallId ?? `group-item-${i}`} part={p} />
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function ToolPart({ part }: { part: ChatToolPart }) {
   const rawName = getRawName(part);
   const display = TOOL_DISPLAY[rawName];
