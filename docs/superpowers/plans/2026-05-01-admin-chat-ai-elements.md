@@ -12,6 +12,14 @@
 
 **Testing note:** Per spec, no new test infrastructure is added in this PR. Each task ends with a manual smoke check (TypeScript build + visible behavior) instead of an automated test. If you want to add vitest + RTL later, the part router and the attachments hook are the obvious targets.
 
+**Registry-drift amendment (2026-05-01, after Task 1 install):** The Vercel AI Elements registry has consolidated three components since this plan was first drafted. Subsequent tasks must use the new locations:
+
+- `@ai-elements/response` → no longer exists. Use `MessageResponse` exported from `@/components/ai-elements/message`. Affects Task 4.
+- `@ai-elements/actions` → no longer exists. Use `MessageActions` and `MessageAction` exported from `@/components/ai-elements/message`. Affects Task 12.
+- `@ai-elements/loader` → no longer exists. Use `Spinner` from `@/components/ui/spinner` (added by shadcn during install). Affects Task 12.
+
+Additionally, the installed `<PromptInput>` from `@/components/ai-elements/prompt-input` natively handles `accept`, `multiple`, `maxFiles`, `maxFileSize`, validation errors via `onError`, and blob→data URL conversion in `onSubmit`. **Task 3 is deleted** (the custom `useImageAttachments` hook is redundant) and **Task 11 (ChatComposer) is rewritten below** to use PromptInput's native attachment plumbing. See the original `INSTALLED.md` snapshot at `admin-dashboard/src/components/ai-elements/INSTALLED.md` for full drift notes.
+
 **Working directory for all commands:** `admin-dashboard/` (the Vite app), unless explicitly stated otherwise.
 
 ---
@@ -189,116 +197,11 @@ git commit -m "feat(playground-chat): add modeConfig with mode→transport mappi
 
 ---
 
-## Task 3: Create useImageAttachments hook
+## Task 3: ~~Create useImageAttachments hook~~ — DELETED
 
-**Files:**
-- Create: `admin-dashboard/src/features/playground-chat/useImageAttachments.ts`
+This task is deleted by the registry-drift amendment. The installed `<PromptInput>` already provides native attachment state, validation, error reporting, drag-and-drop, paste, and blob→data URL conversion. Implementing a parallel hook would duplicate existing behavior and lead to two attachment stores fighting each other.
 
-- [ ] **Step 1: Write the hook**
-
-Create `admin-dashboard/src/features/playground-chat/useImageAttachments.ts`:
-
-```ts
-import { useCallback, useState } from "react";
-
-export type AttachmentItem = {
-  id: string;
-  file: File;
-  dataURL: string;
-  mediaType: string;
-};
-
-const MAX_FILES = 4;
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-
-function readAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error("FileReader failed"));
-    reader.readAsDataURL(file);
-  });
-}
-
-function makeId() {
-  return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : `att-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-export function useImageAttachments() {
-  const [items, setItems] = useState<AttachmentItem[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
-
-  const add = useCallback(async (files: FileList | File[]) => {
-    const incoming = Array.from(files);
-    const newErrors: string[] = [];
-    const accepted: File[] = [];
-
-    for (const f of incoming) {
-      if (!f.type.startsWith("image/")) {
-        newErrors.push(`${f.name}: not an image`);
-        continue;
-      }
-      if (f.size > MAX_BYTES) {
-        newErrors.push(`${f.name}: exceeds 10 MB`);
-        continue;
-      }
-      accepted.push(f);
-    }
-
-    setItems((current) => {
-      const slotsLeft = MAX_FILES - current.length;
-      if (accepted.length > slotsLeft) {
-        newErrors.push(`Only ${slotsLeft} more attachment${slotsLeft === 1 ? "" : "s"} allowed (max ${MAX_FILES}).`);
-      }
-      return current;
-    });
-
-    const acceptedTrimmed = accepted.slice(0, Math.max(0, MAX_FILES - items.length));
-    const read = await Promise.all(
-      acceptedTrimmed.map(async (f) => ({
-        id: makeId(),
-        file: f,
-        dataURL: await readAsDataURL(f),
-        mediaType: f.type,
-      })),
-    );
-
-    setItems((current) => [...current, ...read]);
-    if (newErrors.length > 0) setErrors((e) => [...e, ...newErrors]);
-  }, [items.length]);
-
-  const remove = useCallback((id: string) => {
-    setItems((current) => current.filter((i) => i.id !== id));
-  }, []);
-
-  const clear = useCallback(() => {
-    setItems([]);
-    setErrors([]);
-  }, []);
-
-  const dismissError = useCallback((index: number) => {
-    setErrors((e) => e.filter((_, i) => i !== index));
-  }, []);
-
-  return { items, errors, add, remove, clear, dismissError };
-}
-```
-
-- [ ] **Step 2: TypeScript build**
-
-```bash
-cd admin-dashboard && pnpm tsc -b
-```
-Expected: clean.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add admin-dashboard/src/features/playground-chat/useImageAttachments.ts
-git commit -m "feat(playground-chat): add useImageAttachments hook (base64, 4 files, 10MB)"
-```
+Skip directly to Task 4.
 
 ---
 
@@ -307,16 +210,16 @@ git commit -m "feat(playground-chat): add useImageAttachments hook (base64, 4 fi
 **Files:**
 - Create: `admin-dashboard/src/features/playground-chat/parts/TextPart.tsx`
 
-- [ ] **Step 1: Verify the AI Elements `Response` API**
+- [ ] **Step 1: Verify the `MessageResponse` API in the installed message.tsx**
 
-Open `admin-dashboard/src/components/ai-elements/response.tsx` and confirm the default export (or named export) is a component that takes `children: string` (the markdown text). If the API differs (e.g. takes a `text` prop), adjust the wrapper below to match. Don't continue until you've eyeballed the file.
+Open `admin-dashboard/src/components/ai-elements/message.tsx` and locate the `MessageResponse` export. It's a `streamdown`-based markdown renderer that accepts `children: string` (the markdown text) — same shape as the legacy `Response`.
 
 - [ ] **Step 2: Write the wrapper**
 
 Create `admin-dashboard/src/features/playground-chat/parts/TextPart.tsx`:
 
 ```tsx
-import { Response } from "@/components/ai-elements/response";
+import { MessageResponse } from "@/components/ai-elements/message";
 
 type Props = {
   text: string;
@@ -328,11 +231,11 @@ export function TextPart({ text, isUser }: Props) {
   if (isUser) {
     return <p className="m-0 whitespace-pre-wrap">{text}</p>;
   }
-  return <Response>{text}</Response>;
+  return <MessageResponse>{text}</MessageResponse>;
 }
 ```
 
-User messages render as plain whitespace-preserving text (no markdown — matches existing behavior at `PlaygroundPage.tsx:284`). Assistant messages render through `Response` for markdown.
+User messages render as plain whitespace-preserving text (no markdown — matches existing behavior at `PlaygroundPage.tsx:284`). Assistant messages render through `MessageResponse` for markdown streaming.
 
 - [ ] **Step 3: TypeScript build**
 
@@ -734,152 +637,142 @@ git commit -m "feat(playground-chat): add ModeSuggestions (per-mode starter prom
 **Files:**
 - Create: `admin-dashboard/src/features/playground-chat/ChatComposer.tsx`
 
-- [ ] **Step 1: Verify AI Elements `PromptInput` API**
+This task uses the installed `<PromptInput>`'s **native** attachment plumbing (validation, file dialog, drag-drop, paste, blob→data-URL conversion). We do **not** add a custom hook or custom file input. The plan's Task 3 was deleted for this reason.
 
-Open `admin-dashboard/src/components/ai-elements/prompt-input.tsx`. Typical exports include:
-- `PromptInput` (root, often takes `onSubmit`)
-- `PromptInputBody`
-- `PromptInputAttachments` + `PromptInputAttachment`
-- `PromptInputActionMenu` / `PromptInputActionAddAttachments`
-- `PromptInputTextarea`
-- `PromptInputToolbar` / `PromptInputTools`
-- `PromptInputSubmit` (takes `status` and toggles to stop)
+- [ ] **Step 1: Verify the installed PromptInput API**
 
-Read enough to know which integration pattern this version uses (controlled vs uncontrolled, attachment shape).
+Open `admin-dashboard/src/components/ai-elements/prompt-input.tsx` and confirm these exports exist (they do at install time, but eyeball them):
+- `PromptInput` — root form. Props: `accept`, `multiple`, `maxFiles`, `maxFileSize`, `onError({ code, message })`, `onSubmit({ text, files }, event)`. The component already converts blob URLs to data URLs in `onSubmit`.
+- `PromptInputBody` — inner wrapper.
+- `PromptInputTextarea` — textarea (uncontrolled by default, name="message"). Enter submits, Shift+Enter newline, Backspace-on-empty removes the last attachment.
+- `PromptInputFooter`, `PromptInputTools` — footer/toolbar.
+- `PromptInputActionMenu`, `PromptInputActionMenuTrigger`, `PromptInputActionMenuContent`, `PromptInputActionAddAttachments` — `+` button → "Add photos or files" menu item.
+- `PromptInputSubmit` — submit/stop button. Takes `status: ChatStatus`; toggles its icon to a stop square when `status === "streaming"` or `"submitted"`.
+- `usePromptInputAttachments()` — hook returning `{ files, add, remove, clear, openFileDialog }`. We use it inside the form to render attachment chips.
+
+Note: there is no `PromptInputAttachments` chip-row component in the registry; we render chips ourselves with a small inline component that calls `usePromptInputAttachments()`.
 
 - [ ] **Step 2: Write the component**
 
 Create `admin-dashboard/src/features/playground-chat/ChatComposer.tsx`:
 
 ```tsx
-import { useState } from "react";
 import {
   PromptInput,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
   PromptInputBody,
+  PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputToolbar,
   PromptInputTools,
+  usePromptInputAttachments,
+  type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
-import { Button } from "@/components/ui/button";
-import { useImageAttachments } from "./useImageAttachments";
+import type { ChatStatus } from "ai";
+import { XIcon } from "lucide-react";
+import { useState } from "react";
 
-export type ComposerMessage = {
-  text: string;
-  files?: { mediaType: string; url: string }[];
-};
+const MAX_FILES = 4;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 type Props = {
-  status: "ready" | "submitted" | "streaming" | "error";
-  onSend: (msg: ComposerMessage) => void;
+  status: ChatStatus;
+  onSend: (msg: PromptInputMessage) => void;
   onStop: () => void;
   disabled?: boolean;
 };
 
+function AttachmentChips() {
+  const attachments = usePromptInputAttachments();
+  if (attachments.files.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2 px-2 pt-2">
+      {attachments.files.map((file) => (
+        <div key={file.id} className="relative">
+          {file.mediaType?.startsWith("image/") && file.url ? (
+            <img
+              alt={file.filename ?? "attachment"}
+              src={file.url}
+              className="h-14 w-14 rounded-md border border-border object-cover"
+            />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-md border border-border bg-muted text-[10px] text-muted-foreground">
+              {file.filename ?? "file"}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => attachments.remove(file.id)}
+            aria-label={`Remove ${file.filename ?? "attachment"}`}
+            className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-background text-[10px] shadow ring-1 ring-border hover:bg-muted"
+          >
+            <XIcon className="size-3" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ChatComposer({ status, onSend, onStop, disabled }: Props) {
-  const [text, setText] = useState("");
-  const attachments = useImageAttachments();
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const isActive = status === "streaming" || status === "submitted";
 
-  const submit = () => {
-    const trimmed = text.trim();
-    if (!trimmed && attachments.items.length === 0) return;
-    if (isActive) return;
-    onSend({
-      text: trimmed,
-      files: attachments.items.length
-        ? attachments.items.map((a) => ({ mediaType: a.mediaType, url: a.dataURL }))
-        : undefined,
-    });
-    setText("");
-    attachments.clear();
-  };
-
   return (
-    <div className="border-t border-border p-2">
-      {attachments.errors.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1">
-          {attachments.errors.map((e, i) => (
-            <button
-              key={`${e}-${i}`}
-              type="button"
-              className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive hover:bg-destructive/20"
-              onClick={() => attachments.dismissError(i)}
-              title="Dismiss"
-            >
-              {e} ✕
-            </button>
-          ))}
+    <div className="border-t border-border">
+      {attachmentError && (
+        <div className="px-2 pt-2">
+          <button
+            type="button"
+            onClick={() => setAttachmentError(null)}
+            className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive hover:bg-destructive/20"
+          >
+            {attachmentError} ✕
+          </button>
         </div>
       )}
-
-      {attachments.items.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {attachments.items.map((a) => (
-            <div key={a.id} className="relative">
-              <img
-                src={a.dataURL}
-                alt={a.file.name}
-                className="h-16 w-16 rounded-md border border-border object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => attachments.remove(a.id)}
-                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-background text-[10px] shadow ring-1 ring-border hover:bg-muted"
-                aria-label={`Remove ${a.file.name}`}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
       <PromptInput
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
+        accept="image/*"
+        multiple
+        maxFiles={MAX_FILES}
+        maxFileSize={MAX_FILE_SIZE}
+        onError={(err) => setAttachmentError(err.message)}
+        onSubmit={(message) => {
+          setAttachmentError(null);
+          if (!message.text.trim() && message.files.length === 0) return;
+          if (isActive) return;
+          onSend(message);
         }}
       >
         <PromptInputBody>
+          <AttachmentChips />
           <PromptInputTextarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
             placeholder="Type a message..."
             disabled={disabled}
           />
-          <PromptInputToolbar>
+          <PromptInputFooter>
             <PromptInputTools>
-              <label className="cursor-pointer rounded-md border border-border px-2 py-1 text-xs hover:bg-muted">
-                + Image
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      void attachments.add(e.target.files);
-                      e.target.value = ""; // allow re-selecting the same file
-                    }
-                  }}
-                  disabled={disabled || isActive}
-                />
-              </label>
+              <PromptInputActionMenu>
+                <PromptInputActionMenuTrigger />
+                <PromptInputActionMenuContent>
+                  <PromptInputActionAddAttachments />
+                </PromptInputActionMenuContent>
+              </PromptInputActionMenu>
             </PromptInputTools>
-            {isActive ? (
-              <Button type="button" variant="secondary" size="sm" onClick={onStop}>
-                Stop
-              </Button>
-            ) : (
-              <PromptInputSubmit
-                status={status}
-                disabled={
-                  disabled || (!text.trim() && attachments.items.length === 0)
+            <PromptInputSubmit
+              status={status}
+              onClick={(e) => {
+                if (isActive) {
+                  e.preventDefault();
+                  onStop();
                 }
-              />
-            )}
-          </PromptInputToolbar>
+              }}
+              disabled={disabled}
+            />
+          </PromptInputFooter>
         </PromptInputBody>
       </PromptInput>
     </div>
@@ -888,21 +781,24 @@ export function ChatComposer({ status, onSend, onStop, disabled }: Props) {
 ```
 
 Notes:
-- `PromptInputSubmit` may toggle to a stop state internally based on `status`. The explicit `Stop` button above is a belt-and-suspenders fallback in case the registry version doesn't toggle. Once you confirm the install does toggle, remove the manual Stop branch and let `PromptInputSubmit` handle it (call `onStop` via a different prop, or read its docs in `prompt-input.tsx`).
-- The custom `<label>` for image input is intentional: AI Elements has `PromptInputActionAddAttachments`, but it generally requires using their internal attachment store. Our `useImageAttachments` hook owns that state, so we use a plain file input that hands off to the hook.
+- `PromptInput` reads text from the form's `name="message"` field by default; `PromptInputTextarea` provides that. We don't need to manage text state ourselves.
+- `onSubmit` receives `{ text, files }` where `files: FileUIPart[]` already have `url` as base64 data URLs (PromptInput converts blob URLs internally). We pass them through to `useChat`'s `sendMessage` unchanged.
+- `PromptInputSubmit` toggles to a stop square when `status` is streaming/submitted. We wire `onClick` to call `onStop()` in that state by checking the form status via `isActive`. If pressed while not active, the form-submit path runs and `onSubmit` fires normally.
+- `MAX_FILES` (4) and `MAX_FILE_SIZE` (10 MB) match the original spec. Validation errors come back through `onError` as `{ code, message }` and are surfaced as a dismissible chip above the form.
+- Attachment chips render inside `PromptInputBody` so they're inside the same form/context as the file dialog.
 
 - [ ] **Step 3: TypeScript build**
 
 ```bash
 cd admin-dashboard && pnpm tsc -b
 ```
-Expected: clean. If `PromptInput` requires different props (e.g. uncontrolled with internal state), simplify the wrapper to match.
+Expected: clean. If TypeScript flags `PromptInputMessage` as a missing export, double-check the actual export name in `prompt-input.tsx` (search for `export interface PromptInputMessage`).
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add admin-dashboard/src/features/playground-chat/ChatComposer.tsx
-git commit -m "feat(playground-chat): add ChatComposer with image attachments and stop"
+git commit -m "feat(playground-chat): add ChatComposer using native PromptInput attachments"
 ```
 
 ---
@@ -912,35 +808,34 @@ git commit -m "feat(playground-chat): add ChatComposer with image attachments an
 **Files:**
 - Create: `admin-dashboard/src/features/playground-chat/ChatMessages.tsx`
 
-- [ ] **Step 1: Verify AI Elements `Conversation`, `Message`, `Loader`, `Actions` APIs**
+- [ ] **Step 1: Verify the installed APIs**
 
-Read these files:
-- `admin-dashboard/src/components/ai-elements/conversation.tsx`
-- `admin-dashboard/src/components/ai-elements/message.tsx`
-- `admin-dashboard/src/components/ai-elements/loader.tsx`
-- `admin-dashboard/src/components/ai-elements/actions.tsx`
+Read the relevant exports in:
+- `admin-dashboard/src/components/ai-elements/conversation.tsx` — `Conversation`, `ConversationContent`, `ConversationScrollButton`.
+- `admin-dashboard/src/components/ai-elements/message.tsx` — `Message`, `MessageContent`, `MessageActions`, `MessageAction` (not `Action`/`Actions`).
+- `admin-dashboard/src/components/ui/spinner.tsx` — `Spinner` (used in place of the legacy `Loader`).
 
-Typical exports:
-- `Conversation` / `ConversationContent` / `ConversationScrollButton`
-- `Message` (`from: "user" | "assistant"`) / `MessageContent` / `MessageAvatar?`
-- `Loader` (default)
-- `Actions` (root) / `Action` (`label`, `onClick`, children: icon)
+Loader/Actions are no longer separate registry components; they're exported from `message.tsx` (Actions) or `ui/spinner.tsx` (Loader).
 
 - [ ] **Step 2: Write the component**
 
 Create `admin-dashboard/src/features/playground-chat/ChatMessages.tsx`:
 
 ```tsx
-import type { UIMessage } from "ai";
+import type { ChatStatus, UIMessage } from "ai";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Action, Actions } from "@/components/ai-elements/actions";
-import { Loader } from "@/components/ai-elements/loader";
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+} from "@/components/ai-elements/message";
+import { Spinner } from "@/components/ui/spinner";
 import { TextPart } from "./parts/TextPart";
 import { FilePart } from "./parts/FilePart";
 import { ToolPart, type ChatToolPart } from "./parts/ToolPart";
@@ -949,7 +844,7 @@ import { SourcesPart, type ChatSourcePart } from "./parts/SourcesPart";
 
 type Props = {
   messages: UIMessage[];
-  status: "ready" | "submitted" | "streaming" | "error";
+  status: ChatStatus;
   onRegenerate: () => void;
 };
 
@@ -1043,19 +938,19 @@ export function ChatMessages({ messages, status, onRegenerate }: Props) {
 
                 {/* Actions on assistant messages once they have text */}
                 {isAssistant && text && !isAssistantStreaming && (
-                  <Actions className="mt-1">
-                    <Action
-                      label="Copy"
+                  <MessageActions className="mt-1">
+                    <MessageAction
+                      tooltip="Copy"
                       onClick={() => navigator.clipboard.writeText(text)}
                     >
                       <CopyIcon className="size-3.5" />
-                    </Action>
+                    </MessageAction>
                     {isLast && (
-                      <Action label="Regenerate" onClick={onRegenerate}>
+                      <MessageAction tooltip="Regenerate" onClick={onRegenerate}>
                         <RefreshCcwIcon className="size-3.5" />
-                      </Action>
+                      </MessageAction>
                     )}
-                  </Actions>
+                  </MessageActions>
                 )}
               </MessageContent>
             </Message>
@@ -1065,7 +960,7 @@ export function ChatMessages({ messages, status, onRegenerate }: Props) {
         {(isSubmitted || lastAssistantHasNoText) && (
           <Message from="assistant">
             <MessageContent>
-              <Loader />
+              <Spinner />
             </MessageContent>
           </Message>
         )}
@@ -1108,11 +1003,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlaygroundMember } from "@/lib/types";
 import { useAuthStore } from "@/store/authStore";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // see note in Step 1.5
-import { ChatComposer, type ComposerMessage } from "./ChatComposer";
+import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import { ChatComposer } from "./ChatComposer";
 import { ChatMessages } from "./ChatMessages";
 import { ChatModeBar } from "./ChatModeBar";
 import { ModeSuggestions } from "./ModeSuggestions";
-import { buildTransport, type ChatMode } from "./modeConfig";
+import { buildTransport, MODES, type ChatMode } from "./modeConfig";
 
 function createSessionId() {
   return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -1223,8 +1119,10 @@ export function PlaygroundChat({ selectedMember, orgId }: Props) {
 
   const isActive = status === "streaming" || status === "submitted";
 
-  const handleSend = (msg: ComposerMessage) => {
+  const handleSend = (msg: PromptInputMessage) => {
     setErrorMessage(null);
+    // PromptInputMessage shape: { text: string; files: FileUIPart[] }
+    // useChat.sendMessage accepts the same shape directly.
     sendMessage(msg);
   };
 
@@ -1256,7 +1154,7 @@ export function PlaygroundChat({ selectedMember, orgId }: Props) {
         <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 p-6 text-center">
           <p className="text-sm text-muted-foreground">
             Send a message to start chatting in{" "}
-            <span className="font-medium">{/* mode label */}</span> mode.
+            <span className="font-medium">{MODES[mode].label}</span> mode.
           </p>
           <ModeSuggestions mode={mode} onSelect={handleSuggestion} />
         </div>
@@ -1288,20 +1186,6 @@ cd admin-dashboard && pnpm dlx shadcn@latest add alert
 ```
 
 If you prefer not to add a new shadcn component, replace the `<Alert>` block in `PlaygroundChat.tsx` with a plain styled div (`<div className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive">…</div>`) and drop the import. Either is fine — pick the one that matches the rest of `components/ui` conventions.
-
-- [ ] **Step 2: Render the actual mode label in the empty state**
-
-Replace the comment placeholder above with the real label. Edit `admin-dashboard/src/features/playground-chat/PlaygroundChat.tsx` to import `MODES` and use `MODES[mode].label`:
-
-```tsx
-import { buildTransport, MODES, type ChatMode } from "./modeConfig";
-```
-
-And in the empty state JSX:
-
-```tsx
-<span className="font-medium">{MODES[mode].label}</span>
-```
 
 - [ ] **Step 3: TypeScript build**
 

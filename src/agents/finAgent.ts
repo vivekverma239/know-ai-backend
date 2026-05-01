@@ -3,7 +3,12 @@ import { getLLM } from "@/ai-backend/llm";
 import withSpan from "@/utils/asyncHook";
 import { type ParsedCitation, parseCitations } from "@/utils/citation";
 import { createContextLogger } from "@/utils/logger";
-import { getTracer } from "@lmnr-ai/lmnr";
+import {
+  type KnowsisUIMessage,
+  UIMessageBuilder,
+} from "@/utils/uiMessageBuilder";
+import { extractMessageMetadata } from "@/utils/uiMessageMetadata";
+import { getTracer, observe } from "@lmnr-ai/lmnr";
 import {
   type ModelMessage,
   type LanguageModelUsage,
@@ -11,8 +16,8 @@ import {
   type ToolSet,
   type UIMessage,
   convertToModelMessages,
+  createUIMessageStream,
   stepCountIs,
-  // createUIMessageStream, // Removed: Not available in AI SDK 3.x core or managed differently
   streamText,
 } from "ai";
 import { v4 as uuidv4 } from "uuid";
@@ -176,4 +181,185 @@ export const finAgent = async ({
   });
 
   return stream;
+};
+
+/**
+ * Build a UIMessage stream for the FinAgent that mirrors `streamText`'s
+ * `fullStream` chunks into a `UIMessageBuilder`. After each step finishes,
+ * citations are reparsed from the assistant text and emitted as a
+ * `message-metadata` chunk so the dashboard can resolve `[file_<uuid>]`
+ * references inline without a separate lookup round-trip.
+ *
+ * Mirrors `buildDeepResearchStream` (see `src/agents/deepResearchStream.ts`)
+ * but uses FinAgent's tools and prompt.
+ */
+export type BuildFinAgentStreamArgs = {
+  messages: KnowsisUIMessage[];
+  context: FinAgentContext;
+  webSearch?: boolean;
+  model?: MODELS;
+  fileAnswerModel?: MODELS;
+  logger: { error: (message: string, meta?: Record<string, unknown>) => void };
+  /** Persists the assistant snapshot. Called from `UIMessageBuilder.onChange`. */
+  persistAssistant: (snapshot: KnowsisUIMessage) => Promise<void>;
+};
+
+export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
+  const {
+    messages,
+    context,
+    webSearch = false,
+    model = MODELS.GEMINI_3_FLASH,
+    fileAnswerModel = MODELS.GROK_4_1_FAST,
+    logger: argsLogger,
+    persistAssistant,
+  } = args;
+
+  const agentLogger = createContextLogger({
+    agent: "finAgent",
+    sessionId: context.sessionId,
+    userId: context.userId,
+  });
+
+  return observe({ name: "finAgent" }, () =>
+    createUIMessageStream<KnowsisUIMessage>({
+      originalMessages: messages,
+      execute: async ({ writer }) => {
+        const builder = new UIMessageBuilder({
+          writer,
+          initialMetadata: { agent: "finAgent" },
+          flushIntervalMs: 250,
+          onChange: async (snapshot) => {
+            try {
+              await persistAssistant(snapshot);
+            } catch (error) {
+              argsLogger.error("Failed to persist assistant snapshot", {
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          },
+        });
+
+        builder.start();
+
+        const toolContext: ToolContext = {
+          userId: context.userId,
+          sessionId: context.sessionId,
+          orgId: context.orgId,
+          teamIds: context.teamIds,
+          writer: writer as unknown as ToolContext["writer"],
+          addUsage: (addUsage: { usage: LanguageModelUsage; model: string }) => {
+            agentLogger.debug("Usage update", addUsage);
+          },
+        };
+
+        const systemPrompt = getFinAgentPrompt({ webSearchEnabled: webSearch });
+        const tools: ToolSet = {
+          fileSearchAgent: fileSearchAgentAsTool({ context: toolContext }),
+          fileAnswerTool: getFileAnswerTool({
+            context: toolContext,
+            model: fileAnswerModel,
+          }),
+          chunkSearchTool: getChunkSearchTool({ context: toolContext }),
+          chapterSearchTool: getChapterSearchTool({ context: toolContext }),
+          ...(webSearch
+            ? {
+                webDocSearchTool: getWebDocSearchTool({ context: toolContext }),
+                bulkFileIndexingTool: getBulkFileIndexingTool({ context: toolContext }),
+                webSearchTool: getWebSearchTool({ context: toolContext }),
+                webPageScrapeTool: getWebsiteContentTool({ context: toolContext }),
+              }
+            : {}),
+          fileStatusTool: getFileStatusTool({ context: toolContext }),
+          teamContextTool: getTeamContextTool({ context: toolContext }),
+          ...getTodoListTools({ context: toolContext }),
+        };
+
+        const result = streamText({
+          model: getLLM(model),
+          system: systemPrompt,
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...(await convertToModelMessages(messages)),
+          ],
+          tools: wrapToolsWithFailureLogging({ tools, agentLogger, context }),
+          stopWhen: stepCountIs(15),
+          experimental_telemetry: {
+            isEnabled: true,
+            tracer: getTracer(),
+          },
+        });
+
+        let finishReason: string | undefined;
+        for await (const chunk of result.fullStream) {
+          const metadataPatch = extractMessageMetadata(chunk);
+          if (metadataPatch) builder.mergeMetadata(metadataPatch);
+          if (chunk.type === "finish") finishReason = chunk.finishReason;
+          switch (chunk.type) {
+            case "start-step":
+              builder.startStep();
+              break;
+            case "finish-step":
+              builder.finishStep();
+              // Re-parse citations so partial sources show up after each step.
+              await builder.refreshCitations();
+              break;
+            case "text-start":
+              builder.startText(chunk.id);
+              break;
+            case "text-delta":
+              builder.appendText(chunk.id, chunk.text);
+              break;
+            case "text-end":
+              builder.endText(chunk.id);
+              break;
+            case "reasoning-start":
+              builder.startReasoning(chunk.id);
+              break;
+            case "reasoning-delta":
+              builder.appendReasoning(chunk.id, chunk.text);
+              break;
+            case "reasoning-end":
+              builder.endReasoning(chunk.id);
+              break;
+            case "tool-input-start":
+              builder.startToolCall({ toolCallId: chunk.id, toolName: chunk.toolName });
+              break;
+            case "tool-call":
+              builder.setToolInput({
+                toolCallId: chunk.toolCallId,
+                toolName: chunk.toolName,
+                input: chunk.input,
+              });
+              break;
+            case "tool-result":
+              builder.setToolOutput({
+                toolCallId: chunk.toolCallId,
+                output: chunk.output,
+              });
+              break;
+            case "tool-error":
+              builder.setToolError({
+                toolCallId: chunk.toolCallId,
+                errorText:
+                  chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
+              });
+              break;
+            case "finish":
+              break;
+          }
+        }
+
+        await builder.refreshCitations();
+        await builder.flush();
+        builder.finish({ finishReason: finishReason ?? "stop" });
+      },
+      onError: (error) => {
+        argsLogger.error("FinAgent stream execution failed", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return String(error);
+      },
+    }),
+  );
 };

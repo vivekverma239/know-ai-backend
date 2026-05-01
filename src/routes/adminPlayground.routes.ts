@@ -1,5 +1,5 @@
 import type { Message as SQLMessage } from "@/@types";
-import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
+import { buildFinAgentStream, type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getDb } from "@/db";
 import { accounts, accountsMemberships } from "@/db/external_schema";
 import { createSession, getSession, getSessionWithMessages, syncMessages } from "@/db/queries/message";
@@ -16,6 +16,7 @@ import { AuthorizationError, NotFoundError } from "@/utils/errorHandler";
 import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { logger } from "@/utils/logger";
 import { Type } from "@sinclair/typebox";
+import { createUIMessageStreamResponse } from "ai";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
@@ -179,52 +180,39 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       // Resolve team IDs for the impersonated user
       const teamIds = await getUserTeamIds(userId, orgId);
 
-      const saveMessages = async (messagesToSave: FinAgentUIMessage[]) => {
-        const sqlMessages: SQLMessage[] = messagesToSave.map((message) => {
-          return {
-            id: message.id || uuidv4(),
-            role: message.role,
-            parts: message.parts,
-            metadata: message.data,
-            createdAt: new Date(),
-            updatedAt: null,
-            sessionId,
-            userId,
-          } as unknown as SQLMessage;
-        });
-        if (sqlMessages.length > 0) {
-          await syncMessages(sqlMessages);
-        }
+      const saveSqlMessage = async (message: KnowsisUIMessage | FinAgentUIMessage) => {
+        const row: SQLMessage = {
+          id: message.id || uuidv4(),
+          role: message.role,
+          parts: message.parts,
+          metadata:
+            (message as KnowsisUIMessage).metadata ??
+            (message as FinAgentUIMessage).data ??
+            null,
+          createdAt: new Date(),
+          updatedAt: null,
+          sessionId,
+          userId,
+        } as unknown as SQLMessage;
+        await syncMessages([row]);
       };
 
       // Persist user input before invoking the agent stream.
-      const incomingUserMessages = messages.filter((message) => message.role === "user");
-      await saveMessages(incomingUserMessages);
+      for (const message of messages.filter((m) => m.role === "user")) {
+        await saveSqlMessage(message);
+      }
 
-      const result = await finAgent({
+      const stream = await buildFinAgentStream({
+        messages: messages as unknown as KnowsisUIMessage[],
         context: { userId, sessionId, orgId, teamIds },
-        messages,
-        saveMessage: async (message: FinAgentUIMessage) => {
-          await saveMessages([message]);
-        },
         webSearch: webSearch ?? false,
+        logger,
+        persistAssistant: async (snapshot) => {
+          await saveSqlMessage(snapshot);
+        },
       });
 
-      return reply.send(
-        result.toUIMessageStreamResponse({
-          originalMessages: messages,
-          onFinish: async ({ messages: finishedMessages }) => {
-            try {
-              await saveMessages(finishedMessages as FinAgentUIMessage[]);
-            } catch (error) {
-              logger.error("Failed to persist messages on stream finish", {
-                error: error instanceof Error ? error.message : String(error),
-                sessionId,
-              });
-            }
-          },
-        }),
-      );
+      return reply.send(createUIMessageStreamResponse({ stream }));
     },
   });
 
@@ -287,6 +275,65 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         deepSearch,
       });
       return reply.send(response);
+    },
+  });
+
+  // 2c. POST /files/lookup — Batch lookup file metadata for citation chips
+  // The model emits `[file_<uuid>]` citations inside chat text; the admin
+  // dashboard's chip popovers fetch title + summary by id via this endpoint.
+  fastify.post("/files/lookup", {
+    preHandler: fastify.authenticateAdmin,
+    schema: {
+      description: "Batch lookup file metadata by id for citation chips",
+      tags: ["Admin"],
+      body: Type.Object({
+        ids: Type.Array(Type.String(), { maxItems: 50 }),
+      }),
+    },
+    handler: async (request, reply) => {
+      const { ids } = request.body as { ids: string[] };
+
+      // Filter to UUIDs only — the model can hallucinate non-uuid ids.
+      const validIds = ids.filter(isUuidLike);
+      if (validIds.length === 0) {
+        return reply.send({ items: {} });
+      }
+
+      const rows = await getDb()
+        .select({
+          id: userFile.id,
+          name: userFile.name,
+          metadata: userFile.metadata,
+          type: userFile.type,
+          webArticleMetadata: userFile.webArticleMetadata,
+          createdAt: userFile.createdAt,
+        })
+        .from(userFile)
+        .where(inArray(userFile.id, validIds));
+
+      const items: Record<
+        string,
+        {
+          id: string;
+          title: string;
+          summary: string;
+          documentType?: string;
+          year?: number;
+          url?: string;
+        }
+      > = {};
+      for (const r of rows) {
+        items[r.id] = {
+          id: r.id,
+          title: r.metadata?.title || r.name || "Untitled",
+          summary: r.metadata?.shortSummary || r.metadata?.summary || "",
+          documentType: r.metadata?.documentType,
+          year: r.metadata?.year,
+          url: r.webArticleMetadata?.url,
+        };
+      }
+
+      return reply.send({ items });
     },
   });
 

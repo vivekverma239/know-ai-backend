@@ -11,7 +11,7 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 
 export type ChatMessageMetadata = {
-  agent?: "deepResearch" | "knowledgeBase";
+  agent?: "deepResearch" | "knowledgeBase" | "finAgent";
   steps?: StepMessage[];
   sources?: ParsedCitation[];
   finishReason?: string;

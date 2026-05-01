@@ -235,3 +235,23 @@ export const getPlaygroundReports = (token: string, userId: string) => {
 export const getPlaygroundReport = (token: string, id: string) => {
   return apiRequest<PlaygroundReportDetail>(`/admin/playground/reports/${id}`, { token });
 };
+
+export type PlaygroundFileMetadata = {
+  id: string;
+  title: string;
+  summary: string;
+  documentType?: string;
+  year?: number;
+  url?: string;
+};
+
+export const lookupPlaygroundFiles = (token: string, ids: string[]) => {
+  return apiRequest<{ items: Record<string, PlaygroundFileMetadata> }>(
+    "/admin/playground/files/lookup",
+    {
+      method: "POST",
+      token,
+      body: { ids },
+    },
+  );
+};

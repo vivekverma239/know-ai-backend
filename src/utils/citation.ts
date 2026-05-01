@@ -42,33 +42,36 @@ export const parseCitations = async (text: string): Promise<ParsedCitation[]> =>
     // Strip the surrounding brackets
     const inner = raw.slice(1, -1);
 
-    // File citation: file_<ID>/page=1,2,3
-    if (inner.startsWith("file_")) {
-      const fileMatch = /^file_([^/]+)\/page=([\d,]+)$/i.exec(inner);
-      if (!fileMatch) continue;
+    // File citations. Supported shapes inside the brackets:
+    //   file_<ID>
+    //   file_<ID>/page=1,2,3
+    //   file_<ID>, file_<ID>            (comma-separated, optional spaces)
+    //   file_<ID>/page=1, file_<ID>/page=2,3
+    if (/file_/i.test(inner)) {
+      const items = inner.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+      let matchedAny = false;
+      for (const item of items) {
+        const itemMatch = /^file_([^/\s]+)(?:\/page=([\d,]+))?$/i.exec(item);
+        if (!itemMatch) continue;
+        matchedAny = true;
+        const fileId = itemMatch[1];
+        if (!fileId) continue;
+        const pageNumbers = itemMatch[2]
+          ?.split(",")
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0)
+          .map((p) => Number(p))
+          .filter((n) => Number.isFinite(n) && n > 0) ?? [];
 
-      const fileId = fileMatch[1];
-      if (!fileId) continue;
-      const pageNumbers = fileMatch[2]
-        ?.split(",")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0)
-        .map((p) => Number(p))
-        .filter((n) => Number.isFinite(n) && n > 0);
-
-      citations.push({
-        type: "file",
-        raw,
-        fileId,
-        pageNumbers,
-        // File metadata (title/summary) can be enriched by callers later
-        // once they have looked up the corresponding file records.
-        fileMetadata: {
-          title: "",
-          summary: "",
-        },
-      });
-      continue;
+        citations.push({
+          type: "file",
+          raw,
+          fileId,
+          pageNumbers,
+          fileMetadata: { title: "", summary: "" },
+        });
+      }
+      if (matchedAny) continue;
     }
 
     // URL citation: url=https://...
