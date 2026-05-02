@@ -290,67 +290,134 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
           },
         });
 
-        let finishReason: string | undefined;
-        for await (const chunk of result.fullStream) {
-          const metadataPatch = extractMessageMetadata(chunk);
-          if (metadataPatch) builder.mergeMetadata(metadataPatch);
-          if (chunk.type === "finish") finishReason = chunk.finishReason;
-          switch (chunk.type) {
-            case "start-step":
-              builder.startStep();
-              break;
-            case "finish-step":
-              builder.finishStep();
-              // Re-parse citations so partial sources show up after each step.
-              await builder.refreshCitations();
-              break;
-            case "text-start":
-              builder.startText(chunk.id);
-              break;
-            case "text-delta":
-              builder.appendText(chunk.id, chunk.text);
-              break;
-            case "text-end":
-              builder.endText(chunk.id);
-              break;
-            case "reasoning-start":
-              builder.startReasoning(chunk.id);
-              break;
-            case "reasoning-delta":
-              builder.appendReasoning(chunk.id, chunk.text);
-              break;
-            case "reasoning-end":
-              builder.endReasoning(chunk.id);
-              break;
-            case "tool-input-start":
-              builder.startToolCall({ toolCallId: chunk.id, toolName: chunk.toolName });
-              break;
-            case "tool-call":
-              builder.setToolInput({
-                toolCallId: chunk.toolCallId,
-                toolName: chunk.toolName,
-                input: chunk.input,
-              });
-              break;
-            case "tool-result":
-              builder.setToolOutput({
-                toolCallId: chunk.toolCallId,
-                output: chunk.output,
-              });
-              break;
-            case "tool-error":
-              builder.setToolError({
-                toolCallId: chunk.toolCallId,
-                errorText:
-                  chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
-              });
-              break;
-            case "finish":
-              break;
+        // streamText's fullStream can emit `error` chunks that don't throw —
+        // without surfacing them, a model/provider failure (e.g. an image part
+        // Gemini can't decode) shows up as an empty stream with start→finish
+        // and no diagnostic. Surface these to logs and to the UI as visible
+        // text so the user can see what went wrong.
+        const surfaceStreamError = (label: string, errorText: string) => {
+          argsLogger.error(`FinAgent ${label}`, {
+            error: errorText,
+            sessionId: context.sessionId,
+            userId: context.userId,
+          });
+          try {
+            const id = `${label}-${Date.now()}`;
+            builder.startStep();
+            builder.startText(id);
+            builder.appendText(id, `⚠️ ${label}: ${errorText}`);
+            builder.endText(id);
+            builder.finishStep();
+          } catch (emitError) {
+            argsLogger.error("Failed to surface FinAgent error to UI", {
+              label,
+              cause: emitError instanceof Error ? emitError.message : String(emitError),
+            });
           }
+        };
+
+        let finishReason: string | undefined;
+        try {
+          for await (const chunk of result.fullStream) {
+            const metadataPatch = extractMessageMetadata(chunk);
+            if (metadataPatch) builder.mergeMetadata(metadataPatch);
+            if (chunk.type === "finish") finishReason = chunk.finishReason;
+            switch (chunk.type) {
+              case "start-step":
+                builder.startStep();
+                break;
+              case "finish-step":
+                builder.finishStep();
+                // Re-parse citations so partial sources show up after each step.
+                await builder.refreshCitations();
+                break;
+              case "text-start":
+                builder.startText(chunk.id);
+                break;
+              case "text-delta":
+                builder.appendText(chunk.id, chunk.text);
+                break;
+              case "text-end":
+                builder.endText(chunk.id);
+                break;
+              case "reasoning-start":
+                builder.startReasoning(chunk.id);
+                break;
+              case "reasoning-delta":
+                builder.appendReasoning(chunk.id, chunk.text);
+                break;
+              case "reasoning-end":
+                builder.endReasoning(chunk.id);
+                break;
+              case "tool-input-start":
+                builder.startToolCall({ toolCallId: chunk.id, toolName: chunk.toolName });
+                break;
+              case "tool-call":
+                builder.setToolInput({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  input: chunk.input,
+                });
+                break;
+              case "tool-result":
+                builder.setToolOutput({
+                  toolCallId: chunk.toolCallId,
+                  output: chunk.output,
+                });
+                break;
+              case "tool-error":
+                builder.setToolError({
+                  toolCallId: chunk.toolCallId,
+                  errorText:
+                    chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
+                });
+                break;
+              case "error":
+                surfaceStreamError(
+                  "stream-error",
+                  chunk.error instanceof Error
+                    ? `${chunk.error.message}${chunk.error.stack ? `\n${chunk.error.stack}` : ""}`
+                    : typeof chunk.error === "object"
+                      ? JSON.stringify(chunk.error)
+                      : String(chunk.error),
+                );
+                if (!finishReason) finishReason = "error";
+                break;
+              case "finish":
+                break;
+            }
+          }
+        } catch (iterationError) {
+          surfaceStreamError(
+            "stream-exception",
+            iterationError instanceof Error
+              ? `${iterationError.message}${iterationError.stack ? `\n${iterationError.stack}` : ""}`
+              : String(iterationError),
+          );
+          if (!finishReason) finishReason = "error";
         }
 
         await builder.refreshCitations();
+
+        // If the model produced no visible output (no text, no reasoning,
+        // no tool call, no surfaced error), emit a fallback message so the
+        // UI doesn't render an empty assistant bubble. Observed once with
+        // image attachments where Gemini returned zero chunks silently.
+        const snapshotParts = builder.snapshot().parts ?? [];
+        const hasVisibleOutput = snapshotParts.some(
+          (p) =>
+            p.type === "text" ||
+            p.type === "reasoning" ||
+            (typeof p.type === "string" && p.type.startsWith("tool-")),
+        );
+        if (!hasVisibleOutput) {
+          surfaceStreamError(
+            "empty-response",
+            "The model returned no content. This often happens with image attachments — try a different prompt or model.",
+          );
+          if (!finishReason) finishReason = "empty";
+        }
+
         await builder.flush();
         builder.finish({ finishReason: finishReason ?? "stop" });
       },
