@@ -32,11 +32,13 @@ export const getWebDocSearchTool = ({ context }: { context: ToolContext }) => {
           })) ?? [];
         return { sources };
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         logger.error(`Failed to search for documents for query ${query}`, {
-          error: error instanceof Error ? error.message : "Unknown error",
+          error: message,
+          stack: error instanceof Error ? error.stack : undefined,
         });
         return {
-          error: "Failed to search for documents",
+          error: `Failed to search for documents: ${message}`,
         };
       }
     },

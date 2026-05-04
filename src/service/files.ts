@@ -150,7 +150,7 @@ const indexWebArticles = async ({
     try {
       const { html, title: pageTitle } = await downloadHtmlFromUrl(article.url);
       const parsed = parseHtmlToMarkdown(html, { title: pageTitle });
-      const markdown = parsed.pages.map((p) => p.markdown).join("\n\n");
+      const markdown = parsed.pages.map((p) => p.content).join("\n\n");
       const { metadata } = await generateSummaryAndMetadata(markdown);
 
       return {
