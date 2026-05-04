@@ -88,7 +88,10 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
           saveMessage: async (message: FinAgentUIMessage) => {
             await saveMessages([message]);
           },
-          webSearch: webSearch ?? false,
+          // Default web search + bulk indexing on so the FinAgent has access
+          // to webDocSearchTool / bulkFileIndexingTool / webSearchTool /
+          // webPageScrapeTool out of the box.
+          webSearch: webSearch ?? true,
           fileAnswerModel: fileAnswerModelEnum,
         }),
       );

@@ -4,61 +4,67 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { ToolContext } from "./toolContext";
 
+/**
+ * Index a batch of documents into the user's knowledge base by URL.
+ *
+ * The agent passes titles + URLs returned by `webDocSearchTool`. The service
+ * layer (`bulkAddFiles`) inserts userFile rows and delegates fetch/parse to
+ * parse-engine — for PDFs via the existing async parse pipeline, for web
+ * articles via parse-engine's URL fetch + HTML→markdown utilities.
+ *
+ * Returns the inserted file IDs so the agent can poll status via
+ * `fileStatusTool`.
+ */
 export const getBulkFileIndexingTool = ({
   context,
 }: {
   context: ToolContext;
 }) => {
   return tool({
-    description: "Index multiple documents in the knowledge base",
+    description:
+      "Add documents to the knowledge base by URL. Pass titles + URLs from webDocSearchTool. Returns the inserted file IDs.",
     inputSchema: z.object({
-      pdfs: z.array(
-        z
-          .object({
-            id: z.string(),
+      pdfs: z
+        .array(
+          z.object({
             title: z.string(),
-            storagePath: z.string(),
-          })
-          .describe("This is the ID and storage path returned by web search agent"),
-      ),
-      webArticles: z.array(
-        z
-          .object({
-            id: z.string(),
-            title: z.string(),
-            storagePath: z.string(),
             url: z.string(),
-          })
-          .describe("This is the ID and storage path returned by web search agent"),
-      ),
+          }),
+        )
+        .describe("PDFs returned by webDocSearchTool (type === 'pdf')."),
+      webArticles: z
+        .array(
+          z.object({
+            title: z.string(),
+            url: z.string(),
+          }),
+        )
+        .describe("Web articles returned by webDocSearchTool (type === 'website')."),
     }),
     execute: async ({
       pdfs,
       webArticles,
     }: {
-      pdfs: { id: string; storagePath: string; title: string }[];
-      webArticles: {
-        id: string;
-        storagePath: string;
-        url: string;
-        title: string;
-      }[];
+      pdfs: { url: string; title: string }[];
+      webArticles: { url: string; title: string }[];
     }) => {
       try {
-        await bulkAddFiles({
+        const result = await bulkAddFiles({
           pdfs,
           webArticles,
           userId: context.userId,
-          orgId: context.orgId, // Added support for orgId if available in context
+          orgId: context.orgId,
         });
         return {
           success: true,
           message: "Files added to the knowledge base",
+          ...result,
         };
       } catch (error) {
         logger.error("Error adding files to the knowledge base", {
           error: error instanceof Error ? error.message : String(error),
           pdfs: pdfs.length,
+          webArticles: webArticles.length,
         });
         return {
           success: false,

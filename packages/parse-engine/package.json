@@ -17,6 +17,10 @@
     "./server": {
       "import": "./dist/server/index.js",
       "types": "./dist/server/index.d.ts"
+    },
+    "./url-fetch": {
+      "import": "./dist/url-fetch.js",
+      "types": "./dist/url-fetch.d.ts"
     }
   },
   "files": [

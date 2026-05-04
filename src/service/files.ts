@@ -2,13 +2,17 @@ import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { userFile } from "@/db/schema";
+import { logger } from "@/utils/logger";
 import { generateObject } from "ai";
 import { and, eq, inArray } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { enqueueDocumentParse } from "./file/enqueueDocumentParse";
-import { getStorage } from "./googleStorage";
 
 const db = getDb();
+
+// parse-engine ESM-only — load lazily so we don't pull Playwright at startup.
+const loadParseEngineUrlFetch = () => import("parse-engine/url-fetch");
 
 const generateSummaryAndMetadata = async (content: string) => {
   const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
@@ -63,102 +67,133 @@ const generateSummaryAndMetadata = async (content: string) => {
   return { metadata };
 };
 
+/**
+ * Add a batch of documents to the knowledge base by URL.
+ *
+ * - **PDFs** → insert userFile with `sourceDocumentUrl` set, status pending,
+ *   then `enqueueDocumentParse(file.id)`. The parse worker downloads via
+ *   parse-engine and updates status to in_progress / completed.
+ * - **Web articles** → fetch HTML in-process via parse-engine's
+ *   `downloadHtmlFromUrl` (Playwright + stealth bypass), convert to markdown
+ *   via `parseHtmlToMarkdown`, generate summary metadata, insert with
+ *   status=completed.
+ *
+ * The agent (and the dashboard's Documents view) sees a consistent userFile
+ * row for every input, regardless of source type.
+ */
 export const bulkAddFiles = async ({
   pdfs,
   webArticles,
   userId,
   orgId,
 }: {
-  pdfs: { id: string; title: string; storagePath: string }[];
-  webArticles: {
-    id: string;
-    url: string;
-    storagePath: string;
-    title: string;
-  }[];
+  pdfs: { url: string; title: string }[];
+  webArticles: { url: string; title: string }[];
   userId: string;
   orgId: string;
 }) => {
-  // Create files
-  const files = await db
-    .insert(userFile)
-    .values(
-      pdfs.map((pdf) => ({
-        id: pdf.id,
-        name: pdf.title,
-        userId: userId,
-        orgId: orgId,
-      })),
-    )
-    .returning();
+  // ── PDFs: insert + enqueue async parse ──
+  const pdfRows =
+    pdfs.length > 0
+      ? await db
+          .insert(userFile)
+          .values(
+            pdfs.map((pdf) => ({
+              id: uuidv4(),
+              name: pdf.title,
+              userId,
+              orgId,
+              type: "pdf" as const,
+              sourceDocumentUrl: pdf.url,
+            })),
+          )
+          .returning()
+      : [];
 
-  // Copy over the PDFs to the files
-  let index = 0;
-  for (const pdf of pdfs) {
-    const storageService = getStorage();
-    const pdfBuffer = await storageService.downloadFile(pdf.storagePath);
-    await storageService.uploadFile({
-      data: pdfBuffer,
-      path: `files/${userId}/${files[index]?.id}/${files[index]?.id}.pdf`,
-    });
-    index++;
-  }
+  await Promise.all(pdfRows.map((file) => enqueueDocumentParse(file.id)));
 
-  // Parse files via parse-engine (async via QStash)
-  await Promise.all(
-    files.map(async (file) => {
-      await enqueueDocumentParse(file.id);
-    }),
-  );
-
-  // Generate metadata for web articles parallelly
-  const metadataPromises = webArticles.map(async (webArticle) => {
-    // Assuming storagePath logic for web articles is correct or adapted
-    const buffer = await getStorage().downloadFile(webArticle.storagePath);
-    const markdown = buffer.toString("utf-8");
-    const { metadata } = await generateSummaryAndMetadata(markdown);
-    return {
-      id: webArticle.id,
-      name: metadata.title,
-      userId: userId,
-      orgId: orgId,
-      type: "web_article" as const,
-      webArticleMetadata: {
-        url: webArticle.url,
-        title: metadata.title,
-        content: markdown,
-      },
-      metadata: metadata,
-      status: "completed" as const,
-    };
-  });
-  const metadataResults = await Promise.all(metadataPromises);
-  const webArticlesFiles = await db
-    .insert(userFile)
-    .values(
-      metadataResults.map((result) => ({
-        id: result.id,
-        name: result.name,
-        userId: userId,
-        orgId: orgId,
-        type: "web_article" as const,
-        webArticleMetadata: result.webArticleMetadata,
-        metadata: result.metadata,
-      })),
-    )
-    .returning();
+  // ── Web articles: fetch + summarise synchronously ──
+  // Lazy-load parse-engine's url-fetch subpath so Playwright isn't pulled
+  // into module load when no web articles are being added.
+  const webArticleRows =
+    webArticles.length > 0
+      ? await indexWebArticles({ webArticles, userId, orgId })
+      : [];
 
   return {
-    pdfs: files.map((file) => ({
+    pdfs: pdfRows.map((file) => ({
       id: file.id,
       name: file.name,
+      url: file.sourceDocumentUrl,
     })),
-    webArticles: webArticlesFiles.map((file) => ({
+    webArticles: webArticleRows.map((file) => ({
       id: file.id,
       name: file.name,
       url: file.webArticleMetadata?.url,
     })),
   };
+};
+
+const indexWebArticles = async ({
+  webArticles,
+  userId,
+  orgId,
+}: {
+  webArticles: { url: string; title: string }[];
+  userId: string;
+  orgId: string;
+}) => {
+  const { downloadHtmlFromUrl, parseHtmlToMarkdown } =
+    await loadParseEngineUrlFetch();
+
+  const ingestPromises = webArticles.map(async (article) => {
+    try {
+      const { html, title: pageTitle } = await downloadHtmlFromUrl(article.url);
+      const parsed = parseHtmlToMarkdown(html, { title: pageTitle });
+      const markdown = parsed.pages.map((p) => p.markdown).join("\n\n");
+      const { metadata } = await generateSummaryAndMetadata(markdown);
+
+      return {
+        id: uuidv4(),
+        name: metadata.title || article.title || pageTitle,
+        userId,
+        orgId,
+        type: "web_article" as const,
+        status: "completed" as const,
+        sourceDocumentUrl: article.url,
+        webArticleMetadata: {
+          url: article.url,
+          title: metadata.title || article.title || pageTitle,
+          content: markdown,
+        },
+        metadata,
+      };
+    } catch (error) {
+      logger.error("Failed to index web article", {
+        url: article.url,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Surface a row with status=failed so the user sees the failed entry
+      // in the dashboard rather than a silent drop.
+      return {
+        id: uuidv4(),
+        name: article.title,
+        userId,
+        orgId,
+        type: "web_article" as const,
+        status: "failed" as const,
+        sourceDocumentUrl: article.url,
+        webArticleMetadata: {
+          url: article.url,
+          title: article.title,
+          content: "",
+        },
+      };
+    }
+  });
+
+  const records = await Promise.all(ingestPromises);
+  return await db.insert(userFile).values(records).returning();
 };
 
 export const getFileStatuses = async (fileIds: string[], userId: string) => {

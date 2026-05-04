@@ -205,7 +205,10 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       const stream = await buildFinAgentStream({
         messages: messages as unknown as KnowsisUIMessage[],
         context: { userId, sessionId, orgId, teamIds },
-        webSearch: webSearch ?? false,
+        // Admin playground defaults web search + bulk indexing on so the
+        // FinAgent has access to webDocSearchTool / bulkFileIndexingTool /
+        // webSearchTool / webPageScrapeTool out of the box.
+        webSearch: webSearch ?? true,
         logger,
         persistAssistant: async (snapshot) => {
           await saveSqlMessage(snapshot);
