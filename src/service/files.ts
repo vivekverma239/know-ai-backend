@@ -69,6 +69,53 @@ const generateSummaryAndMetadata = async (content: string) => {
 };
 
 /**
+ * Heuristics that identify HTML responses which are actually a bot-protection
+ * interstitial / access-denied page rather than the real document. When this
+ * fires for a URL the agent classified as "pdf", we treat it as a probe
+ * failure rather than indexing the blocked stub as a web article.
+ */
+const BLOCKED_TITLE_RE =
+  /^(just a moment|access denied|forbidden|blocked|verify|attention required|security check)/i;
+const BLOCKED_BODY_PATTERNS: RegExp[] = [
+  /cloudflare/i,
+  /\bcf-ray\b/i,
+  /checking your browser/i,
+  /ddos protection/i,
+  /\brecaptcha\b/i,
+  /\bhcaptcha\b/i,
+  /verify you are human/i,
+  /access denied/i,
+  /403\s+forbidden/i,
+  /you are not allowed/i,
+  /request blocked/i,
+  /blocked by/i,
+  /rate limit/i,
+  /too many requests/i,
+  /\bakamai\b/i,
+  /\bimperva\b/i,
+  /just a moment/i,
+];
+
+const looksBlocked = ({
+  html,
+  htmlTitle,
+  markdownLength,
+}: {
+  html: string;
+  htmlTitle: string;
+  markdownLength: number;
+}): boolean => {
+  if (BLOCKED_TITLE_RE.test(htmlTitle.trim())) return true;
+  // Tiny body + suspicious title hint at a stub even if no keyword matches.
+  if (markdownLength < 300 && BLOCKED_TITLE_RE.test(htmlTitle.trim())) return true;
+  // Search the (already noise-stripped) HTML for blocking signatures. We cap
+  // the search to the first 8 KB so a real article that happens to mention
+  // "rate limit" deep in its content doesn't trip the heuristic.
+  const head = html.slice(0, 8192);
+  return BLOCKED_BODY_PATTERNS.some((re) => re.test(head));
+};
+
+/**
  * Add a batch of documents to the knowledge base by URL.
  *
  * Format detection is server-side via parse-engine's `downloadFromUrl` —
@@ -77,6 +124,16 @@ const generateSummaryAndMetadata = async (content: string) => {
  * pipeline; URLs that resolve to HTML are summarised inline as web
  * articles. This means an agent that misclassifies a `.htm` SEC viewer
  * as a PDF still produces a useful indexed row.
+ *
+ * The agent's classification is layered with URL-extension and HTML
+ * keyword checks so that real PDFs hidden behind bot-protection pages
+ * (Cloudflare interstitial, CAPTCHA, "access denied" stubs) still
+ * resolve correctly:
+ *   1. URL ends in `.pdf`     → pdf hint
+ *   2. agent classified as pdf → pdf hint
+ *   3. if hint: try `downloadPdfFromUrl` first (3-tier stealth) before
+ *      falling back to the auto-detect path
+ *   4. if response is HTML and `looksBlocked` matches → status=failed
  */
 export const bulkAddFiles = async ({
   pdfs,
@@ -89,27 +146,73 @@ export const bulkAddFiles = async ({
   userId: string;
   orgId: string;
 }) => {
-  const allUrls = [...pdfs, ...webArticles];
-  if (allUrls.length === 0) {
+  type ProbeInput = { url: string; title: string; pdfHint: boolean };
+
+  const inputs: ProbeInput[] = [
+    ...pdfs.map((p) => ({ url: p.url, title: p.title, pdfHint: true })),
+    ...webArticles.map((a) => ({
+      url: a.url,
+      title: a.title,
+      // Even when the agent put it in webArticles, a `.pdf` URL almost
+      // certainly *is* a PDF — trust the URL over the agent.
+      pdfHint: /\.pdf(\?|#|$)/i.test(a.url),
+    })),
+  ];
+
+  if (inputs.length === 0) {
     return { pdfs: [], webArticles: [] };
   }
 
-  const { downloadFromUrl, parseHtmlToMarkdown } = await loadParseEngineUrlFetch();
+  const { downloadFromUrl, downloadPdfFromUrl, parseHtmlToMarkdown } =
+    await loadParseEngineUrlFetch();
   const storage = getStorage();
 
-  // Probe every URL once; parse-engine handles the stealth-bypass + format
-  // detection (PDF vs HTML) and returns the bytes/markup ready to use.
   type Probe =
     | { kind: "pdf"; title: string; url: string; buffer: Buffer }
     | { kind: "html"; title: string; url: string; html: string; htmlTitle: string }
     | { kind: "failed"; title: string; url: string; error: string };
 
   const probes: Probe[] = await Promise.all(
-    allUrls.map(async (entry): Promise<Probe> => {
+    inputs.map(async (entry): Promise<Probe> => {
+      // Hint-driven escalation: if anything suggests PDF, run the 3-tier
+      // stealth downloader first. It validates magic bytes internally, so a
+      // success here means we definitely have a PDF.
+      if (entry.pdfHint) {
+        try {
+          const buffer = await downloadPdfFromUrl(entry.url);
+          return { kind: "pdf", title: entry.title, url: entry.url, buffer };
+        } catch (err) {
+          logger.debug("PDF hint probe failed; falling back to auto-detect", {
+            url: entry.url,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
       try {
         const result = await downloadFromUrl(entry.url);
         if (result.type === "pdf") {
           return { kind: "pdf", title: entry.title, url: entry.url, buffer: result.buffer };
+        }
+        // Sniff the HTML for bot-protection signatures before treating it as
+        // a real article. A blocked stub here likely means the *real* PDF
+        // would have lived at this URL but couldn't be retrieved.
+        const parsedPreview = parseHtmlToMarkdown(result.html);
+        const previewLen = parsedPreview.pages
+          .map((p) => p.content.length)
+          .reduce((a, b) => a + b, 0);
+        if (looksBlocked({
+          html: result.html,
+          htmlTitle: result.title,
+          markdownLength: previewLen,
+        })) {
+          return {
+            kind: "failed",
+            title: entry.title,
+            url: entry.url,
+            error:
+              "Response looks like a bot-protection / access-denied stub (Cloudflare, CAPTCHA, etc.). The real document was not retrieved.",
+          };
         }
         return {
           kind: "html",
