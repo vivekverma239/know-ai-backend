@@ -149,13 +149,14 @@ const indexWebArticles = async ({
   const ingestPromises = webArticles.map(async (article) => {
     try {
       const { html, title: pageTitle } = await downloadHtmlFromUrl(article.url);
-      const parsed = parseHtmlToMarkdown(html, { title: pageTitle });
+      const parsed = parseHtmlToMarkdown(html);
       const markdown = parsed.pages.map((p) => p.content).join("\n\n");
+      const docTitle = parsed.title || pageTitle;
       const { metadata } = await generateSummaryAndMetadata(markdown);
 
       return {
         id: uuidv4(),
-        name: metadata.title || article.title || pageTitle,
+        name: metadata.title || article.title || docTitle,
         userId,
         orgId,
         type: "web_article" as const,
@@ -163,7 +164,7 @@ const indexWebArticles = async ({
         sourceDocumentUrl: article.url,
         webArticleMetadata: {
           url: article.url,
-          title: metadata.title || article.title || pageTitle,
+          title: metadata.title || article.title || docTitle,
           content: markdown,
         },
         metadata,

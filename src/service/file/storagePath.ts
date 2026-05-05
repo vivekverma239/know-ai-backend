@@ -1,6 +1,9 @@
 import { logger } from "@/utils/logger";
 import type { GoogleStorageService } from "@/service/googleStorage";
 
+// parse-engine ESM-only — load lazily so Playwright isn't pulled at startup.
+const loadParseEngineUrlFetch = () => import("parse-engine/url-fetch");
+
 // In-memory cache for resolved storage paths (TTL: 5 minutes)
 const pathCache = new Map<string, { path: string; expiresAt: number }>();
 const PATH_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -125,9 +128,13 @@ const hasPdfMagicBytes = (buffer: Buffer): boolean => {
  * the file is missing from GCS. When the fallback is used the PDF is
  * re-uploaded to GCS so subsequent attempts find it directly.
  *
- * Refuses to upload bytes that don't start with %PDF — otherwise an HTML
- * response (e.g. a web article URL) would be stored at the .pdf path and
- * keep failing on every retry.
+ * The URL fallback delegates to parse-engine's `downloadPdfFromUrl`, which
+ * uses Playwright + stealth-plugin to bypass bot protection (SEC.gov,
+ * Cloudflare, etc.) — plain `fetch()` was getting 403'd on those origins.
+ *
+ * Refuses to store bytes that don't start with %PDF — otherwise an HTML
+ * response (e.g. a web article URL) would land at the .pdf path and keep
+ * failing on every retry.
  */
 export const downloadPdfBuffer = async (
   storage: GoogleStorageService,
@@ -140,21 +147,17 @@ export const downloadPdfBuffer = async (
   }
 
   if (file.sourceDocumentUrl && /^https?:\/\//i.test(file.sourceDocumentUrl)) {
-    logger.warn("PDF not in GCS, falling back to sourceDocumentUrl", {
+    logger.warn("PDF not in GCS, fetching via parse-engine downloadPdfFromUrl", {
       fileId: file.id,
       sourceDocumentUrl: file.sourceDocumentUrl,
     });
 
-    const res = await fetch(file.sourceDocumentUrl);
-    if (!res.ok) {
-      throw new Error(`Failed to download PDF from source URL (${res.status}): ${file.id}`);
-    }
-    const buffer = Buffer.from(await res.arrayBuffer());
+    const { downloadPdfFromUrl } = await loadParseEngineUrlFetch();
+    const buffer = await downloadPdfFromUrl(file.sourceDocumentUrl);
 
     if (!hasPdfMagicBytes(buffer)) {
-      const contentType = res.headers.get("content-type") ?? "unknown";
       throw new Error(
-        `sourceDocumentUrl returned non-PDF content (content-type=${contentType}, leading bytes=${buffer.slice(0, 4).toString("hex")}); refusing to store as PDF: ${file.id}`,
+        `sourceDocumentUrl returned non-PDF content (leading bytes=${buffer.slice(0, 4).toString("hex")}); refusing to store as PDF: ${file.id}`,
       );
     }
 
