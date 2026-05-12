@@ -57,6 +57,13 @@
       "when": 1775355996496,
       "tag": "0007_jittery_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778577457513,
+      "tag": "0008_token_usage_log_attribution",
+      "breakpoints": true
     }
   ]
 }

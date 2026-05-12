@@ -359,13 +359,21 @@ export const tokenUsageLog = createTable(
     requestId: d.varchar({ length: 255 }).notNull(),
     operationId: d.varchar({ length: 255 }).notNull(),
     operationName: d.varchar({ length: 255 }).notNull(),
+    parentOperationId: d.varchar({ length: 255 }),
+    messageId: d.varchar({ length: 255 }),
+    // subject: who the work was for (impersonated user in admin playground)
     userId: d.varchar({ length: 255 }),
     sessionId: d.varchar({ length: 255 }),
     orgId: d.varchar({ length: 255 }),
+    // actor: who triggered the request (admin if impersonating, else == userId)
+    actorUserId: d.varchar({ length: 255 }),
+    source: d.varchar({ length: 32 }).notNull().default("chat"),
     model: d.varchar({ length: 255 }).notNull(),
     promptTokens: d.integer().notNull(),
     completionTokens: d.integer().notNull(),
     totalTokens: d.integer().notNull(),
+    cachedInputTokens: d.integer().notNull().default(0),
+    reasoningTokens: d.integer().notNull().default(0),
     costEstimate: d.numeric({ precision: 10, scale: 6 }),
     timestamp: d.timestamp({ withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
     metadata: d.jsonb().$type<Record<string, unknown>>(),
@@ -378,6 +386,9 @@ export const tokenUsageLog = createTable(
     timestampIdx: index("token_usage_log_timestamp_idx").on(table.timestamp),
     sessionIdIdx: index("token_usage_log_session_id_idx").on(table.sessionId),
     modelIdx: index("token_usage_log_model_idx").on(table.model),
+    messageIdIdx: index("token_usage_log_message_id_idx").on(table.messageId),
+    actorUserIdIdx: index("token_usage_log_actor_user_id_idx").on(table.actorUserId),
+    sourceIdx: index("token_usage_log_source_idx").on(table.source),
   }),
 );
 
