@@ -2,6 +2,7 @@ import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import withSpan from "@/utils/asyncHook";
 import { type ParsedCitation, parseCitations } from "@/utils/citation";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
 import {
   type KnowsisUIMessage,
@@ -168,6 +169,9 @@ export const finAgent = async ({
     ...getTodoListTools({ context: toolContext }),
   };
 
+  // Stable op id per FinAgent invocation; every step recorded under it.
+  const finAgentOperationId = `finAgent-${context.sessionId}-${Date.now()}`;
+
   const stream = streamText({
     model: getLLM(model),
     messages: await convertToModelMessages(messages),
@@ -177,6 +181,22 @@ export const finAgent = async ({
     experimental_telemetry: {
       isEnabled: true,
       tracer: getTracer(),
+    },
+    onStepFinish: (step) => {
+      const usage = step.usage;
+      if (!usage) return;
+      void recordLlmUsage({
+        operationName: "finAgent",
+        operationId: finAgentOperationId,
+        model,
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        totalTokens: usage.totalTokens,
+        reasoningTokens: usage.reasoningTokens,
+        cachedInputTokens: usage.cachedInputTokens,
+        source: "chat",
+        metadata: { agent: "finAgent" },
+      });
     },
   });
 
@@ -275,6 +295,10 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
           ...getTodoListTools({ context: toolContext }),
         };
 
+        // Stable op id per FinAgent invocation so analytics can roll up the
+        // child steps under one operation.
+        const finAgentOperationId = `finAgent-${context.sessionId}-${Date.now()}`;
+
         const result = streamText({
           model: getLLM(model),
           system: systemPrompt,
@@ -287,6 +311,24 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
           experimental_telemetry: {
             isEnabled: true,
             tracer: getTracer(),
+          },
+          onStepFinish: (step) => {
+            const usage = step.usage;
+            if (!usage) return;
+            const messageId = builder.snapshot().id;
+            void recordLlmUsage({
+              operationName: "finAgent",
+              operationId: finAgentOperationId,
+              messageId,
+              model,
+              inputTokens: usage.inputTokens ?? 0,
+              outputTokens: usage.outputTokens ?? 0,
+              totalTokens: usage.totalTokens,
+              reasoningTokens: usage.reasoningTokens,
+              cachedInputTokens: usage.cachedInputTokens,
+              source: "chat",
+              metadata: { agent: "finAgent" },
+            });
           },
         });
 
