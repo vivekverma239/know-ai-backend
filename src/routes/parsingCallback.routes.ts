@@ -5,15 +5,18 @@ import type { FastifyInstance } from "fastify";
 import type { SectionCallbackData } from "@/@types/fileIndex";
 import type { DocumentMetadata } from "@/@types/metadata";
 import type { CallbackTokenUsage } from "@/@types/tokenUsage";
+import { getDb } from "@/db";
+import { userFile } from "@/db/schema";
 import {
   updateOutline,
   updateParsedMetadata,
   updateParsedPages,
 } from "@/service/file/parsing";
-import { updateUsage } from "@/service/file/usage";
+import { recordParseUsage, updateUsage } from "@/service/file/usage";
 import { logError, logger } from "@/utils/logger";
 import { resolveRequestId } from "@/utils/requestContext";
 import { mapCallbackTokenUsage } from "@/utils/tokenUsage";
+import { eq } from "drizzle-orm";
 
 const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
   // Global dispatcher for parsing callbacks
@@ -70,6 +73,34 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
           requestId,
         });
 
+        // Look up file owner up-front so we can attribute parse cost to the
+        // user who uploaded the file. We don't have a request context here
+        // (callback is system-to-system), so identity must be passed
+        // explicitly to recordLlmUsage.
+        const fileRows = await getDb()
+          .select({ userId: userFile.userId, orgId: userFile.orgId })
+          .from(userFile)
+          .where(eq(userFile.id, fileId))
+          .limit(1);
+        const fileOwner = fileRows[0];
+
+        const fanOutUsage = async () => {
+          if (!fileOwner) {
+            logger.warn("Parse callback for unknown fileId; skipping usage fan-out", {
+              fileId,
+              taskType: task_type,
+            });
+            return;
+          }
+          await recordParseUsage({
+            fileId,
+            userId: fileOwner.userId,
+            orgId: fileOwner.orgId,
+            taskType: task_type,
+            usage: usage_metadata ?? {},
+          });
+        };
+
         // Process based on task type
         if (task_type === "parse_outline") {
           const section = data as SectionCallbackData;
@@ -80,14 +111,17 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
             fileId,
           });
           await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
+          await fanOutUsage();
         } else if (task_type === "parse_pdf") {
           const parsed = data as ParsedPDF;
           await updateParsedPages(fileId, parsed);
           await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
+          await fanOutUsage();
         } else if (task_type === "parse_metadata") {
           const parsed = data as DocumentMetadata;
           await updateParsedMetadata(fileId, parsed);
           await updateUsage(fileId, mapCallbackTokenUsage(usage_metadata ?? {}));
+          await fanOutUsage();
         } else {
           logger.warn("Unknown task type received in parsing callback", {
             taskType: task_type,
