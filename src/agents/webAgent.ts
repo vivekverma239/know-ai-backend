@@ -208,4 +208,3 @@ export const webAgent = async (query: string, context: ToolContext) => {
     helpfulText: helpfulText,
   };
 };
-

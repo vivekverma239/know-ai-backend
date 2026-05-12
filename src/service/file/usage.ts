@@ -51,9 +51,7 @@ export async function recordParseUsage(args: {
     // themselves (e.g. provider-prefixed) survive.
     const lastColon = stepKey.lastIndexOf(":");
     const operationName =
-      lastColon >= 0
-        ? `parse:${taskType}:${stepKey.slice(0, lastColon)}`
-        : `parse:${taskType}`;
+      lastColon >= 0 ? `parse:${taskType}:${stepKey.slice(0, lastColon)}` : `parse:${taskType}`;
     const model = lastColon >= 0 ? stepKey.slice(lastColon + 1) : stepKey;
 
     await recordLlmUsage({

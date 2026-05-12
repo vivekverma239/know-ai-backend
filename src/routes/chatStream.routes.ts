@@ -1,27 +1,19 @@
 import type { Message as SQLMessage } from "@/@types";
 import { MODELS } from "@/@types/llm";
-import {
-  buildDeepResearchStream,
-  persistAssistantSnapshot,
-} from "@/agents/deepResearchStream";
+import { buildDeepResearchStream, persistAssistantSnapshot } from "@/agents/deepResearchStream";
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
-import { parseCitations } from "@/utils/citation";
-import { recordLlmUsage } from "@/utils/costTracker";
 import { updateSession } from "@/db/mutation/session";
 import { getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
+import { parseCitations } from "@/utils/citation";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { AuthenticationError, AuthorizationError, NotFoundError } from "@/utils/errorHandler";
-import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { createContextLogger, logger } from "@/utils/logger";
+import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
-import {
-  convertToModelMessages,
-  createUIMessageStreamResponse,
-  stepCountIs,
-  streamText,
-} from "ai";
+import { convertToModelMessages, createUIMessageStreamResponse, stepCountIs, streamText } from "ai";
 import type { FastifyInstance } from "fastify";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
@@ -76,9 +68,7 @@ Current date is ${new Date().toISOString()}.
 const enrichAssistantCitations = async (msgs: KnowsisUIMessage[]) => {
   for (const msg of msgs) {
     if (msg.role !== "assistant") continue;
-    const text = msg.parts
-      .map((p) => (p.type === "text" ? p.text : ""))
-      .join("\n");
+    const text = msg.parts.map((p) => (p.type === "text" ? p.text : "")).join("\n");
     if (!text) continue;
     const citations = await parseCitations(text);
     if (citations.length > 0) {
@@ -110,9 +100,7 @@ interface RunChatStreamOpts {
  * Caller is responsible for auth and session lifecycle (create / 404 /
  * authorize) — this helper assumes the session is already valid.
  */
-export const runChatStream = async (
-  opts: RunChatStreamOpts,
-): Promise<Response> => {
+export const runChatStream = async (opts: RunChatStreamOpts): Promise<Response> => {
   const { userId, orgId, sessionId, messages, deepSearch } = opts;
   const agentLogger = createContextLogger({
     agent: "chatStream",
@@ -217,10 +205,7 @@ export const runChatStream = async (
           },
         },
       },
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...knowledgeBaseModelMessages,
-      ],
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...knowledgeBaseModelMessages],
       experimental_telemetry: { isEnabled: true },
       onStepFinish: (step) => {
         const usage = step.usage;

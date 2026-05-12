@@ -5,19 +5,11 @@ import { processDeepSearchQuery } from "@/agents/deepResearch";
 import type { getLLM } from "@/ai-backend/llm";
 import { syncMessages } from "@/db/queries/message";
 import { recordLlmUsage } from "@/utils/costTracker";
+import { type KnowsisUIMessage, UIMessageBuilder } from "@/utils/uiMessageBuilder";
 import { extractMessageMetadata } from "@/utils/uiMessageMetadata";
-import {
-  type KnowsisUIMessage,
-  UIMessageBuilder,
-} from "@/utils/uiMessageBuilder";
 import { loadForResume, shouldResumeLoop } from "@/utils/uiMessageResume";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
-import {
-  convertToModelMessages,
-  createUIMessageStream,
-  stepCountIs,
-  streamText,
-} from "ai";
+import { convertToModelMessages, createUIMessageStream, stepCountIs, streamText } from "ai";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
@@ -199,8 +191,7 @@ export const buildDeepResearchStream = async (args: DeepResearchStreamArgs) => {
             case "tool-error":
               builder.setToolError({
                 toolCallId: chunk.toolCallId,
-                errorText:
-                  chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
+                errorText: chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
               });
               break;
             case "finish":
@@ -226,10 +217,11 @@ export const buildDeepResearchStream = async (args: DeepResearchStreamArgs) => {
  * Convenience: persist a single `KnowsisUIMessage` to the messages table via
  * the existing `syncMessages` upsert. Used as the `persistAssistant` callback.
  */
-export const persistAssistantSnapshot = (args: {
-  sessionId: string;
-  userId: string;
-}) =>
+export const persistAssistantSnapshot =
+  (args: {
+    sessionId: string;
+    userId: string;
+  }) =>
   async (snapshot: KnowsisUIMessage): Promise<void> => {
     const row: SQLMessage = {
       id: snapshot.id || uuidv4(),
@@ -243,4 +235,3 @@ export const persistAssistantSnapshot = (args: {
     } as SQLMessage;
     await syncMessages([row]);
   };
-

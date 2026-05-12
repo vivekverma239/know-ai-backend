@@ -206,7 +206,11 @@ export async function calculateUsageCost(
     inputTokens: promptTokens,
     outputTokens: completionTokens,
     totalTokens: promptTokens + completionTokens,
-    inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+    inputTokenDetails: {
+      noCacheTokens: undefined,
+      cacheReadTokens: undefined,
+      cacheWriteTokens: undefined,
+    },
     outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
   };
 

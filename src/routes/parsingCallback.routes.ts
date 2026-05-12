@@ -7,11 +7,7 @@ import type { DocumentMetadata } from "@/@types/metadata";
 import type { CallbackTokenUsage } from "@/@types/tokenUsage";
 import { getDb } from "@/db";
 import { userFile } from "@/db/schema";
-import {
-  updateOutline,
-  updateParsedMetadata,
-  updateParsedPages,
-} from "@/service/file/parsing";
+import { updateOutline, updateParsedMetadata, updateParsedPages } from "@/service/file/parsing";
 import { recordParseUsage, updateUsage } from "@/service/file/usage";
 import { logError, logger } from "@/utils/logger";
 import { resolveRequestId } from "@/utils/requestContext";
@@ -45,8 +41,7 @@ const parsingCallbackRoutes = async (fastify: FastifyInstance) => {
         const callbackToken = request.headers["x-callback-token"] as string | undefined;
         const authHeader = request.headers["authorization"] as string | undefined;
         const token =
-          callbackToken ??
-          (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
+          callbackToken ?? (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
 
         if (!token || token !== expectedToken) {
           request.log.warn("Invalid or missing callback token on parsing callback");
