@@ -7,6 +7,7 @@ import {
 import { summarizeChat } from "@/ai-backend/chatSummary";
 import { getLLM } from "@/ai-backend/llm";
 import { parseCitations } from "@/utils/citation";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { updateSession } from "@/db/mutation/session";
 import { getSession, syncMessages } from "@/db/queries/message";
 import { similaritySearchChunksWithObserver } from "@/service/simSearch";
@@ -178,6 +179,7 @@ export const runChatStream = async (
   }
 
   const knowledgeBaseModelMessages = await convertToModelMessages(messages);
+  const knowledgeBaseOperationId = `kbAgent-${sessionId}-${Date.now()}`;
   const stream = await observe({ name: "knowledgeBaseAgent" }, () =>
     streamText({
       model: llm,
@@ -220,6 +222,22 @@ export const runChatStream = async (
         ...knowledgeBaseModelMessages,
       ],
       experimental_telemetry: { isEnabled: true },
+      onStepFinish: (step) => {
+        const usage = step.usage;
+        if (!usage) return;
+        void recordLlmUsage({
+          operationName: "chatStream:knowledgeBase",
+          operationId: knowledgeBaseOperationId,
+          model: MODELS.GEMINI_3_FLASH,
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+          totalTokens: usage.totalTokens,
+          reasoningTokens: usage.reasoningTokens,
+          cachedInputTokens: usage.cachedInputTokens,
+          source: "chat",
+          metadata: { agent: "knowledgeBase" },
+        });
+      },
     }),
   );
 
