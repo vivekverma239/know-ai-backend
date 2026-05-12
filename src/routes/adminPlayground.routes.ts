@@ -15,6 +15,7 @@ import { getUserTeamIds } from "@/service/userTeams";
 import { AuthorizationError, NotFoundError } from "@/utils/errorHandler";
 import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { logger } from "@/utils/logger";
+import { setSubjectIdentity } from "@/utils/requestContext";
 import { Type } from "@sinclair/typebox";
 import { createUIMessageStreamResponse } from "ai";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
@@ -172,6 +173,19 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
 
       // Resolve or create session
       const sessionId = requestSessionId || uuidv4();
+
+      // Lock in subject + actor identity for token usage attribution:
+      //   subject = the impersonated user (so quota / per-user analytics
+      //             are attributed correctly to whose account is being used)
+      //   actor   = the admin (so we can audit "admin X racked up $Y in
+      //             the playground")
+      setSubjectIdentity({
+        userId, // impersonated user
+        orgId,
+        sessionId,
+        actorUserId: request.admin?.userId,
+      });
+
       const existing = await getSessionWithMessages(sessionId, userId);
       if (!existing) {
         await createSession(userId, "New Session", sessionId);
@@ -269,6 +283,14 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
       if (!existing) {
         await createSession(userId, "New Session", sessionId);
       }
+
+      // Subject = impersonated user, actor = admin. Mirrors /chat above.
+      setSubjectIdentity({
+        userId,
+        orgId,
+        sessionId,
+        actorUserId: request.admin?.userId,
+      });
 
       const response = await runChatStream({
         userId,

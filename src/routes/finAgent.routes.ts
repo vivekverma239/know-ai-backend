@@ -4,6 +4,7 @@ import { type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
 import { getSession, syncMessages } from "@/db/queries/message";
 import { AuthenticationError, NotFoundError, ValidationError } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
+import { setSubjectIdentity } from "@/utils/requestContext";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { Type } from "@sinclair/typebox";
 import { convertToModelMessages, createUIMessageStreamResponse } from "ai";
@@ -46,6 +47,18 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
       const userId: string = user.id;
       const orgId: string = user.orgId;
       const { messages, sessionId, webSearch, fileAnswerModel } = request.body;
+
+      // Lock in subject + actor identity for token usage attribution. The
+      // user-facing route has no impersonation, so subject == actor == JWT
+      // user. This also fixes the upstream bug where requestContext.userId
+      // was read from x-user-id header only (and was missing for JWT-auth'd
+      // requests), causing token_usage_log rows to have userId=null.
+      setSubjectIdentity({
+        userId,
+        orgId,
+        sessionId,
+        actorUserId: userId,
+      });
 
       // Check if sessionId is valid
       const session = await getSession(sessionId);
