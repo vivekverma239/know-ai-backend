@@ -1,5 +1,6 @@
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
 import { parseJson } from "@/utils/parseJson";
 import { generateText, stepCountIs } from "ai";
@@ -35,6 +36,7 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
   const prompt = getFileSearchAgentPrompt();
 
   const llm = getLLM(MODELS.GEMINI_3_FLASH);
+  const fileSearchOperationId = `fileSearchAgent-${context.userId}-${Date.now()}`;
   const response = await generateText({
     tools: tools,
     model: llm,
@@ -51,6 +53,19 @@ export const fileSearchAgent = async (query: string, context: ToolContext) => {
     //   },
     // },
     stopWhen: stepCountIs(10),
+    onStepFinish: (step) => {
+      const usage = step.usage;
+      if (!usage) return;
+      void recordLlmUsage({
+        operationName: "tool:fileSearchAgent",
+        operationId: fileSearchOperationId,
+        model: MODELS.GEMINI_3_FLASH,
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        totalTokens: usage.totalTokens,
+        source: "tool",
+      });
+    },
   });
 
   agentLogger.debug("📄 Response received", {

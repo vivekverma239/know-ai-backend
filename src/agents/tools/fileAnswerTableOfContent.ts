@@ -11,6 +11,7 @@ import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { structuredReports, userFile, userFileToCMeta } from "@/db/schema";
 import { similaritySearchChunks } from "@/service/simSearch";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { createContextLogger, logger } from "@/utils/logger";
 import { getTracer } from "@lmnr-ai/lmnr";
 import { type LanguageModelUsage, type ToolSet, generateText, stepCountIs, tool } from "ai";
@@ -422,6 +423,7 @@ ${tocSections}
 
     const llm = getLLM(model);
     const providerOptions = getProviderOptions(model, "default");
+    const fileAnswerOperationId = `fileAnswerAgent-${userId}-${Date.now()}`;
     const response = await generateText({
       model: llm,
       system: systemPrompt,
@@ -438,6 +440,18 @@ ${tocSections}
           agentLogger.debug("🔧 Tool calls", {
             toolCallCount: step.toolCalls.length,
             toolNames: step.toolCalls.map((tc) => tc.toolName),
+          });
+        }
+        const usage = step.usage;
+        if (usage) {
+          void recordLlmUsage({
+            operationName: "tool:fileAnswerAgent",
+            operationId: fileAnswerOperationId,
+            model,
+            inputTokens: usage.inputTokens ?? 0,
+            outputTokens: usage.outputTokens ?? 0,
+            totalTokens: usage.totalTokens,
+            source: "tool",
           });
         }
       },

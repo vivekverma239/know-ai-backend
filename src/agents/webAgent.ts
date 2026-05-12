@@ -1,5 +1,6 @@
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
 import { parseJson } from "@/utils/parseJson";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
@@ -127,6 +128,7 @@ export const webAgent = async (query: string, context: ToolContext) => {
   });
 
   const llm = getLLM(modelToUse);
+  const webAgentOperationId = `webAgent-${context.userId}-${Date.now()}`;
   const response = await generateText({
     model: llm,
     messages: [
@@ -148,6 +150,18 @@ export const webAgent = async (query: string, context: ToolContext) => {
         agentLogger.debug("🔧 Tool calls", {
           toolCallCount: step.toolCalls.length,
           toolNames: step.toolCalls.map((tc) => tc.toolName),
+        });
+      }
+      const usage = step.usage;
+      if (usage) {
+        void recordLlmUsage({
+          operationName: "tool:webAgent",
+          operationId: webAgentOperationId,
+          model: modelToUse,
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+          totalTokens: usage.totalTokens,
+          source: "tool",
         });
       }
     },
