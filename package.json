@@ -33,6 +33,7 @@
     "tunnel": "cloudflared tunnel run --url http://localhost:3000 knowsis-dev",
     "sync:auth": "tsx scripts/sync_auth_tables.ts",
     "test:smoke": "tsx test/smokeTest.ts",
+    "test:cost-tracker": "dotenvx run -- tsx test/costTrackerSmoke.ts",
     "test:agent": "dotenvx run -- tsx test/agentDebug.ts",
     "parse-engine:deploy": "railway up --dockerfile packages/parse-engine/Dockerfile.server"
   },
