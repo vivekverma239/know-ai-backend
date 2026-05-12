@@ -6,6 +6,15 @@ import { Type } from "@sinclair/typebox";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 
+/** Reusable source enum for analytics querystrings. */
+const SourceFilter = Type.Union([
+  Type.Literal("chat"),
+  Type.Literal("parse"),
+  Type.Literal("report"),
+  Type.Literal("tool"),
+  Type.Literal("other"),
+]);
+
 /**
  * Analytics routes for token usage and cost tracking
  */
@@ -29,6 +38,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           userId: Type.Optional(Type.String()),
           orgId: Type.Optional(Type.String()),
           sessionId: Type.Optional(Type.String()),
+          source: Type.Optional(SourceFilter),
         }),
         response: {
           200: Type.Object({
@@ -60,15 +70,15 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
       const requestId = getRequestId();
 
       try {
-        const { startDate, endDate, userId, orgId, sessionId } = request.query as {
+        const { startDate, endDate, userId, orgId, sessionId, source } = request.query as {
           startDate?: string;
           endDate?: string;
           userId?: string;
           orgId?: string;
           sessionId?: string;
+          source?: string;
         };
 
-        // Build WHERE conditions
         const conditions = [];
         if (startDate) {
           conditions.push(gte(tokenUsageLog.timestamp, new Date(startDate)));
@@ -84,6 +94,9 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
         }
         if (sessionId) {
           conditions.push(eq(tokenUsageLog.sessionId, sessionId));
+        }
+        if (source) {
+          conditions.push(eq(tokenUsageLog.source, source));
         }
 
         // Query aggregated data by model
@@ -112,7 +125,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         logger.info("Token usage summary retrieved", {
           requestId,
-          filters: { startDate, endDate, userId, orgId, sessionId },
+          filters: { startDate, endDate, userId, orgId, sessionId, source },
           resultCount: summary.length,
         });
 
@@ -149,6 +162,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           startDate: Type.Optional(Type.String({ format: "date-time" })),
           endDate: Type.Optional(Type.String({ format: "date-time" })),
           orgId: Type.Optional(Type.String()),
+          source: Type.Optional(SourceFilter),
           limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, default: 10 })),
         }),
         response: {
@@ -178,15 +192,16 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           startDate,
           endDate,
           orgId,
+          source,
           limit = 10,
         } = request.query as {
           startDate?: string;
           endDate?: string;
           orgId?: string;
+          source?: string;
           limit?: number;
         };
 
-        // Build WHERE conditions
         const conditions = [];
         if (startDate) {
           conditions.push(gte(tokenUsageLog.timestamp, new Date(startDate)));
@@ -196,6 +211,9 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
         }
         if (orgId) {
           conditions.push(eq(tokenUsageLog.orgId, orgId));
+        }
+        if (source) {
+          conditions.push(eq(tokenUsageLog.source, source));
         }
 
         // Query top users
@@ -214,7 +232,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         logger.info("Token usage by user retrieved", {
           requestId,
-          filters: { startDate, endDate, orgId, limit },
+          filters: { startDate, endDate, orgId, source, limit },
           resultCount: users.length,
         });
 
@@ -250,6 +268,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           startDate: Type.Optional(Type.String({ format: "date-time" })),
           endDate: Type.Optional(Type.String({ format: "date-time" })),
           userId: Type.Optional(Type.String()),
+          source: Type.Optional(SourceFilter),
           limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, default: 10 })),
         }),
         response: {
@@ -280,15 +299,16 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
           startDate,
           endDate,
           userId,
+          source,
           limit = 10,
         } = request.query as {
           startDate?: string;
           endDate?: string;
           userId?: string;
+          source?: string;
           limit?: number;
         };
 
-        // Build WHERE conditions
         const conditions = [];
         if (startDate) {
           conditions.push(gte(tokenUsageLog.timestamp, new Date(startDate)));
@@ -298,6 +318,9 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
         }
         if (userId) {
           conditions.push(eq(tokenUsageLog.userId, userId));
+        }
+        if (source) {
+          conditions.push(eq(tokenUsageLog.source, source));
         }
 
         // Query operations
@@ -317,7 +340,7 @@ const analyticsRoutes = async (fastify: FastifyInstance) => {
 
         logger.info("Token usage by operation retrieved", {
           requestId,
-          filters: { startDate, endDate, userId, limit },
+          filters: { startDate, endDate, userId, source, limit },
           resultCount: operations.length,
         });
 
