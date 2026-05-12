@@ -18,6 +18,13 @@ export interface RequestContext {
   /** Organization ID if available */
   orgId?: string;
 
+  /**
+   * Actor user id — the user who made the request (admin if impersonating).
+   * Equal to userId when not impersonating. Set by route handlers via
+   * setSubjectIdentity() after auth resolves.
+   */
+  actorUserId?: string;
+
   /** Request path */
   path: string;
 
@@ -39,11 +46,16 @@ const requestContextStorage = new AsyncLocalStorage<RequestContext>();
  * This should be called at the start of each request
  */
 export function initRequestContext(request: FastifyRequest): RequestContext {
+  // The JWT auth plugin sets request.user after onRequest. At init time we
+  // only have the x-user-id header; routes call setSubjectIdentity() once
+  // auth has resolved to lock in the true subject + actor.
+  const initialUserId = extractUserId(request);
   const context: RequestContext = {
     requestId: uuidv4(),
-    userId: extractUserId(request),
+    userId: initialUserId,
     sessionId: extractSessionId(request),
     orgId: extractOrgId(request),
+    actorUserId: initialUserId,
     path: request.url,
     method: request.method,
     timestamp: new Date(),
@@ -51,6 +63,38 @@ export function initRequestContext(request: FastifyRequest): RequestContext {
   };
 
   return context;
+}
+
+/**
+ * Lock in the resolved identity for the current request context.
+ *
+ * Called by route handlers after authentication: the actor is the JWT user,
+ * the subject is the impersonated user when present (admin playground) or
+ * the same as the actor otherwise.
+ *
+ * Mutates the current context in place — no new ALS frame is created, so all
+ * downstream `getRequestContext()` reads (including async callbacks invoked
+ * later) see the new values.
+ *
+ * If no context is active (e.g. unit test without `withRequestContext`),
+ * this is a no-op.
+ */
+export function setSubjectIdentity(args: {
+  userId: string;
+  orgId?: string;
+  sessionId?: string;
+  actorUserId?: string;
+}): void {
+  const ctx = requestContextStorage.getStore();
+  if (!ctx) return;
+  ctx.userId = args.userId;
+  if (args.orgId !== undefined) ctx.orgId = args.orgId;
+  if (args.sessionId !== undefined) ctx.sessionId = args.sessionId;
+  if (args.actorUserId !== undefined) {
+    ctx.actorUserId = args.actorUserId;
+  } else if (ctx.actorUserId === undefined) {
+    ctx.actorUserId = args.userId;
+  }
 }
 
 /**
@@ -174,10 +218,13 @@ export function getContextForLogging(): Record<string, unknown> {
   if (!context) {
     return {};
   }
+  // Note: actorUserId is intentionally included for log correlation when an
+  // admin is impersonating a user (subject userId differs from actor).
 
   return {
     requestId: context.requestId,
     userId: context.userId,
+    actorUserId: context.actorUserId,
     sessionId: context.sessionId,
     orgId: context.orgId,
     path: context.path,
