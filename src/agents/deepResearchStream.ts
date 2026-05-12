@@ -1,8 +1,10 @@
 import type { Message as SQLMessage } from "@/@types";
 import type { StepMessage } from "@/@types/agents";
+import type { MODELS } from "@/@types/llm";
 import { processDeepSearchQuery } from "@/agents/deepResearch";
 import type { getLLM } from "@/ai-backend/llm";
 import { syncMessages } from "@/db/queries/message";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { extractMessageMetadata } from "@/utils/uiMessageMetadata";
 import {
   type KnowsisUIMessage,
@@ -29,6 +31,8 @@ export type DeepResearchStreamArgs = {
   orgId: string;
   systemPrompt: string;
   llm: LLM;
+  /** Concrete model id for usage recording (must match `llm`). */
+  modelId: MODELS;
   logger: { error: (message: string, meta?: Record<string, unknown>) => void };
   /** Persists the assistant snapshot. Called from `UIMessageBuilder.onChange`. */
   persistAssistant: (snapshot: KnowsisUIMessage) => Promise<void>;
@@ -123,6 +127,24 @@ export const buildDeepResearchStream = async (args: DeepResearchStreamArgs) => {
           experimental_telemetry: {
             isEnabled: true,
             tracer: getTracer(),
+          },
+          onStepFinish: (step) => {
+            const usage = step.usage;
+            if (!usage) return;
+            const messageId = builder.snapshot().id;
+            void recordLlmUsage({
+              operationName: "deepResearch",
+              operationId: `deepResearch-${args.sessionId}-${Date.now()}`,
+              messageId,
+              model: args.modelId,
+              inputTokens: usage.inputTokens ?? 0,
+              outputTokens: usage.outputTokens ?? 0,
+              totalTokens: usage.totalTokens,
+              reasoningTokens: usage.reasoningTokens,
+              cachedInputTokens: usage.cachedInputTokens,
+              source: "chat",
+              metadata: { agent: "deepResearch" },
+            });
           },
         });
 

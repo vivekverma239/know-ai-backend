@@ -170,6 +170,7 @@ export const runChatStream = async (
       orgId,
       systemPrompt: DEEP_SEARCH_SYSTEM_PROMPT,
       llm,
+      modelId: MODELS.GEMINI_3_FLASH,
       logger: agentLogger,
       persistAssistant: persistAssistantSnapshot({ sessionId, userId }),
     });
