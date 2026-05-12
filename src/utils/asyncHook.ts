@@ -1,7 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { logError, logger } from "@/utils/logger";
-import { getRequestContext, getRequestId } from "@/utils/requestContext";
-import { calculateUsageCost } from "@/utils/tokenlens";
 import { v4 as uuidv4 } from "uuid";
 
 // Types for token tracking
@@ -105,74 +103,37 @@ export function withTokenTracking<T>(
 }
 
 /**
- * Calculate cost estimate for token usage using tokenlens
- */
-async function calculateCost(
-  model: string,
-  promptTokens: number,
-  completionTokens: number,
-): Promise<number> {
-  try {
-    return await calculateUsageCost(model, promptTokens, completionTokens);
-  } catch (error) {
-    logger.warn("Failed to calculate cost with tokenlens, using fallback", {
-      model,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    // Return 0 if tokenlens fails - the fallback in tokenlens.ts will handle it
-    return 0;
-  }
-}
-
-/**
- * Persist token usage to database
- * This is called asynchronously and failures are logged but don't block the main flow
+ * Persist token usage to the database.
+ *
+ * Historically this function inlined the cost calc + tokenUsageLog insert,
+ * which made it a second writer that could (and did) diverge from the
+ * unified path. It now delegates to recordLlmUsage so every row is shaped
+ * and priced identically regardless of whether it was emitted by an agent
+ * loop, a `*Wrapper` LLM call, or the legacy withTokenTracking path.
+ *
+ * Kept async + fire-and-forget for backwards compatibility with callers
+ * that schedule it via setImmediate.
  */
 async function persistTokenUsage(usage: TokenUsage): Promise<void> {
   try {
-    // Dynamically import to avoid circular dependencies
-    const { getDb } = await import("../db/index.js");
-    const { tokenUsageLog } = await import("../db/schema.js");
-
-    const requestId = getRequestId();
-    const requestContext = getRequestContext();
-
-    // Calculate cost using tokenlens
-    const costEstimate = await calculateCost(
-      usage.model,
-      usage.promptTokens,
-      usage.completionTokens,
-    );
-
-    await getDb()
-      .insert(tokenUsageLog)
-      .values({
-        requestId: requestId || "unknown",
-        operationId: usage.operationId,
-        operationName: usage.operationName,
-        userId: requestContext?.userId,
-        sessionId: requestContext?.sessionId,
-        orgId: requestContext?.orgId,
-        model: usage.model,
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-        totalTokens: usage.totalTokens,
-        costEstimate: costEstimate.toFixed(6),
-        timestamp: usage.timestamp,
-        metadata: {},
-      });
-
-    logger.debug("Token usage persisted to database with tokenlens cost", {
+    // Dynamic import keeps the original lazy-load pattern (intended to
+    // avoid circular dependencies during server bootstrap).
+    const { recordLlmUsage } = await import("./costTracker.js");
+    await recordLlmUsage({
+      operationName: usage.operationName,
       operationId: usage.operationId,
+      parentOperationId: usage.parentOperationId,
       model: usage.model,
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
       totalTokens: usage.totalTokens,
-      costEstimate,
+      source: "tool",
     });
   } catch (error) {
     logError(error, {
       operationId: usage.operationId,
       operation: "persistTokenUsage",
-      message: "Failed to persist token usage to database",
+      message: "Failed to delegate token usage to recordLlmUsage",
     });
   }
 }
