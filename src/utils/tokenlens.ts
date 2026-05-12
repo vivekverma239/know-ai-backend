@@ -5,30 +5,76 @@ import { type TokenCosts, computeCostUSD } from "tokenlens";
 
 /**
  * Model mapping for tokenlens
- * Maps our internal model identifiers to tokenlens model identifiers
+ * Maps our internal model identifiers to tokenlens model identifiers.
+ *
+ * Every MODELS enum value MUST have an entry — `test/modelPricing.test.ts`
+ * enforces this. When you add a new model to `MODELS`, add the matching
+ * mapping here too.
  */
 export const TOKENLENS_MODEL_MAPPING: Record<string, string> = {
-  // Google Gemini models
+  // Google Gemini
+  [MODELS.GEMINI_1_5_FLASH]: "google/gemini-1.5-flash",
+  [MODELS.GEMINI_2_0_FLASH]: "google/gemini-2.0-flash",
+  [MODELS.GEMINI_2_0_FLASH_LITE]: "google/gemini-2.0-flash-lite",
+  [MODELS.GEMINI_2_0_PRO]: "google/gemini-2.0-pro",
   [MODELS.GEMINI_2_5_FLASH]: "google/gemini-2.5-flash",
   [MODELS.GEMINI_2_5_FLASH_LITE]: "google/gemini-2.5-flash-lite",
   [MODELS.GEMINI_2_5_PRO]: "google/gemini-2.5-pro",
-  [MODELS.GEMINI_2_0_FLASH]: "google/gemini-2.0-flash",
-  [MODELS.GEMINI_2_0_FLASH_LITE]: "google/gemini-2.0-flash-lite",
-  [MODELS.GEMINI_1_5_FLASH]: "google/gemini-1.5-flash",
+  [MODELS.GEMINI_3_FLASH]: "google/gemini-3-flash",
 
-  // OpenAI models
+  // OpenAI
   [MODELS.GPT_4o]: "openai/gpt-4o",
   [MODELS.GPT_4_1]: "openai/gpt-4.1",
   [MODELS.GPT_4_1_MINI]: "openai/gpt-4.1-mini",
   [MODELS.GPT_5]: "openai/gpt-5",
+  [MODELS.GPT_5_5]: "openai/gpt-5.5",
   [MODELS.GPT_5_MINI]: "openai/gpt-5-mini",
   [MODELS.GPT_5_NANO]: "openai/gpt-5-nano",
   [MODELS.O3_MINI]: "openai/o3-mini",
   [MODELS.O4_MINI]: "openai/o4-mini",
+  [MODELS.OPENAI_GPT_OSS_20B]: "openai/gpt-oss-20b",
+  [MODELS.OPENAI_GPT_OSS_120B]: "openai/gpt-oss-120b",
 
-  // Anthropic Claude models
+  // Anthropic
   [MODELS.CLAUDE_3_5_SONNET]: "anthropic/claude-3.5-sonnet",
-  [MODELS.CLAUDE_4_SONNET]: "anthropic/claude-4.5-sonnet",
+  [MODELS.CLAUDE_4_SONNET]: "anthropic/claude-sonnet-4",
+
+  // xAI
+  [MODELS.GROK_3_MINI]: "x-ai/grok-3-mini",
+  [MODELS.GROK_4]: "x-ai/grok-4",
+  [MODELS.GROK_4_1_FAST]: "x-ai/grok-4.1-fast",
+  [MODELS.GROK_CODE_FAST_1]: "x-ai/grok-code-fast-1",
+
+  // DeepSeek
+  [MODELS.DEEPSEEK_LLAMA_8B]: "deepseek/deepseek-r1-distill-llama-8b",
+  [MODELS.DEEPSEEK_QWEN_2_5_SMALL]: "deepseek/deepseek-r1-distill-qwen-1.5b",
+  [MODELS.DEEPSEEK_QWEN_2_5_MEDIUM]: "deepseek/deepseek-r1-distill-qwen-14b",
+  [MODELS.DEEPSEEK_QWEN_2_5_LARGE]: "deepseek/deepseek-r1-distill-qwen-32b",
+  [MODELS.DEEPSEEK_R1_0528]: "deepseek/deepseek-r1-0528",
+  [MODELS.DEEPSEEK_V3]: "deepseek/deepseek-chat-v3",
+
+  // Meta / Llama
+  [MODELS.LLAMA_3_2_11B_VISION_INSTRUCT]: "meta-llama/llama-3.2-11b-vision-instruct",
+  [MODELS.LLAMA_3_2_90B_VISION_INSTRUCT]: "meta-llama/llama-3.2-90b-vision-instruct",
+
+  // Mistral
+  [MODELS.MAGISTRAL_SMALL_2506]: "mistralai/magistral-small",
+  [MODELS.MAGISTRAL_MEDIUM_2506]: "mistralai/magistral-medium",
+  [MODELS.MAGISTRAL_MEDIUM_2506_THINKING]: "mistralai/magistral-medium",
+
+  // Moonshot
+  [MODELS.KIMI_K2]: "moonshotai/kimi-k2",
+
+  // Z AI / GLM
+  [MODELS.GLM_4_5]: "z-ai/glm-4.5",
+
+  // Perplexity
+  [MODELS.PERPLEXITY_SONAR]: "perplexity/sonar",
+
+  // OpenRouter aliases / Qwen
+  [MODELS.SONOMA_DUSK_ALPHA]: "openrouter/sonoma-dusk-alpha",
+  [MODELS.SONOMA_SKY_ALPHA]: "openrouter/sonoma-sky-alpha",
+  [MODELS.QWEN_3_NEXT_80B_A3B_THINKING]: "qwen/qwen3-next-80b-a3b-thinking",
 };
 
 /**
@@ -200,18 +246,34 @@ function calculateFallbackCost(
   promptTokens: number,
   completionTokens: number,
 ): number {
-  // Approximate pricing per million tokens (in USD)
+  // Approximate pricing per million tokens (in USD). Used only when tokenlens
+  // cannot resolve the model with any of the priority providers.
   const FALLBACK_PRICING: Record<string, { input: number; output: number }> = {
-    // Google Gemini
-    "gemini-2.5-flash": { input: 0.15, output: 0.6 },
-    "gemini-2.5-pro": { input: 1.25, output: 5.0 },
-    "gemini-2.0-flash": { input: 0.15, output: 0.6 },
-    "gemini-1.5-flash": { input: 0.075, output: 0.3 },
+    // Google
+    "gemini-1-5-flash": { input: 0.075, output: 0.3 },
+    "gemini-2-0-flash": { input: 0.1, output: 0.4 },
+    "gemini-2-0-flash-lite": { input: 0.075, output: 0.3 },
+    "gemini-2-5-flash": { input: 0.15, output: 0.6 },
+    "gemini-2-5-flash-lite-preview-06-17": { input: 0.075, output: 0.3 },
+    "gemini-2-5-pro": { input: 1.25, output: 5.0 },
+    "gemini-3-flash-preview": { input: 0.15, output: 0.6 },
     // OpenAI
     "gpt-4o": { input: 2.5, output: 10.0 },
+    "gpt-4-1": { input: 2.0, output: 8.0 },
+    "gpt-4-1-mini": { input: 0.4, output: 1.6 },
     "gpt-5": { input: 5.0, output: 15.0 },
+    "gpt-5-5-2026-04-23": { input: 5.0, output: 15.0 },
+    "gpt-5-mini": { input: 0.25, output: 2.0 },
+    "gpt-5-nano": { input: 0.05, output: 0.4 },
     "o3-mini": { input: 1.1, output: 4.4 },
     "o4-mini": { input: 1.1, output: 4.4 },
+    // Anthropic
+    "anthropic-claude-3-5-sonnet": { input: 3.0, output: 15.0 },
+    "anthropic-claude-sonnet-4": { input: 3.0, output: 15.0 },
+    // xAI
+    "x-ai-grok-3-mini": { input: 0.3, output: 0.6 },
+    "x-ai-grok-4": { input: 5.0, output: 15.0 },
+    "x-ai-grok-4-1-fast": { input: 0.3, output: 0.6 },
     // Default
     default: { input: 1.0, output: 2.0 },
   };
