@@ -3,6 +3,7 @@ import { logger as appLogger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
 import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
 import { recordTokenUsage as persistTokenUsageRecord } from "@/utils/asyncHook";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { traceManager, withActiveSpan } from "@/utils/tracing";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -296,7 +297,10 @@ export const generateTextWrapper = async ({
         operationName: functionName || "generateText",
       });
 
-      // Also persist to database via asyncHook
+      // Persist to token_usage_log via the unified writer. We keep the
+      // legacy asyncHook in-memory aggregator (used by structured-report
+      // step rollups), but the DB row goes through recordLlmUsage so we
+      // have a single source of truth.
       try {
         persistTokenUsageRecord({
           promptTokens,
@@ -307,6 +311,15 @@ export const generateTextWrapper = async ({
       } catch {
         // Non-blocking — token tracking context may not be available
       }
+      void recordLlmUsage({
+        operationName: functionName ?? "generateText",
+        operationId: span.id,
+        model,
+        inputTokens: promptTokens,
+        outputTokens: completionTokens,
+        totalTokens,
+        source: "tool",
+      });
 
       // Calculate and log cost using tokenlens
       try {
@@ -433,7 +446,8 @@ export const generateObjectWrapper = async <T>({
           operationName: "generateObject",
         });
 
-        // Also persist to database via asyncHook
+        // Persist to token_usage_log via the unified writer; see note in
+        // generateTextWrapper for why we keep both calls.
         try {
           persistTokenUsageRecord({
             promptTokens,
@@ -444,6 +458,15 @@ export const generateObjectWrapper = async <T>({
         } catch {
           // Non-blocking — token tracking context may not be available
         }
+        void recordLlmUsage({
+          operationName: "generateObject",
+          operationId: span.id,
+          model,
+          inputTokens: promptTokens,
+          outputTokens: completionTokens,
+          totalTokens,
+          source: "tool",
+        });
 
         // Calculate and log cost using tokenlens
         try {
@@ -567,7 +590,8 @@ export const streamTextWrapper = async ({
               operationName: "streamText",
             });
 
-            // Also persist to database via asyncHook
+            // Persist to token_usage_log via the unified writer; see note
+            // in generateTextWrapper for why we keep both calls.
             try {
               persistTokenUsageRecord({
                 promptTokens,
@@ -578,6 +602,15 @@ export const streamTextWrapper = async ({
             } catch {
               // Non-blocking — token tracking context may not be available
             }
+            void recordLlmUsage({
+              operationName: "streamText",
+              operationId: span.id,
+              model,
+              inputTokens: promptTokens,
+              outputTokens: completionTokens,
+              totalTokens,
+              source: "tool",
+            });
 
             try {
               const cost = await calculateUsageCost(model, promptTokens, completionTokens);
