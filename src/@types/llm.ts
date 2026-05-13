@@ -4,6 +4,7 @@ export enum MODELS {
   GPT_4_1 = "gpt-4.1",
   GPT_4_1_MINI = "gpt-4.1-mini",
   GPT_5 = "gpt-5",
+  GPT_5_5 = "gpt-5.5-2026-04-23",
   GPT_5_MINI = "gpt-5-mini",
 
   GPT_5_NANO = "gpt-5-nano",

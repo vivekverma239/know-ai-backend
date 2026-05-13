@@ -4,15 +4,12 @@ import withSpan from "@/utils/asyncHook";
 import { type ParsedCitation, parseCitations } from "@/utils/citation";
 import { recordLlmUsage } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
-import {
-  type KnowsisUIMessage,
-  UIMessageBuilder,
-} from "@/utils/uiMessageBuilder";
+import { type KnowsisUIMessage, UIMessageBuilder } from "@/utils/uiMessageBuilder";
 import { extractMessageMetadata } from "@/utils/uiMessageMetadata";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import {
-  type ModelMessage,
   type LanguageModelUsage,
+  type ModelMessage,
   type StepResult,
   type ToolSet,
   type UIMessage,
@@ -115,9 +112,9 @@ export const finAgent = async ({
   context,
   messages,
   saveMessage,
-  model = MODELS.GEMINI_3_FLASH,
-  webSearch = false,
-  fileAnswerModel = MODELS.GROK_4_1_FAST,
+  model = MODELS.GPT_5_5,
+  webSearch = true,
+  fileAnswerModel = MODELS.GEMINI_3_FLASH,
 }: {
   context: FinAgentContext;
   messages: FinAgentUIMessage[];
@@ -228,9 +225,9 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
   const {
     messages,
     context,
-    webSearch = false,
-    model = MODELS.GEMINI_3_FLASH,
-    fileAnswerModel = MODELS.GROK_4_1_FAST,
+    webSearch = true,
+    model = MODELS.GPT_5_5,
+    fileAnswerModel = MODELS.GEMINI_3_FLASH,
     logger: argsLogger,
     persistAssistant,
   } = args;
@@ -335,24 +332,31 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
         // streamText's fullStream can emit `error` chunks that don't throw —
         // without surfacing them, a model/provider failure (e.g. an image part
         // Gemini can't decode) shows up as an empty stream with start→finish
-        // and no diagnostic. Surface these to logs and to the UI as visible
-        // text so the user can see what went wrong.
-        const surfaceStreamError = (label: string, errorText: string) => {
-          argsLogger.error(`FinAgent ${label}`, {
-            error: errorText,
+        // and no diagnostic. Log the full error and emit a structured
+        // `data-error` part so the UI can render it as an alert card.
+        const surfaceStreamError = (code: string, errorOrMessage: unknown) => {
+          const message =
+            errorOrMessage instanceof Error
+              ? errorOrMessage.message
+              : typeof errorOrMessage === "string"
+                ? errorOrMessage
+                : typeof errorOrMessage === "object"
+                  ? JSON.stringify(errorOrMessage)
+                  : String(errorOrMessage);
+          const stack =
+            errorOrMessage instanceof Error && errorOrMessage.stack
+              ? errorOrMessage.stack
+              : undefined;
+          argsLogger.error(`FinAgent ${code}`, {
+            error: stack ? `${message}\n${stack}` : message,
             sessionId: context.sessionId,
             userId: context.userId,
           });
           try {
-            const id = `${label}-${Date.now()}`;
-            builder.startStep();
-            builder.startText(id);
-            builder.appendText(id, `⚠️ ${label}: ${errorText}`);
-            builder.endText(id);
-            builder.finishStep();
+            builder.appendError({ message, code });
           } catch (emitError) {
             argsLogger.error("Failed to surface FinAgent error to UI", {
-              label,
+              code,
               cause: emitError instanceof Error ? emitError.message : String(emitError),
             });
           }
@@ -415,14 +419,7 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
                 });
                 break;
               case "error":
-                surfaceStreamError(
-                  "stream-error",
-                  chunk.error instanceof Error
-                    ? `${chunk.error.message}${chunk.error.stack ? `\n${chunk.error.stack}` : ""}`
-                    : typeof chunk.error === "object"
-                      ? JSON.stringify(chunk.error)
-                      : String(chunk.error),
-                );
+                surfaceStreamError("stream-error", chunk.error);
                 if (!finishReason) finishReason = "error";
                 break;
               case "finish":
@@ -430,12 +427,7 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
             }
           }
         } catch (iterationError) {
-          surfaceStreamError(
-            "stream-exception",
-            iterationError instanceof Error
-              ? `${iterationError.message}${iterationError.stack ? `\n${iterationError.stack}` : ""}`
-              : String(iterationError),
-          );
+          surfaceStreamError("stream-exception", iterationError);
           if (!finishReason) finishReason = "error";
         }
 
@@ -450,6 +442,7 @@ export const buildFinAgentStream = (args: BuildFinAgentStreamArgs) => {
           (p) =>
             p.type === "text" ||
             p.type === "reasoning" ||
+            p.type === "data-error" ||
             (typeof p.type === "string" && p.type.startsWith("tool-")),
         );
         if (!hasVisibleOutput) {

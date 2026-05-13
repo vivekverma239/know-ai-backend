@@ -19,12 +19,14 @@ import corsPlugin from "./plugins/cors.plugin";
 import loggingPlugin from "./plugins/logging.plugin";
 import { createErrorHandler } from "./utils/errorHandler";
 
-import adminAuthRoutes from "./routes/adminAuth.routes";
 import adminRoutes from "./routes/admin.routes";
+import adminAuthRoutes from "./routes/adminAuth.routes";
 import adminPlaygroundRoutes from "./routes/adminPlayground.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import chatRoutes from "./routes/chatSession.routes";
 import chatStreamRoutes from "./routes/chatStream.routes";
+import documentParseCallbackRoutes from "./routes/documentParseCallback.routes";
+import documentParseWorkflowRoutes from "./routes/documentParseWorkflow.routes";
 import fileRoutes from "./routes/file.routes";
 import finAgentRoutes from "./routes/finAgent.routes";
 import healthRoutes from "./routes/health.routes";
@@ -32,10 +34,8 @@ import ingestionRoutes from "./routes/ingestion.routes";
 import parsingCallbackRoutes from "./routes/parsingCallback.routes";
 import structuredReportRoutes from "./routes/structuredReport.routes";
 import structuredReportCallbackRoutes from "./routes/structuredReportCallback.routes";
-import webSearchRoutes from "./routes/webSearch.routes";
 import tocMetaCallbackRoutes from "./routes/tocMetaCallback.routes";
-import documentParseCallbackRoutes from "./routes/documentParseCallback.routes";
-import documentParseWorkflowRoutes from "./routes/documentParseWorkflow.routes";
+import webSearchRoutes from "./routes/webSearch.routes";
 import webSearchCallbackRoutes from "./routes/webSearchCallback.routes";
 
 // 50 MiB body limit. Upstash workflow callbacks (e.g. /api/v1/document-parse-workflow)
@@ -77,7 +77,12 @@ const start = async () => {
     global: false,
     encoding: "utf8",
     runFirst: true,
-    routes: ["/api/v1/webhooks/ingestion", "/api/v1/web-search-callback", "/api/v1/toc-meta-callback", "/api/v1/document-parse-workflow"],
+    routes: [
+      "/api/v1/webhooks/ingestion",
+      "/api/v1/web-search-callback",
+      "/api/v1/toc-meta-callback",
+      "/api/v1/document-parse-workflow",
+    ],
     // Body size is governed by the Fastify root `bodyLimit` set above; this
     // plugin reads the body via Fastify's pipeline so it inherits that limit.
   });
@@ -156,7 +161,7 @@ const start = async () => {
   await fastify.register(documentParseWorkflowRoutes, {
     prefix: "/api/v1/document-parse-workflow",
   });
-  await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
+  await fastify.register(analyticsRoutes, { prefix: "/api/v1/admin/analytics" });
   await fastify.register(ingestionRoutes, { prefix: "/api/v1" });
   await fastify.register(adminAuthRoutes, { prefix: "/api/v1/admin/auth" });
   await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });

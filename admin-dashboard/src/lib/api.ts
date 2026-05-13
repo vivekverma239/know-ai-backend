@@ -255,3 +255,118 @@ export const lookupPlaygroundFiles = (token: string, ids: string[]) => {
     },
   );
 };
+
+// ---------------------------------------------------------------------------
+// Analytics — token usage / cost
+// ---------------------------------------------------------------------------
+
+export const COST_SOURCES = [
+  "chat",
+  "parse",
+  "report",
+  "tool",
+  "search",
+  "embedding",
+  "other",
+] as const;
+export type CostSource = (typeof COST_SOURCES)[number];
+
+export type UsageFilters = {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  actorUserId?: string;
+  orgId?: string;
+  sessionId?: string;
+  source?: CostSource;
+};
+
+export type UsageByModel = {
+  model: string;
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalCost: number;
+  requestCount: number;
+};
+
+export type UsageSummary = {
+  summary: UsageByModel[];
+  totals: { totalTokens: number; totalCost: number; requestCount: number };
+};
+
+export const getAdminUsageSummary = (token: string, filters: UsageFilters) =>
+  apiRequest<UsageSummary>("/admin/analytics/token-usage/summary", { token, query: filters });
+
+export type UsageByUserRow = {
+  userId: string;
+  totalTokens: number;
+  totalCost: number;
+  requestCount: number;
+};
+
+export const getAdminUsageByUser = (token: string, filters: UsageFilters & { limit?: number }) =>
+  apiRequest<{ users: UsageByUserRow[] }>("/admin/analytics/token-usage/by-user", {
+    token,
+    query: filters,
+  });
+
+export type UsageByOperationRow = {
+  operationName: string;
+  totalTokens: number;
+  totalCost: number;
+  callCount: number;
+  avgTokensPerCall: number;
+};
+
+export const getAdminUsageByOperation = (
+  token: string,
+  filters: UsageFilters & { limit?: number },
+) =>
+  apiRequest<{ operations: UsageByOperationRow[] }>("/admin/analytics/token-usage/by-operation", {
+    token,
+    query: filters,
+  });
+
+export type UsageByDayRow = {
+  day: string;
+  totalTokens: number;
+  totalCost: number;
+  requestCount: number;
+};
+
+export const getAdminUsageByDay = (token: string, filters: UsageFilters) =>
+  apiRequest<{ days: UsageByDayRow[] }>("/admin/analytics/token-usage/by-day", {
+    token,
+    query: filters,
+  });
+
+export type UserUsageDetail = {
+  userId: string;
+  windowStart: string;
+  windowEnd: string;
+  totals: { totalTokens: number; totalCost: number; requestCount: number };
+  bySource: {
+    source: string;
+    totalTokens: number;
+    totalCost: number;
+    requestCount: number;
+  }[];
+  byModel: {
+    model: string;
+    totalTokens: number;
+    totalCost: number;
+    requestCount: number;
+  }[];
+  byDay: UsageByDayRow[];
+};
+
+export const getAdminUserUsageDetail = (
+  token: string,
+  userId: string,
+  query: { startDate?: string; endDate?: string; orgId?: string } = {},
+) =>
+  apiRequest<UserUsageDetail>(
+    `/admin/analytics/token-usage/by-user/${encodeURIComponent(userId)}`,
+    { token, query },
+  );

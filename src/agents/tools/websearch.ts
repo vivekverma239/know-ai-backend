@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { type LanguageModelUsage, type UIMessageStreamWriter, generateText, tool } from "ai";
 import Exa from "exa-js";
@@ -5,6 +6,7 @@ import { z } from "zod";
 
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
+import { recordLlmUsage } from "@/utils/costTracker";
 import { env } from "@/utils/env";
 import { logger } from "@/utils/logger";
 import type { ToolContext } from "./toolContext";
@@ -32,6 +34,16 @@ export const getWebsiteContentTool = ({
 
         const endTime = Date.now();
         logger.debug(`Exa got contents for ${url} in ${endTime - startTime}ms`);
+
+        void recordLlmUsage({
+          operationName: "tool:getWebsiteContent",
+          operationId: randomUUID(),
+          source: "search",
+          model: "exa:contents",
+          inputTokens: 0,
+          outputTokens: 0,
+          metadata: { provider: "exa", url, resultCount: response.results.length },
+        });
 
         return response.results.map((result) => result.text).join("\n");
       } catch (error) {
@@ -65,6 +77,16 @@ export const getFirecrawlScrapeTool = ({ context }: { context: ToolContext }) =>
         const endTime = Date.now();
         logger.debug(`Firecrawl scraped ${url} in ${endTime - startTime}ms`);
 
+        void recordLlmUsage({
+          operationName: "tool:firecrawlScrape",
+          operationId: randomUUID(),
+          source: "search",
+          model: "firecrawl:scrape",
+          inputTokens: 0,
+          outputTokens: 0,
+          metadata: { provider: "firecrawl", url },
+        });
+
         return result;
       } catch (error) {
         logger.error(`Firecrawl error: ${(error as Error).message}`);
@@ -93,19 +115,58 @@ export const getWebSearchTool = ({ context }: { context: ToolContext }) => {
       const exa = new Exa(env.get("EXA_API_KEY"));
       const startTime = Date.now();
       logger.debug(`Exa searching for ${query}`);
-      const response = await exa.search(query, {
-        type: queryType,
-        category: category,
-      });
-      const endTime = Date.now();
-      logger.debug(`Exa searched for ${query} in ${endTime - startTime}ms`);
-      return response.results.map((result) => {
-        return {
-          title: result.title,
-          url: result.url,
-          text: result.text,
-        };
-      });
+      try {
+        const response = await exa.search(query, {
+          type: queryType,
+          category: category,
+        });
+        const endTime = Date.now();
+        logger.debug(`Exa searched for ${query} in ${endTime - startTime}ms`);
+
+        void recordLlmUsage({
+          operationName: "tool:webSearch",
+          operationId: randomUUID(),
+          source: "search",
+          model: "exa:search",
+          inputTokens: 0,
+          outputTokens: 0,
+          metadata: {
+            provider: "exa",
+            queryType,
+            category,
+            resultCount: response.results.length,
+          },
+        });
+
+        return response.results.map((result) => {
+          return {
+            title: result.title,
+            url: result.url,
+            text: result.text,
+          };
+        });
+      } catch (error) {
+        logger.error(`Exa search error: ${(error as Error).message}`);
+        // Exa typically bills failed searches too — record the row so cost
+        // reporting matches the actual invoice. `status: "error"` distinguishes
+        // failed calls in analytics.
+        void recordLlmUsage({
+          operationName: "tool:webSearch",
+          operationId: randomUUID(),
+          source: "search",
+          model: "exa:search",
+          inputTokens: 0,
+          outputTokens: 0,
+          metadata: {
+            provider: "exa",
+            queryType,
+            category,
+            status: "error",
+            error: (error as Error).message,
+          },
+        });
+        return `Exa error: ${(error as Error).message}`;
+      }
     },
   });
 };

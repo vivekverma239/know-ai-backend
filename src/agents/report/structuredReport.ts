@@ -1,9 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { MODELS } from "@/@types/llm";
 import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { structuredReportTemplate, structuredReports, userFile } from "@/db/schema";
 import { parseSources } from "@/service/citations";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
+import { getRequestContext, withRequestContext } from "@/utils/requestContext";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { type LanguageModelUsage, generateObject, generateText, stepCountIs } from "ai";
 import { eq, inArray } from "drizzle-orm";
@@ -153,6 +156,13 @@ ${COMMON_CITATION_PROMPT}
 
   mergeTokenUsage(usage, model, response.usage);
 
+  recordUsageFromSdk({
+    operationName: "structuredReport:initialResearch",
+    source: "report",
+    model,
+    usage: response.usage,
+  });
+
   return {
     researchOutput: response.text,
     usage: usage,
@@ -222,6 +232,13 @@ Task description: ${taskDescription}
     "generate object for sub questions identification",
     3,
   );
+
+  recordUsageFromSdk({
+    operationName: "structuredReport:subQuestionsIdentification",
+    source: "report",
+    model,
+    usage: response.usage,
+  });
 
   return {
     subQuestions: response.object.subQuestions,
@@ -300,6 +317,13 @@ ${finalReportPrompt}
     },
   });
 
+  recordUsageFromSdk({
+    operationName: "structuredReport:finalReport",
+    source: "report",
+    model,
+    usage: response.usage,
+  });
+
   return {
     report: response.text,
     usage: {
@@ -351,6 +375,13 @@ export const getReportTitleAndSummary = async (
       summary: z.string(),
     }),
   });
+  recordUsageFromSdk({
+    operationName: "structuredReport:titleAndSummary",
+    source: "report",
+    model,
+    usage: response.usage,
+  });
+
   return {
     title: response.object.title,
     summary: response.object.summary,
@@ -375,6 +406,43 @@ export const processStructuredReport = async ({
   });
   if (!report) throw new Error("Report not found");
 
+  // QStash callbacks land without a request context, so every nested
+  // `recordUsageFromSdk` call would record `userId=null`. Establish a synthetic
+  // context here so cost rows are attributed to the report's owner. If the
+  // caller already set up a context (e.g. a synchronous admin trigger), reuse
+  // it instead of clobbering.
+  const existingCtx = getRequestContext();
+  if (!existingCtx) {
+    return withRequestContext(
+      {
+        requestId: randomUUID(),
+        userId: report.userId,
+        actorUserId: report.userId,
+        orgId: report.userId,
+        sessionId: reportId,
+        path: `/structured-report/${reportId}`,
+        method: "WORKFLOW",
+        timestamp: new Date(),
+        metadata: { source: "structuredReportCallback", reportId },
+      },
+      () => processStructuredReportInner({ reportId, reprocess, report, logger }),
+    );
+  }
+
+  return processStructuredReportInner({ reportId, reprocess, report, logger });
+};
+
+const processStructuredReportInner = async ({
+  reportId,
+  reprocess,
+  report,
+  logger,
+}: {
+  reportId: string;
+  reprocess: boolean;
+  report: NonNullable<Awaited<ReturnType<typeof db.query.structuredReports.findFirst>>>;
+  logger: ReturnType<typeof createContextLogger>;
+}) => {
   const outline = await db.query.structuredReportTemplate.findFirst({
     where: eq(structuredReportTemplate.id, report.templateId),
   });

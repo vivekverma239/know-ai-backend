@@ -2,10 +2,12 @@ import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import type { PreflightResult } from "@/db/schema";
 import { similaritySearchDocuments } from "@/service/simSearch";
+import { recordLlmUsage, recordUsageFromSdk } from "@/utils/costTracker";
 import { env } from "@/utils/env";
 import { createContextLogger } from "@/utils/logger";
 import { Output, generateText, stepCountIs, tool } from "ai";
 import Exa from "exa-js";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 const logger = createContextLogger({ agent: "readinessAgent" });
@@ -101,6 +103,21 @@ export const assessReportReadiness = async ({
           category: category === "pdf" ? "pdf" : undefined,
           numResults: 5,
         });
+
+        void recordLlmUsage({
+          operationName: "readinessAgent:webSearch",
+          operationId: randomUUID(),
+          source: "search",
+          model: "exa:search",
+          inputTokens: 0,
+          outputTokens: 0,
+          metadata: {
+            provider: "exa",
+            category,
+            resultCount: results.results.length,
+          },
+        });
+
         return results.results
           .filter((r) => {
             if (seenUrls.has(r.url)) return false;
@@ -124,10 +141,19 @@ export const assessReportReadiness = async ({
     },
   });
 
+  const assessmentModel = MODELS.GEMINI_3_FLASH;
   const { experimental_output: assessment } = await generateText({
-    model: getLLM(MODELS.GEMINI_3_FLASH),
+    model: getLLM(assessmentModel),
     tools: { documentSearch: documentSearchTool, webSearch: webSearchTool },
     stopWhen: stepCountIs(10),
+    onStepFinish: (step) => {
+      recordUsageFromSdk({
+        operationName: "readinessAgent:assessment",
+        source: "report",
+        model: assessmentModel,
+        usage: step.usage,
+      });
+    },
     prompt: `You are a report readiness analyst. Your job is to assess whether the user has sufficient documents to generate a high-quality report, and if not, find relevant sources on the web.
 
 ## Report Details

@@ -5,6 +5,7 @@ import { getEmbeddings } from "@/ai-backend/embeddings";
 import { getLLM } from "@/ai-backend/llm";
 import { getSimilarChapters } from "@/db/queries/simChunks";
 import { similaritySearchChunks } from "@/service/simSearch";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { logger } from "@/utils/logger";
 import { parseJson } from "@/utils/parseJson";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
@@ -176,6 +177,14 @@ export const chapterFilter = async (query: string, userId?: string, orgId?: stri
             tracer: getTracer(),
           },
           stopWhen: stepCountIs(20),
+          onStepFinish: (step) => {
+            recordUsageFromSdk({
+              operationName: "chapterFilter:filter",
+              source: "tool",
+              model,
+              usage: step.usage,
+            });
+          },
         });
 
         logger.info(`Chapter filter response: ${response.text}`);
@@ -308,6 +317,14 @@ export const chapterAgentV2 = async ({
             tracer: getTracer(),
           },
           stopWhen: stepCountIs(20),
+          onStepFinish: (step) => {
+            recordUsageFromSdk({
+              operationName: "chapterFilter:summarize",
+              source: "tool",
+              model,
+              usage: step.usage,
+            });
+          },
         });
 
         return response.text;

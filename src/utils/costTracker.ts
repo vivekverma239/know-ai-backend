@@ -1,20 +1,28 @@
+import { randomUUID } from "node:crypto";
 import { getDb } from "@/db";
 import { tokenUsageLog } from "@/db/schema";
 import { logger } from "@/utils/logger";
 import { getRequestContext, getRequestId } from "@/utils/requestContext";
 import { calculateCostWithFallback } from "@/utils/tokenlens";
+import type { LanguageModelUsage } from "ai";
 
 /**
- * Where a recorded LLM call came from. Drives admin analytics filters and
- * per-feature quotas.
+ * Where a recorded usage row came from. Drives admin analytics filters and
+ * per-feature aggregation.
  *
- *   - "chat": agent/chat-stream code paths invoked from a user-facing API.
- *   - "parse": parse-engine token usage fanned out from /parsing-callback.
- *   - "report": structured-report generation.
- *   - "tool": LLM call inside a tool's `execute` (e.g. fileAnswerAgent).
- *   - "other": anything that doesn't fit the above; should be rare.
+ *   - "chat":      agent/chat-stream code paths invoked from a user-facing API.
+ *   - "parse":     parse-engine token usage fanned out from /parsing-callback.
+ *   - "report":    structured-report generation.
+ *   - "tool":      LLM call inside a tool's `execute` (e.g. fileAnswerAgent).
+ *   - "search":    external search APIs (Exa, Firecrawl) — fixed per-call cost,
+ *                  zero tokens.
+ *   - "embedding": embedding APIs (OpenAI/Google via `embedMany`).
+ *   - "other":     anything that doesn't fit the above; should be rare.
  */
-export type CostSource = "chat" | "parse" | "report" | "tool" | "other";
+export type CostSource = "chat" | "parse" | "report" | "tool" | "search" | "embedding" | "other";
+
+/** Maximum value that fits in `token_usage_log.cost_estimate` (numeric(10,6)). */
+const COST_ESTIMATE_MAX = 9999.999999;
 
 /**
  * A single LLM call's usage record. `inputTokens`/`outputTokens`/`totalTokens`
@@ -75,7 +83,21 @@ export async function recordLlmUsage(record: LlmCallRecord): Promise<void> {
 
     let costEstimate = 0;
     try {
-      costEstimate = await calculateCostWithFallback(record.model, inputTokens, outputTokens);
+      const rawCost = await calculateCostWithFallback(record.model, inputTokens, outputTokens);
+      // `token_usage_log.cost_estimate` is numeric(10,6) — max ~$9999.999999.
+      // A pathological single call (e.g. 10M reasoning tokens on a flagship
+      // model) can exceed that and the insert would throw, losing the row.
+      // Clamp + log so the row is still attributed.
+      if (Number.isFinite(rawCost) && rawCost <= COST_ESTIMATE_MAX) {
+        costEstimate = rawCost;
+      } else {
+        logger.warn("costTracker: clamping costEstimate to column max", {
+          model: record.model,
+          rawCost,
+          clamped: COST_ESTIMATE_MAX,
+        });
+        costEstimate = COST_ESTIMATE_MAX;
+      }
     } catch (error) {
       logger.debug("costTracker: cost calc failed, recording row with cost=0", {
         model: record.model,
@@ -113,4 +135,57 @@ export async function recordLlmUsage(record: LlmCallRecord): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+/**
+ * Convenience wrapper that lifts a Vercel AI SDK `LanguageModelUsage` straight
+ * into a `token_usage_log` row. Fire-and-forget — the cost-tracking layer
+ * should never block or fail the caller.
+ *
+ * Use this for the common case where a `generateText` / `generateObject` /
+ * `streamText` call returns a single `usage` payload (or an `onStepFinish`
+ * callback fires per step). Generates a fresh `operationId` per call.
+ *
+ * When `usage` is missing we log warn-once-per-operation. The SDK contract is
+ * that a successful response always carries usage; a regression here usually
+ * means an SDK upgrade renamed the field, or a stream errored mid-flight.
+ * Without the alert the cost rows would silently stop appearing.
+ */
+const missingUsageWarned = new Set<string>();
+
+export function recordUsageFromSdk(args: {
+  operationName: string;
+  source: CostSource;
+  model: string;
+  usage: LanguageModelUsage | undefined | null;
+  parentOperationId?: string;
+  messageId?: string;
+  metadata?: Record<string, unknown>;
+}): void {
+  const usage = args.usage;
+  if (!usage) {
+    if (!missingUsageWarned.has(args.operationName)) {
+      missingUsageWarned.add(args.operationName);
+      logger.warn("recordUsageFromSdk: missing usage payload — first occurrence", {
+        operationName: args.operationName,
+        source: args.source,
+        model: args.model,
+      });
+    }
+    return;
+  }
+  void recordLlmUsage({
+    operationName: args.operationName,
+    operationId: randomUUID(),
+    parentOperationId: args.parentOperationId,
+    messageId: args.messageId,
+    source: args.source,
+    model: args.model,
+    inputTokens: usage.inputTokens ?? 0,
+    outputTokens: usage.outputTokens ?? 0,
+    totalTokens: usage.totalTokens,
+    reasoningTokens: usage.reasoningTokens,
+    cachedInputTokens: usage.cachedInputTokens,
+    metadata: args.metadata,
+  });
 }

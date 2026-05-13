@@ -22,6 +22,8 @@ const FILE_ID = /file_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{1
 // adds metadata inside (e.g. `/page=1`, comma-separated lists, surrounding
 // spaces); we consume the whole bracket and re-render only the file id chips.
 const BRACKETED_CITATION = /\[([^\]\n]*file_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}[^\]\n]*)\]/g;
+// Web-source citation emitted by the FinAgent prompt: `[url=https://…]`.
+const URL_CITATION = /\[url=(https?:\/\/[^\]\s]+)\]/g;
 
 function shortId(fileId: string): string {
   const uuid = fileId.slice("file_".length);
@@ -36,12 +38,26 @@ function citeTag(id: string): string {
   return `<filecite cite_uuid="${uuid}">${shortId(id)}</filecite>`;
 }
 
+function urlHostLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function urlCiteTag(url: string): string {
+  // Encode the URL so it survives HTML-attribute parsing; WebCite decodes.
+  return `<webcite cite_url="${encodeURIComponent(url)}">${urlHostLabel(url)}</webcite>`;
+}
+
 function preprocessCitations(text: string): string {
   let out = text.replace(BRACKETED_CITATION, (match, content: string) => {
     const ids = content.match(FILE_ID);
     if (!ids) return match;
     return ids.map(citeTag).join(" ");
   });
+  out = out.replace(URL_CITATION, (_match, url: string) => urlCiteTag(url));
   out = out.replace(FILE_ID, citeTag);
   return out;
 }
@@ -175,11 +191,43 @@ function FileCite({ cite_uuid, children }: FileCiteProps) {
   );
 }
 
-const responseAllowedTags = { filecite: ["cite_uuid"] };
-const responseLiteralTagContent = ["filecite"];
+type WebCiteProps = {
+  cite_url?: string;
+  children?: React.ReactNode;
+};
+
+function WebCite({ cite_url, children }: WebCiteProps) {
+  if (!cite_url) return <span>{children}</span>;
+  let url: string;
+  try {
+    url = decodeURIComponent(cite_url);
+  } catch {
+    return <span>{children}</span>;
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={url}
+      className="not-prose mx-0.5 inline-flex cursor-pointer items-baseline rounded border border-border bg-muted/60 px-1 align-baseline font-mono text-[10px] text-muted-foreground no-underline hover:bg-muted hover:text-foreground"
+    >
+      {children}
+    </a>
+  );
+}
+
+const responseAllowedTags = {
+  filecite: ["cite_uuid"],
+  webcite: ["cite_url"],
+};
+const responseLiteralTagContent = ["filecite", "webcite"];
 // `components` here is keyed by tag name. Streamdown forwards element attributes
 // to the component, so `file_id` lands as a prop.
-const responseComponents = { filecite: FileCite as never };
+const responseComponents = {
+  filecite: FileCite as never,
+  webcite: WebCite as never,
+};
 
 export function TextPart({ text, isUser }: Props) {
   if (!text) return null;

@@ -7,6 +7,8 @@ import { EntitiesPage } from "./pages/EntitiesPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PdfViewerPage } from "./pages/PdfViewerPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
+import { UsagePage } from "./pages/UsagePage";
+import { UserUsagePage } from "./pages/UserUsagePage";
 import { useAuthStore } from "./store/authStore";
 
 function RootRedirect() {
@@ -34,6 +36,8 @@ export function App() {
         <Route path="documents/:id/pdf" element={<PdfViewerPage />} />
         <Route path="entities" element={<EntitiesPage />} />
         <Route path="playground" element={<PlaygroundPage />} />
+        <Route path="usage" element={<UsagePage />} />
+        <Route path="usage/users/:userId" element={<UserUsagePage />} />
       </Route>
 
       <Route path="*" element={<RootRedirect />} />

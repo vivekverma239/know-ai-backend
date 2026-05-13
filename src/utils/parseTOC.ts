@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import {
   type FilePart,
   type ImagePart,
@@ -189,10 +190,18 @@ export const parseTOC = async (doc: Buffer) => {
       { role: "user", content: userContent },
     ];
     const task = limit(async () => {
+      const tocModel = MODELS.GEMINI_2_0_FLASH;
       const response = await generateObject({
-        model: getLLM(MODELS.GEMINI_2_0_FLASH),
+        model: getLLM(tocModel),
         schema: schema,
         messages: messages,
+      });
+
+      recordUsageFromSdk({
+        operationName: "parseTOC:sectionExtraction",
+        source: "parse",
+        model: tocModel,
+        usage: response.usage,
       });
 
       allSections.push(...response.object.sections);
@@ -204,8 +213,9 @@ export const parseTOC = async (doc: Buffer) => {
 
   const sortedSections = allSections.sort((a, b) => a.startPage - b.startPage);
 
+  const combineModel = MODELS.GEMINI_2_5_FLASH_LITE;
   const combinedTOC = await generateObject({
-    model: getLLM(MODELS.GEMINI_2_5_FLASH_LITE),
+    model: getLLM(combineModel),
     schema: schema,
     messages: [
       { role: "system", content: combineTOCPrompt },
@@ -214,6 +224,13 @@ export const parseTOC = async (doc: Buffer) => {
         content: `Sections: ${JSON.stringify(sortedSections, null, 2)}`,
       },
     ] as ModelMessage[],
+  });
+
+  recordUsageFromSdk({
+    operationName: "parseTOC:combine",
+    source: "parse",
+    model: combineModel,
+    usage: combinedTOC.usage,
   });
 
   const end = performance.now();
@@ -236,8 +253,9 @@ Rules:
 `;
 
 export const responseFromPDF = async (doc: Buffer, question: string) => {
+  const model = MODELS.GEMINI_2_5_FLASH;
   const response = await generateText({
-    model: getLLM(MODELS.GEMINI_2_5_FLASH),
+    model: getLLM(model),
     messages: [
       { role: "system", content: systemPromptForResponse },
       {
@@ -256,5 +274,13 @@ export const responseFromPDF = async (doc: Buffer, question: string) => {
       },
     ],
   });
+
+  recordUsageFromSdk({
+    operationName: "parseTOC:responseFromPDF",
+    source: "parse",
+    model,
+    usage: response.usage,
+  });
+
   return response.text;
 };

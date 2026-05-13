@@ -2,6 +2,7 @@ import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { userFile } from "@/db/schema";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { logger } from "@/utils/logger";
 import { generateObject } from "ai";
 import { and, eq, inArray } from "drizzle-orm";
@@ -16,7 +17,8 @@ const db = getDb();
 const loadParseEngineUrlFetch = () => import("parse-engine/url-fetch");
 
 const generateSummaryAndMetadata = async (content: string) => {
-  const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
+  const model = MODELS.GEMINI_2_5_FLASH_LITE;
+  const llm = getLLM(model);
   const prompt = `
   You are a helpful assistant. Given a web article content, generate a summary and metadata about the article.
   
@@ -60,6 +62,13 @@ const generateSummaryAndMetadata = async (content: string) => {
       referencePeriodEnd: z.string().optional(),
     }),
     prompt: prompt,
+  });
+
+  recordUsageFromSdk({
+    operationName: "generateSummaryAndMetadata",
+    source: "other",
+    model,
+    usage: result.usage,
   });
 
   // Parse the JSON response

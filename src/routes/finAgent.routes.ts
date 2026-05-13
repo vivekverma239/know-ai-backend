@@ -15,6 +15,7 @@ export interface FinAgentPostBody {
   messages: FinAgentUIMessage[];
   sessionId: string;
   webSearch?: boolean;
+  model?: string;
   fileAnswerModel?: string;
 }
 
@@ -30,6 +31,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
           messages: Type.Array(Type.Any()),
           sessionId: Type.String(),
           webSearch: Type.Optional(Type.Boolean()),
+          model: Type.Optional(Type.String()),
           fileAnswerModel: Type.Optional(Type.String()),
         }),
         response: {
@@ -46,7 +48,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
       }
       const userId: string = user.id;
       const orgId: string = user.orgId;
-      const { messages, sessionId, webSearch, fileAnswerModel } = request.body;
+      const { messages, sessionId, webSearch, model, fileAnswerModel } = request.body;
 
       // Lock in subject + actor identity for token usage attribution. The
       // user-facing route has no impersonation, so subject == actor == JWT
@@ -69,7 +71,14 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
         throw new ValidationError("Invalid sessionId");
       }
 
-      const fileAnswerModelEnum = (fileAnswerModel as MODELS) || MODELS.GROK_4_1_FAST;
+      // Validate model overrides against the MODELS enum; unknown values fall
+      // back to the FinAgent function defaults (GPT_5_5 / GEMINI_3_FLASH).
+      const knownModels = new Set<string>(Object.values(MODELS) as string[]);
+      const modelEnum = model && knownModels.has(model) ? (model as MODELS) : undefined;
+      const fileAnswerModelEnum =
+        fileAnswerModel && knownModels.has(fileAnswerModel)
+          ? (fileAnswerModel as MODELS)
+          : undefined;
 
       const saveMessages = async (messagesToSave: FinAgentUIMessage[]) => {
         const sqlMessages: SQLMessage[] = messagesToSave.map((message) => {
@@ -105,6 +114,7 @@ const finAgentRoutes = async (fastify: FastifyInstance) => {
           // to webDocSearchTool / bulkFileIndexingTool / webSearchTool /
           // webPageScrapeTool out of the box.
           webSearch: webSearch ?? true,
+          model: modelEnum,
           fileAnswerModel: fileAnswerModelEnum,
         }),
       );

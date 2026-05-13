@@ -51,14 +51,16 @@ export type TransportContext = {
   userId: string;
   orgId: string;
   sessionId: string;
+  /** Per-mode extras (e.g. FinAgent model overrides) merged into the body. */
+  extraBody?: Record<string, unknown>;
 };
 
 export function buildTransport(mode: ChatMode, ctx: TransportContext) {
-  const { accessToken, userId, orgId, sessionId } = ctx;
+  const { accessToken, userId, orgId, sessionId, extraBody } = ctx;
   const cfg = MODES[mode];
   return new DefaultChatTransport({
     api: `${API_BASE_URL}${cfg.endpoint}`,
     headers: { Authorization: `Bearer ${accessToken}` },
-    body: { userId, orgId, sessionId, ...cfg.bodyExtra() },
+    body: { userId, orgId, sessionId, ...cfg.bodyExtra(), ...extraBody },
   });
 }

@@ -3,6 +3,7 @@ import { getEmbeddings } from "@/ai-backend/embeddings";
 import { getLLM } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { highlights } from "@/db/external_schema";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { logError, logger } from "@/utils/logger";
 import { generateText } from "ai";
 import { eq } from "drizzle-orm";
@@ -79,8 +80,9 @@ const parseImageContent = async (
   }
 
   try {
+    const model = MODELS.GEMINI_3_FLASH;
     const response = await generateText({
-      model: getLLM(MODELS.GEMINI_3_FLASH),
+      model: getLLM(model),
       messages: [
         {
           role: "user",
@@ -96,6 +98,14 @@ const parseImageContent = async (
           ],
         },
       ],
+    });
+
+    recordUsageFromSdk({
+      operationName: "highlightIngestion:parseImage",
+      source: "other",
+      model,
+      usage: response.usage,
+      metadata: { highlightId: String(highlightId) },
     });
 
     return cleanText(response.text);

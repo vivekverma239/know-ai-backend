@@ -93,6 +93,16 @@ export function AdminLayout() {
               </Button>
             )}
           </NavLink>
+          <NavLink to="/dashboard/usage" end className="contents">
+            {({ isActive }: { isActive: boolean }) => (
+              <Button
+                variant={isActive ? "default" : "ghost"}
+                className="w-full justify-start"
+              >
+                Usage
+              </Button>
+            )}
+          </NavLink>
         </nav>
 
         {/* Spacer */}

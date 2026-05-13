@@ -10,6 +10,10 @@ import { ChatMessages } from "./ChatMessages";
 import { ChatModeBar } from "./ChatModeBar";
 import { ModeSuggestions } from "./ModeSuggestions";
 import { buildTransport, MODES, type ChatMode } from "./modeConfig";
+import {
+  DEFAULT_AGENT_MODEL,
+  DEFAULT_FILE_ANSWER_MODEL,
+} from "./availableModels";
 
 function createSessionId() {
   return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -24,6 +28,8 @@ export function PlaygroundChat({ selectedMember, orgId }: Props) {
   const [mode, setMode] = useState<ChatMode>("finAgent");
   const [sessionId, setSessionId] = useState(createSessionId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [agentModel, setAgentModel] = useState(DEFAULT_AGENT_MODEL);
+  const [fileAnswerModel, setFileAnswerModel] = useState(DEFAULT_FILE_ANSWER_MODEL);
 
   const transport = useMemo(
     () =>
@@ -32,8 +38,20 @@ export function PlaygroundChat({ selectedMember, orgId }: Props) {
         userId: selectedMember.id,
         orgId,
         sessionId,
+        extraBody:
+          mode === "finAgent"
+            ? { model: agentModel, fileAnswerModel }
+            : undefined,
       }),
-    [accessToken, selectedMember.id, orgId, sessionId, mode],
+    [
+      accessToken,
+      selectedMember.id,
+      orgId,
+      sessionId,
+      mode,
+      agentModel,
+      fileAnswerModel,
+    ],
   );
 
   // Tying `id` to user|org|mode forces a fresh Chat whenever any change.
@@ -133,7 +151,15 @@ export function PlaygroundChat({ selectedMember, orgId }: Props) {
 
   return (
     <div className="flex h-[calc(100vh-220px)] flex-col">
-      <ChatModeBar mode={mode} onChange={setMode} disabled={status === "streaming" || status === "submitted"} />
+      <ChatModeBar
+        mode={mode}
+        onChange={setMode}
+        disabled={status === "streaming" || status === "submitted"}
+        agentModel={agentModel}
+        onAgentModelChange={setAgentModel}
+        fileAnswerModel={fileAnswerModel}
+        onFileAnswerModelChange={setFileAnswerModel}
+      />
 
       {errorMessage && (
         <div className="px-2 pt-2">

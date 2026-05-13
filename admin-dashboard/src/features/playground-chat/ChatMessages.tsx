@@ -16,6 +16,7 @@ import { TextPart } from "./parts/TextPart";
 import { FilePart } from "./parts/FilePart";
 import { ToolList, type ChatToolPart } from "./parts/ToolPart";
 import { ReasoningPart } from "./parts/ReasoningPart";
+import { ErrorPart } from "./parts/ErrorPart";
 import { SourcesPart, type ChatSourcePart } from "./parts/SourcesPart";
 
 type Props = {
@@ -38,6 +39,12 @@ type AnyPart = {
   output?: unknown;
   errorText?: string;
   title?: string;
+  data?: { message?: string; code?: string };
+};
+
+type ChatErrorPart = AnyPart & {
+  type: "data-error";
+  data: { message: string; code?: string };
 };
 
 function gatherText(parts: AnyPart[]): string {
@@ -60,6 +67,12 @@ function gatherSources(parts: AnyPart[]): ChatSourcePart[] {
   ) as ChatSourcePart[];
 }
 
+function gatherErrors(parts: AnyPart[]): ChatErrorPart[] {
+  return parts.filter(
+    (p) => p.type === "data-error" && p.data && typeof p.data.message === "string",
+  ) as ChatErrorPart[];
+}
+
 export function ChatMessages({ messages, status, onRegenerate }: Props) {
   const isSubmitted = status === "submitted";
   const isStreaming = status === "streaming";
@@ -80,6 +93,7 @@ export function ChatMessages({ messages, status, onRegenerate }: Props) {
           const tools = parts.filter(
             (p) => p.type.startsWith("tool-") || p.type === "dynamic-tool",
           );
+          const errors = gatherErrors(parts);
           const files = parts.filter((p) => p.type === "file");
           const isLast = msgIndex === messages.length - 1;
           const isAssistant = msg.role === "assistant";
@@ -98,6 +112,14 @@ export function ChatMessages({ messages, status, onRegenerate }: Props) {
                 )}
 
                 <TextPart text={text} isUser={msg.role === "user"} />
+
+                {errors.map((e, i) => (
+                  <ErrorPart
+                    key={`err-${i}`}
+                    message={e.data.message}
+                    code={e.data.code}
+                  />
+                ))}
 
                 {files.map((f, i) => (
                   <FilePart

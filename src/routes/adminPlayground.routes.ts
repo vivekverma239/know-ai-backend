@@ -1,8 +1,14 @@
 import type { Message as SQLMessage } from "@/@types";
-import { buildFinAgentStream, type FinAgentUIMessage, finAgent } from "@/agents/finAgent";
+import { MODELS } from "@/@types/llm";
+import { type FinAgentUIMessage, buildFinAgentStream, finAgent } from "@/agents/finAgent";
 import { getDb } from "@/db";
 import { accounts, accountsMemberships } from "@/db/external_schema";
-import { createSession, getSession, getSessionWithMessages, syncMessages } from "@/db/queries/message";
+import {
+  createSession,
+  getSession,
+  getSessionWithMessages,
+  syncMessages,
+} from "@/db/queries/message";
 import {
   type ModelConfig,
   structuredReportTemplate,
@@ -13,9 +19,9 @@ import { runChatStream } from "@/routes/chatStream.routes";
 import { sendQstashMessage } from "@/service/qstash";
 import { getUserTeamIds } from "@/service/userTeams";
 import { AuthorizationError, NotFoundError } from "@/utils/errorHandler";
-import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { logger } from "@/utils/logger";
 import { setSubjectIdentity } from "@/utils/requestContext";
+import type { KnowsisUIMessage } from "@/utils/uiMessageBuilder";
 import { Type } from "@sinclair/typebox";
 import { createUIMessageStreamResponse } from "ai";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
@@ -146,6 +152,8 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         orgId: Type.String(),
         sessionId: Type.Optional(Type.String()),
         webSearch: Type.Optional(Type.Boolean()),
+        model: Type.Optional(Type.String()),
+        fileAnswerModel: Type.Optional(Type.String()),
       }),
     },
     handler: async (request, reply) => {
@@ -155,13 +163,38 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         orgId,
         sessionId: requestSessionId,
         webSearch,
+        model: requestModel,
+        fileAnswerModel: requestFileAnswerModel,
       } = request.body as {
         messages: FinAgentUIMessage[];
         userId: string;
         orgId: string;
         sessionId?: string;
         webSearch?: boolean;
+        model?: string;
+        fileAnswerModel?: string;
       };
+
+      // Validate model overrides against the MODELS enum so we never hand an
+      // unknown string to `getLLM()`. Unknown values fall back to the
+      // FinAgent defaults rather than 400'ing — keeps the playground forgiving.
+      const knownModels = new Set<string>(Object.values(MODELS) as string[]);
+      const model =
+        requestModel && knownModels.has(requestModel) ? (requestModel as MODELS) : undefined;
+      const fileAnswerModel =
+        requestFileAnswerModel && knownModels.has(requestFileAnswerModel)
+          ? (requestFileAnswerModel as MODELS)
+          : undefined;
+      if (requestModel && !model) {
+        logger.warn("Unknown FinAgent model requested; using default", {
+          requestedModel: requestModel,
+        });
+      }
+      if (requestFileAnswerModel && !fileAnswerModel) {
+        logger.warn("Unknown FinAgent fileAnswerModel requested; using default", {
+          requestedFileAnswerModel: requestFileAnswerModel,
+        });
+      }
 
       logger.warn("Admin action", {
         adminUserId: request.admin?.userId,
@@ -200,9 +233,7 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
           role: message.role,
           parts: message.parts,
           metadata:
-            (message as KnowsisUIMessage).metadata ??
-            (message as FinAgentUIMessage).data ??
-            null,
+            (message as KnowsisUIMessage).metadata ?? (message as FinAgentUIMessage).data ?? null,
           createdAt: new Date(),
           updatedAt: null,
           sessionId,
@@ -223,6 +254,8 @@ const adminPlaygroundRoutes = async (fastify: FastifyInstance) => {
         // FinAgent has access to webDocSearchTool / bulkFileIndexingTool /
         // webSearchTool / webPageScrapeTool out of the box.
         webSearch: webSearch ?? true,
+        model,
+        fileAnswerModel,
         logger,
         persistAssistant: async (snapshot) => {
           await saveSqlMessage(snapshot);

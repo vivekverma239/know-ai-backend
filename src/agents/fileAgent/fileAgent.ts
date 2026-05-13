@@ -5,6 +5,7 @@ import { getLLM } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { getSimilarChapters } from "@/db/queries/simChunks";
 import { userFileChapter, userFilePage, userFileSection } from "@/db/schema";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { logger } from "@/utils/logger";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { generateText, stepCountIs, tool } from "ai";
@@ -70,7 +71,8 @@ export const fileAgent = async ({
   callback?: (step: StepMessage) => void;
 }) => {
   // const llm = getLLM(DEFAULT_SMALL_MODEL);
-  const llm = getLLM(MODELS.GEMINI_2_5_FLASH_LITE);
+  const model = MODELS.GEMINI_2_5_FLASH_LITE;
+  const llm = getLLM(model);
   // const llm = getLLM(MODELS.GPT_4_1_MINI);
   // const llm = getLLM(MODELS.KIMI_K2);
 
@@ -136,6 +138,15 @@ export const fileAgent = async ({
       }),
     },
     stopWhen: stepCountIs(20),
+    onStepFinish: (step) => {
+      recordUsageFromSdk({
+        operationName: "fileAgent",
+        source: "tool",
+        model,
+        usage: step.usage,
+        metadata: { fileId },
+      });
+    },
     providerOptions: {
       google: {
         thinkingConfig: {

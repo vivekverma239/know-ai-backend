@@ -1,5 +1,6 @@
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { generateText } from "ai";
 import moment from "moment";
 
@@ -42,5 +43,13 @@ export const queryExpansion = async (query: string) => {
     },
     temperature: 1,
   });
+
+  recordUsageFromSdk({
+    operationName: "queryExpansion",
+    source: "chat",
+    model,
+    usage: response.usage,
+  });
+
   return response.text;
 };

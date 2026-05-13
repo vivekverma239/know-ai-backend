@@ -4,6 +4,7 @@ import { getLLM, getProviderOptions } from "@/ai-backend/llm";
 import { getDb } from "@/db";
 import { structuredReports, userFile } from "@/db/schema";
 import { similaritySearchChunks, similaritySearchDocuments } from "@/service/simSearch";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { createContextLogger } from "@/utils/logger";
 import { parseJson } from "@/utils/parseJson";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
@@ -151,7 +152,8 @@ const queryAgent = async (
   }[],
   addUsage?: (usage: { usage: LanguageModelUsage; model: string }) => void,
 ): Promise<{ response: string; usage: LanguageModelUsage }> => {
-  const llm = getLLM(MODELS.GEMINI_2_5_FLASH);
+  const queryAgentModel = MODELS.GEMINI_2_5_FLASH;
+  const llm = getLLM(queryAgentModel);
 
   const response = await generateText({
     model: llm,
@@ -191,9 +193,16 @@ ${COMMON_CITATION_PROMPT}
   if (addUsage) {
     addUsage({
       usage: queryAgentUsage,
-      model: MODELS.GEMINI_2_5_FLASH,
+      model: queryAgentModel,
     });
   }
+
+  recordUsageFromSdk({
+    operationName: "fileAnswer:queryAgent",
+    source: "tool",
+    model: queryAgentModel,
+    usage: queryAgentUsage,
+  });
 
   return {
     response: response.text,
@@ -289,6 +298,13 @@ const documentFilter = async (
           });
         }
 
+        recordUsageFromSdk({
+          operationName: "fileAnswer:documentFilter",
+          source: "tool",
+          model,
+          usage: documentFilterUsage,
+        });
+
         const result = parseJson(response.text) as {
           documents: { id: string; title: string }[];
         } | null;
@@ -373,6 +389,13 @@ export const fileAnswerChunkSearchAgent = async ({
       expandedQuery = expansionResponse.text;
       mergeTokenUsage(usageRecord, expansionModel, expansionResponse.usage);
       addUsage?.({ usage: expansionResponse.usage, model: expansionModel });
+
+      recordUsageFromSdk({
+        operationName: "fileAnswer:queryExpansion",
+        source: "tool",
+        model: expansionModel,
+        usage: expansionResponse.usage,
+      });
 
       queryExpansionStep.message = "Query expanded";
       queryExpansionStep.status = "done";
@@ -472,6 +495,14 @@ export const fileAnswerChunkSearchAgent = async ({
       providerOptions,
       experimental_telemetry: { isEnabled: true, tracer: getTracer() },
       stopWhen: stepCountIs(maxIterations),
+      onStepFinish: (step) => {
+        recordUsageFromSdk({
+          operationName: "fileAnswer:dataExtraction",
+          source: "tool",
+          model,
+          usage: step.usage,
+        });
+      },
     });
 
     mergeTokenUsage(usageRecord, model, response.usage);

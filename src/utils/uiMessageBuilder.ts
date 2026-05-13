@@ -27,6 +27,7 @@ export type ChatMessageMetadata = {
 
 export type ChatDataParts = {
   step: StepMessage;
+  error: { message: string; code?: string };
 };
 
 export type KnowsisUIMessage = UIMessage<ChatMessageMetadata, ChatDataParts>;
@@ -35,6 +36,7 @@ type AssistantPart = UIMessagePart<ChatDataParts, Record<string, never>>;
 
 type ToolPart = Extract<AssistantPart, { type: `tool-${string}` }>;
 type DataStepPart = Extract<AssistantPart, { type: "data-step" }>;
+type DataErrorPart = Extract<AssistantPart, { type: "data-error" }>;
 
 type BuilderEvent =
   | { type: "mutation" }
@@ -298,6 +300,20 @@ export class UIMessageBuilder {
     else this.assistant.parts.push(part);
 
     this.writer.write({ type: "data-step", id: step.id, data: step });
+    this.notify({ type: "mutation" }, "milestone");
+  }
+
+  /**
+   * Emit a structured error part the UI can render as an alert card. The
+   * message should be a short, human-readable string (e.g. provider error
+   * message) with no stack trace; full details belong in the logger.
+   */
+  appendError(args: { message: string; code?: string }): void {
+    const id = uuidv4();
+    const data = { message: args.message, code: args.code };
+    const part: DataErrorPart = { type: "data-error", id, data };
+    this.assistant.parts.push(part);
+    this.writer.write({ type: "data-error", id, data });
     this.notify({ type: "mutation" }, "milestone");
   }
 

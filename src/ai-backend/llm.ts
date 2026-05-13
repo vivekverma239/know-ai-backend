@@ -1,9 +1,8 @@
 import { MODELS } from "@/@types/llm";
+import { recordTokenUsage as persistTokenUsageRecord } from "@/utils/asyncHook";
+import { type CostSource, recordLlmUsage } from "@/utils/costTracker";
 import { logger as appLogger } from "@/utils/logger";
 import { getRequestId } from "@/utils/requestContext";
-import { calculateUsageCost, formatCost } from "@/utils/tokenlens";
-import { recordTokenUsage as persistTokenUsageRecord } from "@/utils/asyncHook";
-import { recordLlmUsage } from "@/utils/costTracker";
 import { traceManager, withActiveSpan } from "@/utils/tracing";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -103,6 +102,8 @@ export function getLLM(model: MODELS | string) {
       return wrapAISDKModel(openai("gpt-4o"));
     case MODELS.GPT_5:
       return wrapAISDKModel(openai("gpt-5"));
+    case MODELS.GPT_5_5:
+      return wrapAISDKModel(openai("gpt-5.5-2026-04-23"));
     case MODELS.GPT_5_MINI:
       return wrapAISDKModel(openai("gpt-5-mini"));
     case MODELS.GPT_5_NANO:
@@ -155,6 +156,7 @@ export const REASONING_MODELS = [
   // MODELS.GEMINI_3_FLASH, // Not in target types yet, add if needed or comment out
   MODELS.O4_MINI,
   MODELS.GPT_5,
+  MODELS.GPT_5_5,
   MODELS.GROK_4_1_FAST,
 ];
 
@@ -210,6 +212,7 @@ export const generateTextWrapper = async ({
   lastMessageID,
   onStepFinishCallback,
   functionName,
+  source = "tool",
 }: {
   model: MODELS;
   messages: ModelMessage[];
@@ -221,6 +224,7 @@ export const generateTextWrapper = async ({
   lastMessageID?: string;
   onStepFinishCallback?: (stepResult: StepResult<ToolSet>) => void;
   functionName?: string;
+  source?: CostSource;
 }): Promise<Result<GenerateTextResult<ToolSet, never>, Error>> => {
   // Check if last message is a assistant message
   if (messages[messages.length - 1]?.role === "assistant") {
@@ -318,28 +322,18 @@ export const generateTextWrapper = async ({
         inputTokens: promptTokens,
         outputTokens: completionTokens,
         totalTokens,
-        source: "tool",
+        source,
       });
 
-      // Calculate and log cost using tokenlens
-      try {
-        const cost = await calculateUsageCost(model, promptTokens, completionTokens);
-        appLogger.info("LLM call completed with cost", {
-          model,
-          functionName,
-          promptTokens,
-          completionTokens,
-          totalTokens,
-          cost: formatCost(cost),
-          costUSD: cost,
-          spanId: span.id,
-        });
-      } catch (error) {
-        appLogger.debug("Cost calculation failed (non-blocking)", {
-          model,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+      // Cost is computed once inside recordLlmUsage and persisted on the row.
+      appLogger.info("LLM call completed", {
+        model,
+        functionName,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        spanId: span.id,
+      });
     }
 
     // End span with success metadata
@@ -379,11 +373,15 @@ export const generateObjectWrapper = async <T>({
   messages,
   schema,
   reasoningLevel = "none",
+  source = "tool",
+  functionName,
 }: {
   model: MODELS;
   messages: ModelMessage[];
   schema: z.ZodType;
   reasoningLevel: "none" | "default" | "high";
+  source?: CostSource;
+  functionName?: string;
 }): Promise<Result<T, Error>> => {
   const llm = getLLM(model);
 
@@ -459,33 +457,22 @@ export const generateObjectWrapper = async <T>({
           // Non-blocking — token tracking context may not be available
         }
         void recordLlmUsage({
-          operationName: "generateObject",
+          operationName: functionName ?? "generateObject",
           operationId: span.id,
           model,
           inputTokens: promptTokens,
           outputTokens: completionTokens,
           totalTokens,
-          source: "tool",
+          source,
         });
 
-        // Calculate and log cost using tokenlens
-        try {
-          const cost = await calculateUsageCost(model, promptTokens, completionTokens);
-          appLogger.info("LLM generateObject completed with cost", {
-            model,
-            promptTokens,
-            completionTokens,
-            totalTokens,
-            cost: formatCost(cost),
-            costUSD: cost,
-            spanId: span.id,
-          });
-        } catch (error) {
-          appLogger.debug("Cost calculation failed (non-blocking)", {
-            model,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+        appLogger.info("LLM generateObject completed", {
+          model,
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          spanId: span.id,
+        });
       }
 
       // End span with success
@@ -519,6 +506,8 @@ export const streamTextWrapper = async ({
   tools,
   onFinish,
   requestHeaders,
+  source = "chat",
+  functionName,
 }: {
   model: MODELS;
   messages: ModelMessage[];
@@ -527,6 +516,8 @@ export const streamTextWrapper = async ({
   tools?: ToolSet;
   onFinish: (responseMessage: ModelMessage) => Promise<void>;
   requestHeaders?: Headers;
+  source?: CostSource;
+  functionName?: string;
 }) => {
   const llm = getLLM(model);
   const providerOptions = getProviderOptions(model, reasoningLevel);
@@ -603,33 +594,22 @@ export const streamTextWrapper = async ({
               // Non-blocking — token tracking context may not be available
             }
             void recordLlmUsage({
-              operationName: "streamText",
+              operationName: functionName ?? "streamText",
               operationId: span.id,
               model,
               inputTokens: promptTokens,
               outputTokens: completionTokens,
               totalTokens,
-              source: "tool",
+              source,
             });
 
-            try {
-              const cost = await calculateUsageCost(model, promptTokens, completionTokens);
-              appLogger.info("LLM streamText completed with cost", {
-                model,
-                promptTokens,
-                completionTokens,
-                totalTokens,
-                cost: formatCost(cost),
-                costUSD: cost,
-                spanId: span.id,
-              });
-            } catch (error) {
-              appLogger.debug("Cost calculation failed (non-blocking)", {
-                model,
-                error: error instanceof Error ? error.message : String(error),
-                spanId: span.id,
-              });
-            }
+            appLogger.info("LLM streamText completed", {
+              model,
+              promptTokens,
+              completionTokens,
+              totalTokens,
+              spanId: span.id,
+            });
 
             closeSpan({
               finishReason: event.finishReason,

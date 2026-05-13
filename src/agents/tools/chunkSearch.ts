@@ -1,6 +1,7 @@
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import { similaritySearchChapters, similaritySearchChunks } from "@/service/simSearch";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import { logger } from "@/utils/logger";
 import { generateObject, tool } from "ai";
 import { z } from "zod";
@@ -21,8 +22,9 @@ export const snippetSearch = async ({
   });
 
   // Send to LLM to filter and get possible response
+  const model = MODELS.OPENAI_GPT_OSS_20B;
   const response = await generateObject({
-    model: getLLM(MODELS.OPENAI_GPT_OSS_20B), // Use generic or specific model
+    model: getLLM(model),
     schema: z.array(
       z.object({
         chunkId: z.string(),
@@ -45,6 +47,14 @@ export const snippetSearch = async ({
     - MUST RETURN CLASSIFICATION FOR EACH CHUNK, EVEN IF IT IS IRRELEVANT
     `,
     temperature: 0.0,
+  });
+
+  recordUsageFromSdk({
+    operationName: "snippetSearch",
+    source: "tool",
+    model,
+    usage: response.usage,
+    metadata: { chunkCount: chunks.length },
   });
 
   // Make sure chunk map to input

@@ -2,6 +2,7 @@ import { type StepMessage, StepType } from "@/@types/agents";
 import { MODELS } from "@/@types/llm";
 import { getLLM } from "@/ai-backend/llm";
 import { similaritySearchChunks } from "@/service/simSearch";
+import { recordUsageFromSdk } from "@/utils/costTracker";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { getTracer, observe } from "@lmnr-ai/lmnr";
 import { generateText, stepCountIs, tool } from "ai";
@@ -22,7 +23,8 @@ const queryAgent = async (
 ) => {
   // const llm = getLLM(MODELS.O4_MINI);
   // const llm = getLLM(MODELS.GEMINI_2_5_FLASH);
-  const llm = getLLM(MODELS.GEMINI_2_0_FLASH);
+  const queryAgentModel = MODELS.GEMINI_2_0_FLASH;
+  const llm = getLLM(queryAgentModel);
 
   const response = await generateText({
     model: llm,
@@ -67,6 +69,14 @@ Keep in mind curent year is ${new Date().getFullYear()}
     //   } satisfies GoogleGenerativeAIProviderOptions,
     // },
   });
+
+  recordUsageFromSdk({
+    operationName: "chapter:queryAgent",
+    source: "tool",
+    model: queryAgentModel,
+    usage: response.usage,
+  });
+
   return response.text;
 };
 
@@ -265,6 +275,12 @@ export const chapterAgentV3 = async ({
           },
           stopWhen: stepCountIs(25),
           onStepFinish: (step) => {
+            recordUsageFromSdk({
+              operationName: "chapter:dataExtraction",
+              source: "tool",
+              model,
+              usage: step.usage,
+            });
             const reasoning = step.reasoning;
             if (step.finishReason === "tool-calls") {
             }
